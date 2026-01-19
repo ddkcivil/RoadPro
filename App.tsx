@@ -235,8 +235,13 @@ const App: React.FC = () => {
     if ('serviceWorker' in navigator) {
       const registerSW = async () => {
         try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('SW registered: ', registration);
+          // Check if we're on localhost or a secure context (HTTPS)
+          if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            const registration = await navigator.serviceWorker.register('./sw.js');
+            console.log('SW registered: ', registration);
+          } else {
+            console.log('Service worker not registered: not a secure context');
+          }
         } catch (registrationError) {
           console.log('SW registration failed: ', registrationError);
         }
