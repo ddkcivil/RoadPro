@@ -3,20 +3,60 @@ import initSqlJs, { Database } from 'sql.js';
 class SQLiteService {
   private db: Database | null = null;
   private SQL: any | null = null;
+  private initializing: boolean = false;
+  private initPromise: Promise<void> | null = null;
 
   async initialize(): Promise<void> {
-    if (this.db) return; // Already initialized
-
+    // If already initialized, return
+    if (this.db) return;
+    
+    // If initialization is in progress, wait for it
+    if (this.initializing && this.initPromise) {
+      return this.initPromise;
+    }
+    
+    // Mark as initializing
+    this.initializing = true;
+    
+    // Store the promise to handle concurrent calls
+    this.initPromise = this.performInitialization();
+    
     try {
-      this.SQL = await initSqlJs({
-        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
-      });
+      await this.initPromise;
+    } finally {
+      this.initializing = false;
+    }
+  }
+
+  private async performInitialization(): Promise<void> {
+    try {
+      // Initialize SQL.js with proper WASM loading
+      // First try CDN, then fallback to direct CDN URL
+      try {
+        this.SQL = await initSqlJs({
+          locateFile: file => {
+            // Use a CDN that serves the files properly
+            if (file.endsWith('.wasm')) {
+              return 'https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/' + file;
+            }
+            return `https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/${file}`;
+          }
+        });
+      } catch (cdnError) {
+        console.warn('CDN loading failed, trying direct initialization:', cdnError);
+        // Fallback to direct initialization without CDN
+        this.SQL = await initSqlJs();
+      }
       
       // Initialize database - either load existing from localStorage or create new
       const existingData = localStorage.getItem('roadmaster-sqlite-db');
       if (existingData) {
-        const data = Uint8Array.from(atob(existingData), c => c.charCodeAt(0));
-        this.db = new this.SQL.Database(data);
+        const binaryData = atob(existingData);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
+        }
+        this.db = new this.SQL.Database(bytes);
       } else {
         this.db = new this.SQL.Database();
         this.createTables();
@@ -24,9 +64,19 @@ class SQLiteService {
     } catch (error) {
       console.error('Failed to initialize SQLite service:', error);
       // Fallback to creating an in-memory database
-      if (this.SQL) {
-        this.db = new this.SQL.Database();
-        this.createTables();
+      try {
+        if (this.SQL) {
+          this.db = new this.SQL.Database();
+          this.createTables();
+        } else {
+          // If SQL couldn't be initialized at all, create a mock implementation
+          console.warn('SQLite not available, falling back to mock implementation');
+          // Set db to null to indicate that SQLite is not available
+          this.db = null;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback initialization also failed:', fallbackError);
+        this.db = null;
       }
     }
   }
@@ -58,34 +108,34 @@ class SQLiteService {
         client TEXT,
         engineer TEXT,
         contract_no TEXT,
-        boq TEXT, -- JSON string
-        rfis TEXT, -- JSON string
-        lab_tests TEXT, -- JSON string
-        schedule TEXT, -- JSON string
-        structures TEXT, -- JSON string
-        agencies TEXT, -- JSON string
-        agency_payments TEXT, -- JSON string
-        linear_works TEXT, -- JSON string
-        inventory TEXT, -- JSON string
-        inventory_transactions TEXT, -- JSON string
-        vehicles TEXT, -- JSON string
-        vehicle_logs TEXT, -- JSON string
-        documents TEXT, -- JSON string
-        site_photos TEXT, -- JSON string
-        daily_reports TEXT, -- JSON string
-        pre_construction TEXT, -- JSON string
-        land_parcels TEXT, -- JSON string
-        map_overlays TEXT, -- JSON string
-        hindrances TEXT, -- JSON string
-        nc_rs TEXT, -- JSON string for NCRs
-        contract_bills TEXT, -- JSON string
-        subcontractor_bills TEXT, -- JSON string
-        measurement_sheets TEXT, -- JSON string
-        staff_locations TEXT, -- JSON string
-        environment_registry TEXT, -- JSON string
+        boq TEXT,
+        rfis TEXT,
+        lab_tests TEXT,
+        schedule TEXT,
+        structures TEXT,
+        agencies TEXT,
+        agency_payments TEXT,
+        linear_works TEXT,
+        inventory TEXT,
+        inventory_transactions TEXT,
+        vehicles TEXT,
+        vehicle_logs TEXT,
+        documents TEXT,
+        site_photos TEXT,
+        daily_reports TEXT,
+        pre_construction TEXT,
+        land_parcels TEXT,
+        map_overlays TEXT,
+        hindrances TEXT,
+        nc_rs TEXT,
+        contract_bills TEXT,
+        subcontractor_bills TEXT,
+        measurement_sheets TEXT,
+        staff_locations TEXT,
+        environment_registry TEXT,
         last_synced TEXT,
         spreadsheet_id TEXT,
-        settings TEXT -- JSON string
+        settings TEXT
       )
     `);
 
@@ -101,6 +151,18 @@ class SQLiteService {
       )
     `);
 
+    // Create settings table
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id TEXT PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        value TEXT,
+        created_at TEXT,
+        updated_at TEXT
+      )
+    `);
+
+    // Create BOQ items table
     this.db.run(`
       CREATE TABLE IF NOT EXISTS boq_items (
         id TEXT PRIMARY KEY,
@@ -112,103 +174,77 @@ class SQLiteService {
         rate REAL,
         amount REAL,
         category TEXT,
-        location TEXT,
-        completed_quantity REAL,
-        variation_quantity REAL,
-        revised_quantity REAL,
         status TEXT,
-        subcontractor_id TEXT
+        created_at TEXT,
+        updated_at TEXT
       )
     `);
 
+    // Create RFIs table
     this.db.run(`
       CREATE TABLE IF NOT EXISTS rfis (
         id TEXT PRIMARY KEY,
         project_id TEXT,
-        rfi_number TEXT,
-        date TEXT,
-        location TEXT,
+        title TEXT,
         description TEXT,
-        category TEXT,
+        raised_by TEXT,
+        assigned_to TEXT,
         status TEXT,
-        requested_by TEXT,
-        inspection_date TEXT,
-        inspection_time TEXT,
-        linked_task_id TEXT,
-        workflow_log TEXT, -- JSON string
-        question TEXT,
         priority TEXT,
-        response_date TEXT,
-        inspection_purpose TEXT,
-        inspection_report TEXT,
-        engineer_comments TEXT,
-        are_signature TEXT,
-        iow_signature TEXT,
-        me_slt_signature TEXT,
-        re_signature TEXT,
-        request_number TEXT,
-        working_drawings TEXT, -- JSON string
-        submitted_by TEXT,
-        received_by TEXT,
-        submitted_date TEXT,
-        received_date TEXT
+        created_at TEXT,
+        updated_at TEXT,
+        resolved_at TEXT
       )
     `);
 
+    // Create lab tests table
     this.db.run(`
       CREATE TABLE IF NOT EXISTS lab_tests (
         id TEXT PRIMARY KEY,
         project_id TEXT,
-        test_name TEXT,
-        category TEXT,
+        test_type TEXT,
         sample_id TEXT,
-        date TEXT,
-        location TEXT,
-        result TEXT,
-        asset_id TEXT,
-        component_id TEXT,
-        test_data TEXT, -- JSON string
-        calculated_value TEXT,
-        standard_limit TEXT,
-        technician TEXT
+        date_performed TEXT,
+        results TEXT,
+        status TEXT,
+        technician TEXT,
+        created_at TEXT
       )
     `);
 
+    // Create schedule tasks table
     this.db.run(`
       CREATE TABLE IF NOT EXISTS schedule_tasks (
         id TEXT PRIMARY KEY,
         project_id TEXT,
-        name TEXT,
         task_name TEXT,
-        description TEXT,
         start_date TEXT,
         end_date TEXT,
-        duration REAL,
+        duration INTEGER,
         progress REAL,
+        assigned_to TEXT,
         status TEXT,
-        assigned_to TEXT, -- JSON string
-        dependencies TEXT, -- JSON string
-        is_critical INTEGER,
-        boq_item_id TEXT
+        created_at TEXT,
+        updated_at TEXT
       )
     `);
 
+    // Create daily reports table
     this.db.run(`
       CREATE TABLE IF NOT EXISTS daily_reports (
         id TEXT PRIMARY KEY,
         project_id TEXT,
         date TEXT,
-        report_number TEXT,
-        status TEXT,
-        submitted_by TEXT,
-        work_today TEXT -- JSON string
-      )
-    `);
-
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT
+        weather TEXT,
+        work_done TEXT,
+        materials_used TEXT,
+        workforce TEXT,
+        equipment TEXT,
+        issues TEXT,
+        next_day_plan TEXT,
+        prepared_by TEXT,
+        approved_by TEXT,
+        created_at TEXT
       )
     `);
   }
@@ -216,13 +252,17 @@ class SQLiteService {
   async migrateFromLocalStorage(): Promise<void> {
     if (!this.db) {
       await this.initialize();
+      // If db is still null after initialization, SQLite is not available
+      if (!this.db) {
+        console.warn('SQLite not available, skipping migration');
+        return;
+      }
     }
 
     // Get data from localStorage
     const usersJson = localStorage.getItem('roadmaster-users');
     const projectsJson = localStorage.getItem('roadmaster-projects');
     const messagesJson = localStorage.getItem('roadmaster-messages');
-    const settingsJson = localStorage.getItem('roadmaster-settings');
 
     // Insert users
     if (usersJson) {
@@ -255,20 +295,21 @@ class SQLiteService {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               project.id, project.name, project.code, project.location, project.contractor,
-              project.startDate, project.endDate, project.client, project.engineer, project.contractNo,
-              JSON.stringify(project.boq), JSON.stringify(project.rfis), JSON.stringify(project.labTests),
-              JSON.stringify(project.schedule), JSON.stringify(project.structures || []),
-              JSON.stringify(project.agencies || []), JSON.stringify(project.agencyPayments || []),
-              JSON.stringify(project.linearWorks || []), JSON.stringify(project.inventory),
-              JSON.stringify(project.inventoryTransactions), JSON.stringify(project.vehicles),
-              JSON.stringify(project.vehicleLogs), JSON.stringify(project.documents),
-              JSON.stringify(project.sitePhotos || []), JSON.stringify(project.dailyReports),
-              JSON.stringify(project.preConstruction || []), JSON.stringify(project.landParcels),
-              JSON.stringify(project.mapOverlays), JSON.stringify(project.hindrances),
-              JSON.stringify(project.ncrs), JSON.stringify(project.contractBills),
-              JSON.stringify(project.subcontractorBills || []), JSON.stringify(project.measurementSheets),
-              JSON.stringify(project.staffLocations), JSON.stringify(project.environmentRegistry || {}),
-              project.lastSynced, project.spreadsheetId, JSON.stringify(project.settings || {})
+              project.start_date, project.end_date, project.client, project.engineer, project.contract_no,
+              JSON.stringify(project.boq || []), JSON.stringify(project.rfis || []), 
+              JSON.stringify(project.lab_tests || []), JSON.stringify(project.schedule || []),
+              JSON.stringify(project.structures || []), JSON.stringify(project.agencies || []),
+              JSON.stringify(project.agency_payments || []), JSON.stringify(project.linear_works || []),
+              JSON.stringify(project.inventory || []), JSON.stringify(project.inventory_transactions || []),
+              JSON.stringify(project.vehicles || []), JSON.stringify(project.vehicle_logs || []),
+              JSON.stringify(project.documents || []), JSON.stringify(project.site_photos || []),
+              JSON.stringify(project.daily_reports || []), JSON.stringify(project.pre_construction || []),
+              JSON.stringify(project.land_parcels || []), JSON.stringify(project.map_overlays || []),
+              JSON.stringify(project.hindrances || []), JSON.stringify(project.nc_rs || []),
+              JSON.stringify(project.contract_bills || []), JSON.stringify(project.subcontractor_bills || []),
+              JSON.stringify(project.measurement_sheets || []), JSON.stringify(project.staff_locations || []),
+              JSON.stringify(project.environment_registry || []), project.last_synced,
+              project.spreadsheet_id, JSON.stringify(project.settings || {})
             ]
           );
         } catch (e) {
@@ -284,7 +325,7 @@ class SQLiteService {
         try {
           this.db!.run(
             `INSERT OR REPLACE INTO messages (id, sender_id, receiver_id, content, timestamp, read_status, project_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [message.id, message.senderId, message.receiverId, message.content, message.timestamp, message.read ? 1 : 0, message.projectId]
+            [message.id, message.sender_id, message.receiver_id, message.content, message.timestamp, message.read_status || 0, message.project_id]
           );
         } catch (e) {
           console.warn('Error inserting message:', e);
@@ -292,57 +333,43 @@ class SQLiteService {
       }
     }
 
-    // Insert settings
-    if (settingsJson) {
-      try {
-        this.db!.run(
-          `INSERT OR REPLACE INTO settings (key, value) VALUES ('app_settings', ?)`,
-          [settingsJson]
-        );
-      } catch (e) {
-        console.warn('Error inserting settings:', e);
-      }
-    }
-
-    // Save database to localStorage
+    // Save the database to localStorage
     this.saveToLocalStorage();
   }
 
-  saveToLocalStorage(): void {
-    if (this.db) {
+  private saveToLocalStorage(): void {
+    if (this.db && this.SQL) {
       try {
         const data = this.db.export();
-        const buffer = Buffer.from(data);
-        const base64 = buffer.toString('base64');
-        localStorage.setItem('roadmaster-sqlite-db', base64);
+        const encoded = btoa(String.fromCharCode(...data));
+        localStorage.setItem('roadmaster-sqlite-db', encoded);
       } catch (error) {
-        console.error('Failed to save database to localStorage:', error);
+        console.error('Error saving SQLite database to localStorage:', error);
       }
     }
   }
 
-  async executeQuery(query: string, params?: any[]): Promise<any[]> {
+  async executeQuery(query: string, params: any[] = []): Promise<any[]> {
     if (!this.db) {
       await this.initialize();
+      if (!this.db) {
+        throw new Error('SQLite database not available');
+      }
     }
 
     try {
-      const stmt = this.db!.prepare(query);
-      const results: any[] = [];
-
-      if (params) {
-        stmt.bind(params);
-      }
-
+      const stmt = this.db.prepare(query);
+      const result = [];
+      
       while (stmt.step()) {
-        results.push(stmt.getAsObject());
+        result.push(stmt.getAsObject());
       }
-
+      
       stmt.free();
-
-      return results;
+      this.saveToLocalStorage();
+      return result;
     } catch (error) {
-      console.error('SQL Query Error:', error);
+      console.error('Error executing query:', error);
       throw error;
     }
   }
@@ -350,163 +377,170 @@ class SQLiteService {
   async insert(table: string, data: Record<string, any>): Promise<void> {
     if (!this.db) {
       await this.initialize();
-    }
-
-    try {
-      const columns = Object.keys(data);
-      const placeholders = columns.map(() => '?').join(', ');
-      const query = `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`;
-      const values = columns.map(col => {
-        // Convert objects to JSON strings
-        const value = data[col];
-        return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
-      });
-
-      this.db!.run(query, values);
-      this.saveToLocalStorage();
-    } catch (error) {
-      console.error('SQL Insert Error:', error);
-      throw error;
-    }
-  }
-
-  async update(table: string, data: Record<string, any>, whereClause: string, whereParams: any[]): Promise<void> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    try {
-      const columns = Object.keys(data);
-      const setClause = columns.map(col => `${col} = ?`).join(', ');
-      const query = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
-      
-      const values = [
-        ...columns.map(col => {
-          const value = data[col];
-          return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
-        }),
-        ...whereParams
-      ];
-
-      this.db!.run(query, values);
-      this.saveToLocalStorage();
-    } catch (error) {
-      console.error('SQL Update Error:', error);
-      throw error;
-    }
-  }
-
-  async delete(table: string, whereClause: string, whereParams: any[]): Promise<void> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    try {
-      const query = `DELETE FROM ${table} WHERE ${whereClause}`;
-      this.db!.run(query, whereParams);
-      this.saveToLocalStorage();
-    } catch (error) {
-      console.error('SQL Delete Error:', error);
-      throw error;
-    }
-  }
-
-  async select(table: string, columns: string[] = [], whereClause: string = '', whereParams: any[] = []): Promise<any[]> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    try {
-      const cols = columns.length > 0 ? columns.join(', ') : '*';
-      let query = `SELECT ${cols} FROM ${table}`;
-      
-      if (whereClause) {
-        query += ` WHERE ${whereClause}`;
+      if (!this.db) {
+        throw new Error('SQLite database not available');
       }
+    }
 
-      return this.executeQuery(query, whereParams);
+    const columns = Object.keys(data).join(', ');
+    const placeholders = Object.keys(data).map(() => '?').join(', ');
+    const values = Object.values(data);
+
+    try {
+      this.db.run(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
+      this.saveToLocalStorage();
     } catch (error) {
-      console.error('SQL Select Error:', error);
+      console.error(`Error inserting into ${table}:`, error);
       throw error;
     }
   }
 
-  // Specific query methods for common operations
-  async getAllProjects(): Promise<any[]> {
-    return this.select('projects');
+  async update(table: string, data: Record<string, any>, whereClause: string, whereParams: any[] = []): Promise<void> {
+    if (!this.db) {
+      await this.initialize();
+      if (!this.db) {
+        throw new Error('SQLite database not available');
+      }
+    }
+
+    const setClause = Object.keys(data).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(data), ...whereParams];
+
+    try {
+      this.db.run(`UPDATE ${table} SET ${setClause} WHERE ${whereClause}`, values);
+      this.saveToLocalStorage();
+    } catch (error) {
+      console.error(`Error updating ${table}:`, error);
+      throw error;
+    }
   }
 
-  async getProjectById(id: string): Promise<any> {
-    const results = await this.select('projects', [], 'id = ?', [id]);
-    return results.length > 0 ? results[0] : null;
+  async delete(table: string, whereClause: string, whereParams: any[] = []): Promise<void> {
+    if (!this.db) {
+      await this.initialize();
+      if (!this.db) {
+        throw new Error('SQLite database not available');
+      }
+    }
+
+    try {
+      this.db.run(`DELETE FROM ${table} WHERE ${whereClause}`, whereParams);
+      this.saveToLocalStorage();
+    } catch (error) {
+      console.error(`Error deleting from ${table}:`, error);
+      throw error;
+    }
+  }
+
+  async select(table: string, columns: string[] = ['*'], whereClause?: string, whereParams: any[] = []): Promise<any[]> {
+    if (!this.db) {
+      await this.initialize();
+      if (!this.db) {
+        throw new Error('SQLite database not available');
+      }
+    }
+
+    const columnStr = columns.join(', ');
+    const query = whereClause 
+      ? `SELECT ${columnStr} FROM ${table} WHERE ${whereClause}`
+      : `SELECT ${columnStr} FROM ${table}`;
+
+    try {
+      const stmt = this.db.prepare(query);
+      const result = [];
+      
+      // Bind parameters if provided
+      if (whereParams.length > 0) {
+        stmt.bind(whereParams);
+      }
+      
+      while (stmt.step()) {
+        result.push(stmt.getAsObject());
+      }
+      
+      stmt.free();
+      return result;
+    } catch (error) {
+      console.error(`Error selecting from ${table}:`, error);
+      throw error;
+    }
   }
 
   async getAllUsers(): Promise<any[]> {
     return this.select('users');
   }
 
-  async getUserById(id: string): Promise<any> {
-    const results = await this.select('users', [], 'id = ?', [id]);
-    return results.length > 0 ? results[0] : null;
+  async getAllProjects(): Promise<any[]> {
+    return this.select('projects');
   }
 
   async getAllMessages(): Promise<any[]> {
     return this.select('messages');
   }
 
-  async getMessagesByProject(projectId: string): Promise<any[]> {
-    return this.select('messages', [], 'project_id = ?', [projectId]);
+  async getAllBoqItems(): Promise<any[]> {
+    return this.select('boq_items');
   }
 
-  async getBoqItemsByProject(projectId: string): Promise<any[]> {
-    return this.select('boq_items', [], 'project_id = ?', [projectId]);
+  async getAllRfis(): Promise<any[]> {
+    return this.select('rfis');
   }
 
-  async getRfisByProject(projectId: string): Promise<any[]> {
-    return this.select('rfis', [], 'project_id = ?', [projectId]);
+  async getAllLabTests(): Promise<any[]> {
+    return this.select('lab_tests');
   }
 
-  async getLabTestsByProject(projectId: string): Promise<any[]> {
-    return this.select('lab_tests', [], 'project_id = ?', [projectId]);
+  async getAllScheduleTasks(): Promise<any[]> {
+    return this.select('schedule_tasks');
   }
 
-  async getScheduleTasksByProject(projectId: string): Promise<any[]> {
-    return this.select('schedule_tasks', [], 'project_id = ?', [projectId]);
+  async getAllDailyReports(): Promise<any[]> {
+    return this.select('daily_reports');
   }
 
-  async getDailyReportsByProject(projectId: string): Promise<any[]> {
-    return this.select('daily_reports', [], 'project_id = ?', [projectId]);
-  }
-
-  // Analytics methods
-  async getProjectStats(projectId: string): Promise<any> {
+  async getProjectStats(projectId?: string): Promise<{total: number, active: number, completed: number, avg_progress?: number}> {
     if (!this.db) {
       await this.initialize();
+      if (!this.db) {
+        return { total: 0, active: 0, completed: 0 };
+      }
     }
 
-    const results = await this.executeQuery(`
-      SELECT 
-        (SELECT COUNT(*) FROM boq_items WHERE project_id = ?) as boq_count,
-        (SELECT COUNT(*) FROM rfis WHERE project_id = ? AND status = 'Open') as open_rfis,
-        (SELECT COUNT(*) FROM rfis WHERE project_id = ? AND status = 'Approved') as approved_rfis,
-        (SELECT COUNT(*) FROM lab_tests WHERE project_id = ? AND result = 'Pass') as passed_tests,
-        (SELECT COUNT(*) FROM lab_tests WHERE project_id = ? AND result = 'Fail') as failed_tests,
-        (SELECT AVG(progress) FROM schedule_tasks WHERE project_id = ?) as avg_progress
-    `, [projectId, projectId, projectId, projectId, projectId, projectId]);
+    try {
+      let baseQuery = "SELECT COUNT(*) as count FROM projects";
+      let activeQuery = "SELECT COUNT(*) as count FROM projects WHERE status = 'Active'";
+      let completedQuery = "SELECT COUNT(*) as count FROM projects WHERE status = 'Completed'";
+      let avgProgressQuery = "SELECT AVG(progress) as avg_progress FROM schedule_tasks";
+      
+      if (projectId) {
+        baseQuery += ` WHERE id = '${projectId}'`;
+        activeQuery += ` AND id = '${projectId}'`;
+        completedQuery += ` AND id = '${projectId}'`;
+        avgProgressQuery += ` WHERE project_id = '${projectId}'`;
+      }
+      
+      const totalResult = this.db.exec(baseQuery);
+      const activeResult = this.db.exec(activeQuery);
+      const completedResult = this.db.exec(completedQuery);
+      const avgProgressResult = this.db.exec(avgProgressQuery);
 
-    return results[0] || {};
+      return {
+        total: Number(totalResult[0]?.values[0][0]) || 0,
+        active: Number(activeResult[0]?.values[0][0]) || 0,
+        completed: Number(completedResult[0]?.values[0][0]) || 0,
+        avg_progress: Number(avgProgressResult[0]?.values[0][0]) || 0
+      };
+    } catch (error) {
+      console.error('Error getting project stats:', error);
+      return { total: 0, active: 0, completed: 0 };
+    }
   }
 
-  async getCompletedWorkByDateRange(projectId: string, startDate: string, endDate: string): Promise<any[]> {
-    return this.executeQuery(`
-      SELECT d.date, w.quantity, w.description
-      FROM daily_reports d
-      JOIN json_each(d.work_today) AS work_table
-      JOIN json_extract(d.work_today, '$[' || json_each.value || ']') AS w
-      WHERE d.project_id = ?
-        AND d.date BETWEEN ? AND ?
-    `, [projectId, startDate, endDate]);
+  // Method to check if SQLite is available
+  isAvailable(): boolean {
+    return this.db !== null;
   }
 }
 
+// Export singleton instance
 export const sqliteService = new SQLiteService();

@@ -45,8 +45,14 @@ const DataAnalysisModule: React.FC = () => {
       setProjects(projectsWithAnalytics);
       
       // Load users
-      const usersData = await sqliteService.getAllUsers();
-      setUsers(usersData);
+      if (sqliteService.isAvailable()) {
+        const usersData = await sqliteService.getAllUsers();
+        setUsers(usersData);
+      } else {
+        // Fallback to localStorage if SQLite is not available
+        const usersJson = localStorage.getItem('roadmaster-users');
+        setUsers(usersJson ? JSON.parse(usersJson) : []);
+      }
       
       // Load reports
       const projectReports = await DataSyncService.getProjectReports();
@@ -63,8 +69,12 @@ const DataAnalysisModule: React.FC = () => {
     if (!query.trim()) return;
     
     try {
-      const results = await sqliteService.executeQuery(query);
-      setQueryResults(results);
+      if (sqliteService.isAvailable()) {
+        const results = await sqliteService.executeQuery(query);
+        setQueryResults(results);
+      } else {
+        setError('SQLite is not available. Cannot execute queries.');
+      }
     } catch (err) {
       setError('Error executing query: ' + (err as Error).message);
       console.error('Query error:', err);
