@@ -303,18 +303,50 @@ const App: React.FC = () => {
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated
-    return localStorage.getItem('roadmaster-authenticated') === 'true';
+    const authState = localStorage.getItem('roadmaster-authenticated') === 'true';
+    console.log('Initial isAuthenticated state:', authState);
+    return authState;
   });
   const [userRole, setUserRole] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem('roadmaster-user-role');
-    return savedRole ? savedRole as UserRole : UserRole.PROJECT_MANAGER;
+    const role = savedRole ? savedRole as UserRole : UserRole.PROJECT_MANAGER;
+    console.log('Initial userRole state:', role);
+    return role;
   });
   const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('roadmaster-user-name') || 'Guest';
+    const name = localStorage.getItem('roadmaster-user-name') || 'Guest';
+    console.log('Initial userName state:', name);
+    return name;
   });
   const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    return localStorage.getItem('roadmaster-current-user-id') || 'u2';
+    const userId = localStorage.getItem('roadmaster-current-user-id') || 'u2';
+    console.log('Initial currentUserId state:', userId);
+    return userId;
   });
+
+  // Effect to verify authentication state after component mounts
+  useEffect(() => {
+    console.log('Component mounted - Auth state check:', {
+      isAuthenticated,
+      userRole,
+      userName,
+      currentUserId,
+      localStorageAuth: localStorage.getItem('roadmaster-authenticated'),
+      localStorageRole: localStorage.getItem('roadmaster-user-role'),
+      localStorageName: localStorage.getItem('roadmaster-user-name'),
+      localStorageUserId: localStorage.getItem('roadmaster-current-user-id'),
+    });
+  }, [isAuthenticated, userRole, userName, currentUserId]);
+
+  // Debug effect to track authentication state changes
+  useEffect(() => {
+    console.log('Authentication state changed:', {
+      isAuthenticated,
+      userRole,
+      userName,
+      currentUserId
+    });
+  }, [isAuthenticated, userRole, userName, currentUserId]);
   
   // Project selection state
   const [hasSelectedProject, setHasSelectedProject] = useState(false);
@@ -350,6 +382,7 @@ const App: React.FC = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
     // Try to restore the last selected project from localStorage
     const savedSelectedProject = localStorage.getItem('roadmaster-selected-project');
+    console.log('Initial selectedProjectId state:', savedSelectedProject);
     return savedSelectedProject || null;
   });
   
