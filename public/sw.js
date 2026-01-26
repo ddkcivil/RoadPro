@@ -1,11 +1,10 @@
 
-const CACHE_NAME = 'roadmaster-v1';
+const CACHE_NAME = 'roadmaster-v2'; // Updated version to clear old cache
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap',
-
 ];
 
 self.addEventListener('install', (event) => {
@@ -17,41 +16,62 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Skip Google Analytics requests to avoid blocking issues
+  if (event.request.url.includes('google-analytics.com')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Handle navigation requests separately from resource requests
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/index.html');
+      })
+    );
+    return;
+  }
+
+  // For other requests, try cache first then network
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
-        // Only try to fetch from network if there's no cached response for certain types of requests
         if (cachedResponse) {
-          // Update the cache in the background for existing cached resources
-          if (event.request.method === 'GET' && 
-              (event.request.url.startsWith('http://') || event.request.url.startsWith('https://'))) {
+          // Update cache in background for static assets
+          if (event.request.destination === 'script' || 
+              event.request.destination === 'style' || 
+              event.request.destination === 'image') {
             fetch(event.request).then((networkResponse) => {
-              if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              if (networkResponse && networkResponse.status === 200) {
                 cache.put(event.request, networkResponse.clone());
               }
             }).catch((error) => {
-              console.warn('Failed to update cache for:', event.request.url, error);
+              console.warn('Background fetch failed for:', event.request.url, error);
             });
           }
           return cachedResponse;
         }
         
-        // Try to fetch from network
+        // If not in cache, fetch from network
         return fetch(event.request).then((networkResponse) => {
-          // Check if we received a valid response
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            cache.put(event.request, networkResponse.clone());
+          if (networkResponse && networkResponse.status === 200) {
+            // Only cache successful responses for appropriate content types
+            if (event.request.destination === 'script' || 
+                event.request.destination === 'style' || 
+                event.request.destination === 'image' ||
+                event.request.destination === 'font') {
+              cache.put(event.request, networkResponse.clone());
+            }
           }
           return networkResponse;
         }).catch((error) => {
           console.error('Network request failed:', event.request.url, error);
           throw error;
         });
-      }).catch((error) => {
-        console.error('Cache match failed:', event.request.url, error);
-        // Try network as fallback
-        return fetch(event.request);
       });
+    }).catch((error) => {
+      console.error('Cache operation failed:', event.request.url, error);
+      return fetch(event.request);
     })
   );
 });

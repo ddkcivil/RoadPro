@@ -1,12 +1,13 @@
 
 {
-  "name": "RoadMaster Pro Desktop",
-  "short_name": "RoadMaster",
+  "name": "RoadPro - Construction Management System",
+  "short_name": "RoadPro",
   "description": "Road Construction Management OS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#6366f1",
+  "scope": "/",
   "icons": [
     {
       "src": "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=192&h=192",
@@ -18,5 +19,10 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "serviceworker": {
+    "src": "/sw.js",
+    "scope": "/",
+    "update_via_cache": "all"
+  }
 }
