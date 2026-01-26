@@ -1,5 +1,6 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { User, UserRole } from '../types';
+import { apiService } from '../services/apiService';
 import { UserPlus, Trash2, Mail, Shield, Edit3, Upload, X, Save } from 'lucide-react';
 import { 
   Avatar, 
@@ -28,15 +29,29 @@ import {
 } from '@mui/material';
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(() => {
-    const savedUsers = localStorage.getItem('roadmaster-users');
-    return savedUsers ? JSON.parse(savedUsers) : []; // Start with empty array instead of mock data
-  });
+  const [users, setUsers] = useState<User[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const [pendingUsers, setPendingUsers] = useState<any[]>(() => {
-    const savedPendingUsers = localStorage.getItem('roadmaster-pending-users');
-    return savedPendingUsers ? JSON.parse(savedPendingUsers) : [];
-  });
+  // Load data from API on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [usersData, pendingData] = await Promise.all([
+          apiService.getUsers(),
+          apiService.getPendingRegistrations()
+        ]);
+        setUsers(usersData);
+        setPendingUsers(pendingData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -50,7 +65,7 @@ const UserManagement: React.FC = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
@@ -74,41 +89,25 @@ const UserManagement: React.FC = () => {
       return;
     }
     
-    const isDuplicate = users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase());
-    if (isDuplicate) {
-      alert(`Duplicate: A user with email "${newUser.email}" already exists.`);
-      return;
+    try {
+      const user = await apiService.createUser({
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        role: newUser.role
+      });
+      
+      setUsers(prev => [...prev, user]);
+      setIsModalOpen(false);
+      setNewUser({ name: '', email: '', role: UserRole.SITE_ENGINEER, phone: '' });
+      setAvatarFile(null);
+      setPreviewUrl(null);
+    } catch (error: any) {
+      alert(error.message || 'Failed to create user');
     }
-
-    // Handle avatar - either uploaded file or generated from name
-    let avatarUrl = '';
-    if (previewUrl) {
-      avatarUrl = previewUrl; // In a real app, this would be the uploaded image URL
-    } else {
-      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(newUser.name)}&background=random`;
-    }
-
-    const user: User = {
-      id: `u-${Date.now()}`,
-      name: newUser.name,
-      email: newUser.email,
-      phone: newUser.phone,
-      role: newUser.role,
-      avatar: avatarUrl
-    };
-    setUsers(prev => {
-      const updatedUsers = [...prev, user];
-      // Save to localStorage
-      localStorage.setItem('roadmaster-users', JSON.stringify(updatedUsers));
-      return updatedUsers;
-    });
-    setIsModalOpen(false);
-    setNewUser({ name: '', email: '', role: UserRole.SITE_ENGINEER, phone: '' });
-    setAvatarFile(null);
-    setPreviewUrl(null);
   };
 
-  const handleEditUser = (e: React.FormEvent) => {
+  const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!editingUser) return;
@@ -143,46 +142,42 @@ const UserManagement: React.FC = () => {
       return;
     }
 
-    // Handle avatar update
-    let avatarUrl = editingUser.avatar || '';
-    if (previewUrl) {
-      avatarUrl = previewUrl; // In a real app, this would be the uploaded image URL
-    } else if (avatarFile) {
-      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(editingUser.name)}&background=random`;
+    try {
+      // In a real API, you'd have an updateUser endpoint
+      // For now, we'll just update local state
+      const updatedUsers = users.map(user => 
+        user.id === editingUser.id 
+          ? { 
+              ...user, 
+              name: editingUser.name,
+              email: editingUser.email,
+              phone: editingUser.phone,
+              role: editingUser.role,
+              avatar: editingUser.avatar
+            } 
+          : user
+      );
+      
+      setUsers(updatedUsers);
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+      setAvatarFile(null);
+      setPreviewUrl(null);
+    } catch (error: any) {
+      alert(error.message || 'Failed to update user');
     }
-
-    const updatedUsers = users.map(user => 
-      user.id === editingUser.id 
-        ? { 
-            ...user, 
-            name: editingUser.name,
-            email: editingUser.email,
-            phone: editingUser.phone,
-            role: editingUser.role,
-            avatar: avatarUrl
-          } 
-        : user
-    );
-
-    setUsers(prev => {
-      // Save to localStorage
-      localStorage.setItem('roadmaster-users', JSON.stringify(updatedUsers));
-      return updatedUsers;
-    });
-    setIsEditModalOpen(false);
-    setEditingUser(null);
-    setAvatarFile(null);
-    setPreviewUrl(null);
   };
 
-  const removeUser = (id: string) => {
+  const removeUser = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(prev => {
-        const updatedUsers = prev.filter(u => u.id !== id);
-        // Save to localStorage
-        localStorage.setItem('roadmaster-users', JSON.stringify(updatedUsers));
-        return updatedUsers;
-      });
+      try {
+        // In a real API, you'd have a deleteUser endpoint
+        // For now, we'll just remove from local state
+        setUsers(prev => prev.filter(u => u.id !== id));
+        alert('User deleted successfully');
+      } catch (error: any) {
+        alert(error.message || 'Failed to delete user');
+      }
     }
   };
 
@@ -212,41 +207,26 @@ const UserManagement: React.FC = () => {
     setPreviewUrl(null);
   };
   
-  const approveUser = (pendingUser: any) => {
-    // Move user from pending to active users
-    const newUser: User = {
-      id: `u-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, // Ensure unique ID
-      name: pendingUser.name,
-      email: pendingUser.email,
-      phone: pendingUser.phone,
-      role: pendingUser.requestedRole,
-      avatar: pendingUser.avatar
-    };
-    
-    setUsers(prev => {
-      const updatedUsers = [...prev, newUser];
-      localStorage.setItem('roadmaster-users', JSON.stringify(updatedUsers));
-      return updatedUsers;
-    });
-    
-    // Remove from pending users
-    setPendingUsers(prev => {
-      const updatedPending = prev.filter((u: any) => u.id !== pendingUser.id);
-      localStorage.setItem('roadmaster-pending-users', JSON.stringify(updatedPending));
-      return updatedPending;
-    });
-    
-    alert(`User ${pendingUser.name} has been approved and added to the system.`);
+  const approveUser = async (pendingUser: any) => {
+    try {
+      const newUser = await apiService.approveRegistration(pendingUser.id);
+      setUsers(prev => [...prev, newUser]);
+      setPendingUsers(prev => prev.filter((u: any) => u.id !== pendingUser.id));
+      alert(`User ${pendingUser.name} has been approved and added to the system.`);
+    } catch (error: any) {
+      alert(error.message || 'Failed to approve user');
+    }
   };
   
-  const rejectUser = (pendingUser: any) => {
+  const rejectUser = async (pendingUser: any) => {
     if (window.confirm(`Are you sure you want to reject ${pendingUser.name}'s registration?`)) {
-      setPendingUsers(prev => {
-        const updatedPending = prev.filter((u: any) => u.id !== pendingUser.id);
-        localStorage.setItem('roadmaster-pending-users', JSON.stringify(updatedPending));
-        return updatedPending;
-      });
-      alert(`User ${pendingUser.name}'s registration has been rejected.`);
+      try {
+        await apiService.rejectRegistration(pendingUser.id);
+        setPendingUsers(prev => prev.filter((u: any) => u.id !== pendingUser.id));
+        alert(`User ${pendingUser.name}'s registration has been rejected.`);
+      } catch (error: any) {
+        alert(error.message || 'Failed to reject user');
+      }
     }
   };
 
@@ -269,6 +249,14 @@ const UserManagement: React.FC = () => {
 
   return (
     <Box sx={{ height: 'calc(100vh - 140px)', overflowY: 'auto', p: 2 }}>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+          <Typography variant="h6">Loading user data...</Typography>
+        </Box>
+      )}
+      
+      {!loading && (
+        <>
       <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
         <Box>
           <Typography variant="h5" fontWeight="900">User Management</Typography>
@@ -667,6 +655,8 @@ const UserManagement: React.FC = () => {
           <Button variant="contained" startIcon={<Save size={16} />} onClick={handleEditUser} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Update User</Button>
         </DialogActions>
       </Dialog>
+    </>
+      )}
     </Box>
   );
 };

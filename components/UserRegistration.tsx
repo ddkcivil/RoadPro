@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
+import { apiService } from '../services/apiService';
 import { UserPlus, Mail, Shield, Edit3, Upload, X, Save } from 'lucide-react';
 import { 
   Avatar, 
@@ -74,60 +75,31 @@ const UserRegistration: React.FC = () => {
       return;
     }
 
-    // Check for existing user
-    const existingUsers = localStorage.getItem('roadmaster-users');
-    const users = existingUsers ? JSON.parse(existingUsers) : [];
-    const isDuplicate = users.some((u: User) => u.email.toLowerCase() === registrationForm.email.toLowerCase());
-    
-    if (isDuplicate) {
-      setErrors({ email: 'A user with this email already exists.' });
-      return;
+    try {
+      // Submit registration to API
+      const pendingUser = await apiService.submitRegistration({
+        name: registrationForm.name,
+        email: registrationForm.email,
+        phone: registrationForm.phone,
+        requestedRole: registrationForm.role
+      });
+
+      setRegistrationSuccess(true);
+      
+      // Reset form
+      setRegistrationForm({ 
+        name: '', 
+        email: '', 
+        role: UserRole.SITE_ENGINEER, 
+        phone: '', 
+        password: '', 
+        confirmPassword: '' 
+      });
+      setAvatarFile(null);
+      setPreviewUrl(null);
+    } catch (error: any) {
+      setErrors({ email: error.message || 'Registration failed' });
     }
-
-    // Handle avatar - either uploaded file or generated from name
-    let avatarUrl = '';
-    if (previewUrl) {
-      avatarUrl = previewUrl;
-    } else {
-      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(registrationForm.name)}&background=random`;
-    }
-
-    // Create pending user entry
-    const pendingUser = {
-      id: `pending-${Date.now()}`,
-      name: registrationForm.name,
-      email: registrationForm.email,
-      phone: registrationForm.phone,
-      role: registrationForm.role,
-      avatar: avatarUrl,
-      status: 'pending',
-      requestedRole: registrationForm.role,
-      createdAt: new Date().toISOString(),
-      requestedBy: 'self'
-    };
-
-    // Store in pending users
-    const pendingUsersJson = localStorage.getItem('roadmaster-pending-users');
-    const pendingUsers = pendingUsersJson ? JSON.parse(pendingUsersJson) : [];
-    pendingUsers.push(pendingUser);
-    localStorage.setItem('roadmaster-pending-users', JSON.stringify(pendingUsers));
-
-    // Simulate sending email notification to admin
-    console.log('Notification sent to admin for user approval:', pendingUser);
-
-    setRegistrationSuccess(true);
-    
-    // Reset form
-    setRegistrationForm({ 
-      name: '', 
-      email: '', 
-      role: UserRole.SITE_ENGINEER, 
-      phone: '', 
-      password: '', 
-      confirmPassword: '' 
-    });
-    setAvatarFile(null);
-    setPreviewUrl(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

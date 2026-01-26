@@ -1,0 +1,16 @@
+{
+  "name": "roadpro-api",
+  "version": "1.0.0",
+  "description": "Backend API for RoadPro application",
+  "main": "api/users.js",
+  "scripts": {
+    "start": "node api/users.js",
+    "dev": "nodemon api/users.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
