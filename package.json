@@ -3,10 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "cd api && node mongo-api.js",
+    "api": "cd api && npm start"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -16,7 +21,6 @@
     "@mui/material": "6.4.3",
     "@mui/x-data-grid": "7.25.0",
     "@types/xlsx": "^0.0.35",
-    "dotenv": "^17.2.3",
     "geojson": "^0.5.0",
     "google-cli": "^0.1.1",
     "jspdf": "^4.0.0",
@@ -24,7 +28,6 @@
     "leaflet-geosearch": "^4.2.2",
     "leaflet-omnivore": "^0.3.0",
     "lucide-react": "0.460.0",
-    "mongoose": "^9.1.5",
     "pdfjs-dist": "^5.4.530",
     "qrcode.react": "^4.2.0",
     "react": "18.2.0",
@@ -34,7 +37,8 @@
     "shapefile": "^0.6.6",
     "sql.js": "^1.13.0",
     "topojson": "^3.0.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "dotenv": "^16.3.1"
   },
   "overrides": {
     "pdfjs-dist": "^5.4.530"
