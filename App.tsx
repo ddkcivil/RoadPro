@@ -85,7 +85,7 @@ import ContactPage from './components/core/ContactPage';
 import ErrorBoundary from './components/core/ErrorBoundary';
 import NotificationsBadge from './components/core/NotificationsBadge';
 import ProjectModal from './components/core/ProjectModal';
-import TestProjectCreation from './components/core/TestProjectCreation';
+
 import { I18nProvider } from './contexts/I18nContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -344,18 +344,10 @@ const App: React.FC = () => {
     // Initialize localStorage with empty arrays if no data exists
     LocalStorageUtils.initializeEmptyData();
     
-    // Ensure admin user exists
+    // Initialize with empty users array if no data exists
     const savedUsers = localStorage.getItem('roadmaster-users');
-    if (!savedUsers || JSON.parse(savedUsers).length === 0) {
-      const adminUser = {
-        id: 'admin-001',
-        name: 'Dharma Dhoj Kunwar',
-        email: 'dharmadkunwar20@gmail.com',
-        phone: '9779802877286',
-        role: 'Admin',
-        avatar: 'https://ui-avatars.com/api/?name=Dharma+Kunwar&background=random'
-      };
-      localStorage.setItem('roadmaster-users', JSON.stringify([adminUser]));
+    if (!savedUsers) {
+      localStorage.setItem('roadmaster-users', JSON.stringify([]));
     }
     
     // Initialize SQLite service and migrate data from localStorage if needed
@@ -696,17 +688,7 @@ const App: React.FC = () => {
     
     // Initialize with empty array if no data exists
     if (!savedUsers) {
-      // Create admin user by default
-      const adminUser = {
-        id: 'admin-001',
-        name: 'Dharma Dhoj Kunwar',
-        email: 'dharmadkunwar20@gmail.com',
-        phone: '9779802877286',
-        role: 'Admin',
-        avatar: 'https://ui-avatars.com/api/?name=Dharma+Kunwar&background=random'
-      };
-      const defaultUsers = [adminUser];
-      localStorage.setItem('roadmaster-users', JSON.stringify(defaultUsers));
+      localStorage.setItem('roadmaster-users', JSON.stringify([]));
     }
     
     // Find user by ID or use a default user
@@ -750,16 +732,7 @@ const App: React.FC = () => {
           
           // Initialize with empty array if no data exists
           if (!savedUsers) {
-            // Create admin user by default
-            const adminUser = {
-              id: 'admin-001',
-              name: 'Dharma Dhoj Kunwar',
-              email: 'dharmadkunwar20@gmail.com',
-              phone: '9779802877286',
-              role: 'Admin',
-              avatar: 'https://ui-avatars.com/api/?name=Dharma+Kunwar&background=random'
-            };
-            users = [adminUser];
+            users = [];
             localStorage.setItem('roadmaster-users', JSON.stringify(users));
           }
           

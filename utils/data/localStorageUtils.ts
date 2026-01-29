@@ -55,16 +55,7 @@ export const LocalStorageUtils = {
     }
 
     if (!localStorage.getItem(LOCAL_STORAGE_KEYS.USERS)) {
-      // Create admin user by default
-      const adminUser = {
-        id: 'admin-001',
-        name: 'Dharma Dhoj Kunwar',
-        email: 'dharmadkunwar20@gmail.com',
-        phone: '9779802877286',
-        role: 'Admin',
-        avatar: 'https://ui-avatars.com/api/?name=Dharma+Kunwar&background=random'
-      };
-      localStorage.setItem(LOCAL_STORAGE_KEYS.USERS, JSON.stringify([adminUser]));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USERS, JSON.stringify([]));
     }
 
     if (!localStorage.getItem(LOCAL_STORAGE_KEYS.MESSAGES)) {
