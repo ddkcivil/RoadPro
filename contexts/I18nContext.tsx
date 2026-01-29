@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { getTranslation, getCurrentLanguage, setCurrentLanguage } from '../utils/i18nUtils';
+import { getTranslation, getCurrentLanguage, setCurrentLanguage } from '../utils/formatting/i18nUtils';
 
 interface I18nContextType {
   language: string;

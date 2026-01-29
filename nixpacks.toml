@@ -1,5 +1,0 @@
-# Nixpacks configuration for RoadPro API
-provides = ['node']
-install = ['npm install']
-build = []
-start = 'cd api && npm start'

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { UserRole } from './types';
-import { LocalStorageUtils } from './utils/localStorageUtils';
-import { DataCache } from './utils/cacheUtils';
-import { PermissionsService } from './services/permissionsService';
-import { sqliteService } from './services/sqliteService';
+import { LocalStorageUtils } from './utils/data/localStorageUtils';
+import { DataCache } from './utils/data/cacheUtils';
+import { PermissionsService } from './services/auth/permissionsService';
+import { sqliteService } from './services/database/sqliteService';
 
 // Test component that initializes all app services including SQLite
 const TestApp: React.FC = () => {
