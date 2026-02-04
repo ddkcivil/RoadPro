@@ -930,10 +930,12 @@ const App: React.FC = () => {
       { id: 'documents', label: 'Document Hub', icon: FolderOpen }
     ];
     
-    if ((currentUser as UserWithPermissions).permissions.includes(Permission.USER_READ)) {
-      items.push({ id: 'user-management', label: 'User Management', icon: UserCheck });
+    if (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.PROJECT_MANAGER) {
+      if ((currentUser as UserWithPermissions).permissions.includes(Permission.USER_READ)) {
+        items.push({ id: 'user-management', label: 'User Management', icon: UserCheck });
+      }
+      items.push({ id: 'user-registration', label: 'Create Account', icon: Shield }); // This is 'Create Account'
     }
-    items.push({ id: 'user-registration', label: 'Create Account', icon: Shield });
     
     return items;
   }, [currentUser]);
@@ -1165,24 +1167,26 @@ const App: React.FC = () => {
 
             <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
             
-            <Tooltip title={sidebarCollapsed ? "Settings" : ""} placement="right">
-                <ListItemButton
-                    selected={activeTab === 'settings'}
-                    onClick={() => startTransition(() => setActiveTab('settings'))}
-                    sx={{
-                        borderRadius: '12px', mb: 0.5, py: 1.2,
-                        color: activeTab === 'settings' ? 'white' : '#94a3b8',
-                        bgcolor: activeTab === 'settings' ? alpha('#4f46e5', 0.2) : 'transparent',
-                        '&:hover': { bgcolor: alpha('#ffffff', 0.05) },
-                        justifyContent: sidebarCollapsed ? 'center' : 'initial'
-                    }}
-                >
-                    <ListItemIcon sx={{ minWidth: sidebarCollapsed ? 0 : 36, color: 'inherit' }}>
-                        <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-                    </ListItemIcon>
-                    {!sidebarCollapsed && <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: 13, fontWeight: activeTab === 'settings' ? 700 : 500 }} />}
-                </ListItemButton>
-            </Tooltip>
+            {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.PROJECT_MANAGER) && (
+              <Tooltip title={sidebarCollapsed ? "Settings" : ""} placement="right">
+                  <ListItemButton
+                      selected={activeTab === 'settings'}
+                      onClick={() => startTransition(() => setActiveTab('settings'))}
+                      sx={{
+                          borderRadius: '12px', mb: 0.5, py: 1.2,
+                          color: activeTab === 'settings' ? 'white' : '#94a3b8',
+                          bgcolor: activeTab === 'settings' ? alpha('#4f46e5', 0.2) : 'transparent',
+                          '&:hover': { bgcolor: alpha('#ffffff', 0.05) },
+                          justifyContent: sidebarCollapsed ? 'center' : 'initial'
+                      }}
+                  >
+                      <ListItemIcon sx={{ minWidth: sidebarCollapsed ? 0 : 36, color: 'inherit' }}>
+                          <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
+                      </ListItemIcon>
+                      {!sidebarCollapsed && <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: 13, fontWeight: activeTab === 'settings' ? 700 : 500 }} />}
+                  </ListItemButton>
+              </Tooltip>
+            )}
           </Box>
 
           <Box p={2} borderTop="1px solid rgba(255,255,255,0.05)">
