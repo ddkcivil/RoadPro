@@ -400,51 +400,7 @@ const App: React.FC = () => {
     addSkipLink('#main-content', 'Skip to main content');
   }, []);
 
-  // Handle focus management to prevent aria-hidden conflicts
-  useEffect(() => {
-    let isHandlingFocus = false;
-    
-    const handleFocusIn = (event: FocusEvent) => {
-      // Prevent infinite recursion
-      if (isHandlingFocus) return;
-      
-      // Check if we have any open dialogs/modals
-      const openDialogs = document.querySelectorAll('[role="dialog"][aria-modal="true"]');
-      
-      if (openDialogs.length > 0) {
-        // Check if the focused element is inside an open dialog
-        const target = event.target as HTMLElement;
-        const isInsideDialog = Array.from(openDialogs).some(dialog => 
-          dialog.contains(target) || target === dialog
-        );
-        
-        // If focus is trying to move outside an open dialog, trap it inside
-        if (!isInsideDialog) {
-          isHandlingFocus = true;
-          try {
-            // Try to focus back to the dialog or the first focusable element inside it
-            const firstFocusable = openDialogs[0].querySelector(
-              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            ) as HTMLElement;
-            
-            if (firstFocusable) {
-              firstFocusable.focus();
-            } else {
-              (openDialogs[0] as HTMLElement).focus();
-            }
-          } finally {
-            // Reset the flag after a short delay to allow normal focus events
-            setTimeout(() => {
-              isHandlingFocus = false;
-            }, 0);
-          }
-        }
-      }
-    };
 
-    document.addEventListener('focusin', handleFocusIn);
-    return () => document.removeEventListener('focusin', handleFocusIn);
-  }, []);
         const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
         const [themePrimaryColor, setThemePrimaryColor] = useState('#1A2B3C'); // New Dark Blue
         const [themeSecondaryColor, setThemeSecondaryColor] = useState('#000000'); // New Black
