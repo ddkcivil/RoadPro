@@ -881,12 +881,14 @@ const App: React.FC = () => {
   const onDeleteProject = async (projectId: string) => {
     setProjects(prev => {
       const updatedProjects = prev.filter(p => p.id !== projectId);
-      localStorage.setItem('roadmaster-projects', JSON.stringify(updatedProjects));
       
-      // Update cache
-      DataCache.set(getCacheKey('projects'), updatedProjects, { ttl: 10 * 60 * 1000 }); // 10 minutes
-      
-      // Remove from SQLite database as well
+      // Defer synchronous storage updates to prevent blocking the main thread during the click event
+      setTimeout(() => {
+        localStorage.setItem('roadmaster-projects', JSON.stringify(updatedProjects));
+        DataCache.set(getCacheKey('projects'), updatedProjects, { ttl: 10 * 60 * 1000 }); // 10 minutes
+      }, 0);
+
+      // Perform SQLite deletion asynchronously
       (async () => {
         try {
           await sqliteService.initialize();
