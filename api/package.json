@@ -2,6 +2,7 @@
   "name": "roadpro-api",
   "version": "1.0.0",
   "description": "Backend API for RoadPro application",
+  "type": "module",
   "main": "mongo-api.js",
   "scripts": {
     "start": "node mongo-api.js",
