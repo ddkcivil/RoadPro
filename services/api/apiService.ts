@@ -1,617 +1,295 @@
-import { API_CONFIG } from './apiConfig';
-
 // API service to communicate with backend
 class ApiService {
-  private baseUrl: string;
-  private mockData: {
-    users: any[];
-    projects: any[];
-    pendingRegistrations: any[];
-  };
 
-  constructor() {
-    // Use configured API URL
-    this.baseUrl = API_CONFIG.BASE_URL;
-    
-    // Fallback mock data for when API is not available
-    this.mockData = {
-      users: [
-        {
-          id: 'admin-1',
-          name: 'System Administrator',
-          email: 'admin@roadpro.com',
-          phone: '+1234567890',
-          role: 'ADMIN',
-          avatar: 'https://ui-avatars.com/api/?name=System+Administrator&background=random'
-        }
-      ],
-      projects: [],
-      pendingRegistrations: []
-    };
-  }
 
-  // Check if API is available
-  private async isApiAvailable(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/health`, { 
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  }
 
-  // Mock delay to simulate network requests
-  private async delay(ms = 500) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 
-  // Helper methods for localStorage synchronization
-  private getLocalStorageUsers(): any[] {
-    try {
-      const usersJson = localStorage.getItem('roadmaster-users');
-      return usersJson ? JSON.parse(usersJson) : [];
-    } catch (error) {
-      console.error('Error reading users from localStorage:', error);
-      return [];
-    }
-  }
-
-  private saveUserToLocalStorage(user: any): void {
-    try {
-      const users = this.getLocalStorageUsers();
-      const existingIndex = users.findIndex(u => u.email === user.email);
-      
-      if (existingIndex >= 0) {
-        users[existingIndex] = user;
-      } else {
-        users.push(user);
-      }
-      
-      localStorage.setItem('roadmaster-users', JSON.stringify(users));
-    } catch (error) {
-      console.error('Error saving user to localStorage:', error);
-    }
-  }
 
   // User Management
   async getUsers() {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/users`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const apiUsers = await response.json();
-        
-        // Also get users from localStorage and merge them
-        const localStorageUsers = this.getLocalStorageUsers();
-        
-        // Merge API users with localStorage users, prioritizing API users
-        const mergedUsers = [...apiUsers];
-        localStorageUsers.forEach(localUser => {
-          if (!mergedUsers.some(apiUser => apiUser.email === localUser.email)) {
-            mergedUsers.push(localUser);
-          }
-        });
-        
-        return mergedUsers;
-      } catch (error) {
-        console.error('API request failed, falling back to mock data:', error);
-        return this.mockData.users;
+    try {
+      const response = await fetch(`/api/users`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
-      await this.delay();
-      // Return localStorage users if available, otherwise mock data
-      const localStorageUsers = this.getLocalStorageUsers();
-      return localStorageUsers.length > 0 ? localStorageUsers : this.mockData.users;
+      
+      const apiUsers = await response.json();
+      return apiUsers;
+    } catch (error: any) {
+      console.error('Failed to fetch users:', error);
+      throw error;
     }
   }
 
   async createUser(userData) {
-    const apiAvailable = await this.isApiAvailable();
-      
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData)
-        });
-          
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create user');
-        }
-          
-        const createdUser = await response.json();
-          
-        // Also save to localStorage for consistency
-        this.saveUserToLocalStorage(createdUser);
-          
-        return createdUser;
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
-    } else {
-      await this.delay();
+    try {
+      const response = await fetch(`/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
         
-      // Check if user already exists in localStorage
-      const existingUser = this.getLocalStorageUsers().find(u => u.email.toLowerCase() === userData.email.toLowerCase());
-      if (existingUser) {
-        throw new Error('User already exists');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user');
       }
         
-      const newUser = {
-        id: `user-${Date.now()}`,
-        ...userData,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`,
-        createdAt: new Date().toISOString()
-      };
-        
-      // Save to localStorage
-      this.saveUserToLocalStorage(newUser);
-        
-      // Update mock data
-      this.mockData.users.push(newUser);
-        
-      return newUser;
+      const createdUser = await response.json();
+      return createdUser;
+    } catch (error: any) {
+      console.error('Failed to create user:', error);
+      throw error;
     }
   }
 
   async loginUser(email, password) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Login failed');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API login request failed:', error);
-        throw error;
-      }
-    } else {
-      await this.delay();
+    try {
+      const response = await fetch(`/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
       
-      // Fallback to mock login
-      const user = this.mockData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (!user) {
-        throw new Error('Invalid credentials');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
       }
       
-      return {
-        success: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar
-        },
-        token: 'mock-jwt-token-' + Date.now()
-      };
+      return await response.json();
+    } catch (error: any) {
+      console.error('API login request failed:', error);
+      throw error;
     }
   }
 
   // Pending Registrations
   async getPendingRegistrations() {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/pending-registrations`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed, falling back to mock data:', error);
-        return this.mockData.pendingRegistrations;
+    try {
+      const response = await fetch(`/api/pending-registrations`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
-      await this.delay();
-      return this.mockData.pendingRegistrations;
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Failed to fetch pending registrations:', error);
+      throw error;
     }
   }
 
   async submitRegistration(registrationData) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/pending-registrations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(registrationData)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to submit registration');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
-    } else {
-      await this.delay();
+    try {
+      const response = await fetch(`/api/pending-registrations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registrationData)
+      });
       
-      const existingPending = this.mockData.pendingRegistrations.find(
-        r => r.email.toLowerCase() === registrationData.email.toLowerCase()
-      );
-      
-      if (existingPending) {
-        throw new Error('Registration already pending');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit registration');
       }
       
-      const pendingReg = {
-        id: `pending-${Date.now()}`,
-        ...registrationData,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      
-      this.mockData.pendingRegistrations.push(pendingReg);
-      return pendingReg;
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async approveRegistration(id) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/pending-registrations/${id}/approve`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to approve registration');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
-    } else {
-      await this.delay();
+    try {
+      const response = await fetch(`/api/pending-registrations/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
       
-      const pendingUser = this.mockData.pendingRegistrations.find(r => r.id === id);
-      if (!pendingUser) {
-        throw new Error('Pending registration not found');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve registration');
       }
       
-      const newUser = {
-        id: `user-${Date.now()}`,
-        name: pendingUser.name,
-        email: pendingUser.email,
-        phone: pendingUser.phone,
-        role: pendingUser.requestedRole,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(pendingUser.name)}&background=random`,
-        createdAt: new Date().toISOString()
-      };
-      
-      this.mockData.users.push(newUser);
-      this.mockData.pendingRegistrations = this.mockData.pendingRegistrations.filter(r => r.id !== id);
-      
-      return newUser;
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async rejectRegistration(id) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/pending-registrations/${id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to reject registration');
-        }
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+    try {
+      const response = await fetch(`/api/pending-registrations/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject registration');
       }
-    } else {
-      await this.delay();
-      this.mockData.pendingRegistrations = this.mockData.pendingRegistrations.filter(r => r.id !== id);
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async getProjects() {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/projects`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed, falling back to mock data:', error);
-        return this.mockData.projects;
+    try {
+      const response = await fetch(`/api/projects`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
-      await this.delay();
-      return this.mockData.projects;
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Failed to fetch projects:', error);
+      throw error;
     }
   }
 
   async createProject(projectData) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/projects`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create project');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+    try {
+      const response = await fetch(`/api/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create project');
       }
-    } else {
-      await this.delay();
       
-      const project = {
-        id: `proj-${Date.now()}`,
-        ...projectData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      this.mockData.projects.push(project);
-      return project;
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async updateProject(id, projectData) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/projects/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update project');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
-    } else {
-      await this.delay();
+    try {
+      const response = await fetch(`/api/projects/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectData)
+      });
       
-      const index = this.mockData.projects.findIndex(p => p.id === id);
-      if (index === -1) {
-        throw new Error('Project not found');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update project');
       }
       
-      this.mockData.projects[index] = {
-        ...this.mockData.projects[index],
-        ...projectData,
-        updatedAt: new Date().toISOString()
-      };
-      
-      return this.mockData.projects[index];
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async deleteProject(id) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/projects/${id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to delete project');
-        }
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+    try {
+      const response = await fetch(`/api/projects/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete project');
       }
-    } else {
-      await this.delay();
-      this.mockData.projects = this.mockData.projects.filter(p => p.id !== id);
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   // Health check
   async healthCheck() {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/health`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-      } catch (error) {
-        console.error('API health check failed:', error);
-        return { status: 'error', timestamp: new Date().toISOString() };
+    try {
+      const response = await fetch(`/api/health`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
-      await this.delay(100);
-      return { status: 'mock-ok', timestamp: new Date().toISOString() };
+      return await response.json();
+    } catch (error: any) {
+      console.error('API health check failed:', error);
+      throw error; // Propagate the error for consistent handling
     }
   }
 
   // Staff Management APIs
   async getLeaveRequests() {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/leave-requests`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed, falling back to localStorage:', error);
-        return this.getLocalStorageLeaveRequests();
+    try {
+      const response = await fetch(`/api/leave-requests`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } else {
-      await this.delay();
-      return this.getLocalStorageLeaveRequests();
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Failed to fetch leave requests:', error);
+      throw error;
     }
   }
 
   async createLeaveRequest(leaveRequest: any) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/leave-requests`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(leaveRequest)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create leave request');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+    try {
+      const response = await fetch(`/api/leave-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leaveRequest)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create leave request');
       }
-    } else {
-      await this.delay();
-      this.saveLeaveRequestToLocalStorage(leaveRequest);
-      return leaveRequest;
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
   async updateLeaveRequest(id: string, updates: any) {
-    const apiAvailable = await this.isApiAvailable();
-    
-    if (apiAvailable) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/leave-requests/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updates)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update leave request');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+    try {
+      const response = await fetch(`/api/leave-requests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update leave request');
       }
-    } else {
-      await this.delay();
-      this.updateLeaveRequestInLocalStorage(id, updates);
-      return { ...updates, id };
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      throw error;
     }
   }
 
-  // Helper methods for staff management
-  private getLocalStorageLeaveRequests(): any[] {
-    try {
-      const requestsJson = localStorage.getItem('staff-leave-requests');
-      return requestsJson ? JSON.parse(requestsJson) : [];
-    } catch (error) {
-      console.error('Error reading leave requests from localStorage:', error);
-      return [];
-    }
-  }
 
-  private saveLeaveRequestToLocalStorage(request: any): void {
-    try {
-      const requests = this.getLocalStorageLeaveRequests();
-      requests.push(request);
-      localStorage.setItem('staff-leave-requests', JSON.stringify(requests));
-    } catch (error) {
-      console.error('Error saving leave request to localStorage:', error);
-    }
-  }
-
-  private updateLeaveRequestInLocalStorage(id: string, updates: any): void {
-    try {
-      const requests = this.getLocalStorageLeaveRequests();
-      const index = requests.findIndex((r: any) => r.id === id);
-      if (index >= 0) {
-        requests[index] = { ...requests[index], ...updates, updatedAt: new Date().toISOString() };
-        localStorage.setItem('staff-leave-requests', JSON.stringify(requests));
-      }
-    } catch (error) {
-      console.error('Error updating leave request in localStorage:', error);
-    }
-  }
 }
 
 // Export singleton instance
