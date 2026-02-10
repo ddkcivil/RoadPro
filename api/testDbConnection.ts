@@ -1,6 +1,6 @@
 // api/testDbConnection.ts
 import 'dotenv/config'; // Load environment variables from .env
-import { connectToDatabase } from './_utils/mysqlConnect.js';
+import { connectToDatabase } from './_utils/mysqlConnect.ts';
 
 async function testConnection() {
   try {

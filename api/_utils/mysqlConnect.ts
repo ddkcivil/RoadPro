@@ -1,25 +1,39 @@
 // api/_utils/mysqlConnect.ts
-import { Sequelize, DataTypes, Model, CreationAttributes, Optional } from 'sequelize';
+import { Sequelize, DataTypes, Model } from 'sequelize';
+import * as sqlite3 from 'sqlite3';
 
-// Define the MySQL connection string from environment variables
-const mysqlUri = process.env.MYSQL_URI;
+// Use SQLite for local development, MySQL for production
+const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
 
-if (!mysqlUri) {
-  console.error('MYSQL_URI environment variable is not defined!');
-  throw new Error('MYSQL_URI environment variable is not defined!');
+let sequelize: Sequelize;
+
+if (isProduction) {
+  // Production: Use MySQL
+  const mysqlUri = process.env.MYSQL_URI;
+
+  if (!mysqlUri) {
+    console.error('MYSQL_URI environment variable is not defined for production!');
+    throw new Error('MYSQL_URI environment variable is not defined!');
+  }
+
+  sequelize = new Sequelize(mysqlUri, {
+    dialect: 'mysql',
+    logging: false,
+    dialectOptions: {
+      // ssl: {
+      //   require: true,
+      //   rejectUnauthorized: false,
+      // },
+    },
+  });
+} else {
+  // Development: Use SQLite
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite',
+    logging: false,
+  });
 }
-
-const sequelize = new Sequelize(mysqlUri, {
-  dialect: 'mysql',
-  logging: false, // Set to true to see SQL queries in console
-  dialectOptions: {
-    // You might need to add SSL options if connecting to a cloud database
-    // ssl: {
-    //   require: true,
-    //   rejectUnauthorized: false,
-    // },
-  },
-});
 
 // Define Models
 
@@ -35,11 +49,11 @@ export interface UserAttributes {
   updatedAt?: Date;
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface UserCreationAttributes extends Partial<UserAttributes> {}
 export interface UserInstance extends Model<UserAttributes, UserCreationAttributes>, UserAttributes {}
 
 // User Model
-class User extends Model<UserAttributes, UserInstance> {}
+class User extends Model<UserAttributes, UserCreationAttributes> {}
 User.init({
   id: {
     type: DataTypes.STRING,
@@ -95,11 +109,11 @@ export interface PendingRegistrationAttributes {
   updatedAt?: Date;
 }
 
-export interface PendingRegistrationCreationAttributes extends Optional<PendingRegistrationAttributes, 'id' | 'status' | 'createdAt' | 'updatedAt'> {}
+export interface PendingRegistrationCreationAttributes extends Partial<PendingRegistrationAttributes> {}
 export interface PendingRegistrationInstance extends Model<PendingRegistrationAttributes, PendingRegistrationCreationAttributes>, PendingRegistrationAttributes {}
 
 // PendingRegistration Model
-class PendingRegistration extends Model<PendingRegistrationAttributes, PendingRegistrationInstance> {}
+class PendingRegistration extends Model<PendingRegistrationAttributes, PendingRegistrationCreationAttributes> {}
 PendingRegistration.init({
   id: {
     type: DataTypes.STRING,
@@ -213,11 +227,11 @@ export interface ProjectAttributes {
   updatedAt?: Date;
 }
 
-export interface ProjectCreationAttributes extends Optional<ProjectAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface ProjectCreationAttributes extends Partial<ProjectAttributes> {}
 export interface ProjectInstance extends Model<ProjectAttributes, ProjectCreationAttributes>, ProjectAttributes {}
 
 // Project Model (complex types stored as JSON)
-class Project extends Model<ProjectAttributes, ProjectInstance> {}
+class Project extends Model<ProjectAttributes, ProjectCreationAttributes> {}
 Project.init({
   id: { type: DataTypes.STRING, primaryKey: true, unique: true },
   name: { type: DataTypes.STRING, allowNull: false },
