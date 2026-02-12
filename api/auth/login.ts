@@ -1,11 +1,10 @@
 // api/auth/login.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from '../_utils/mysqlConnect.js'; // Changed import path
-// No longer need mongoose
+import { connectToDatabase } from '../_utils/dbConnect.js';
 import bcrypt from 'bcrypt';
 
 import { withErrorHandler } from '../_utils/errorHandler.js';
-import { UserAttributes, UserInstance } from '../_utils/mysqlConnect.js';
+import { IUser } from '../_utils/dbConnect.js';
 
 export default withErrorHandler(async function (req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -21,34 +20,24 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
     }
 
     // Find user by email
-    const user = (await User.findOne({ 
-      where: { email: email.toLowerCase() },
-      attributes: ['id', 'name', 'email', 'phone', 'password', 'role', 'avatar', 'createdAt', 'updatedAt'] // Explicitly select all attributes, including password
-    })) as UserInstance | null;
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check password using bcrypt
-    if (!user) { // Sequelize instances have direct property access, ensuring user is not null
-      res.status(401).json({ error: 'Invalid credentials' });
-      return; // Added return to exit early if user is null
-    }
-
-    if (!user.password) { // Check if password exists on the user instance
-      res.status(401).json({ error: 'Invalid credentials' });
-      return; // Added return to exit early if password is not found
+    if (!user.password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Return user data (without password)
-    // Sequelize instances have a .toJSON() method or you can extract specific fields
-    const userData = user.toJSON();
-    delete userData.password;
+    const userData = user.toObject();
+    delete (userData as any).password;
 
     res.status(200).json({
       success: true,

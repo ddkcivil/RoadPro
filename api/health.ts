@@ -1,6 +1,6 @@
 // api/health.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from './_utils/mysqlConnect.js'; // Changed import path
+import { connectToDatabase } from './_utils/dbConnect.js';
 import { withErrorHandler } from './_utils/errorHandler.js';
 
 export default withErrorHandler(async function (req: VercelRequest, res: VercelResponse) {
@@ -9,14 +9,16 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
   }
 
   try {
-    const { sequelize } = await connectToDatabase(); // Get sequelize instance
-    await sequelize.authenticate(); // This will throw an error if not connected
-    
-    res.status(200).json({ 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      database: 'connected (MySQL)'
-    });
+    const { mongoose } = await connectToDatabase();
+    if (mongoose.connection.readyState === 1) {
+      res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        database: 'connected (MongoDB)'
+      });
+    } else {
+      res.status(500).json({ error: 'Database not connected' });
+    }
   } catch (error: any) {
     console.error('Health check failed:', error);
     res.status(500).json({ error: 'Health check failed', details: error.message });

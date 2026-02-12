@@ -210,7 +210,7 @@ export async function connectToDatabase() {
   try {
     await mongoose.connect(mongoUri);
     console.log('MongoDB connection has been established successfully.');
-    return { User, PendingRegistration, Project };
+  return { User, PendingRegistration, Project, mongoose };
   } catch (error) {
     console.error('Unable to connect to MongoDB:', error);
     throw error;
