@@ -1,58 +1,56 @@
 // api/users/[id]/index.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from '../../_utils/mysqlConnect.js'; // Changed import path
+import { connectToDatabase } from '../../_utils/dbConnect.js';
 import bcrypt from 'bcrypt';
-import { withErrorHandler } from '../../_utils/errorHandler.js'; // Adjust path as needed
-import { UserAttributes, UserInstance } from '../../_utils/mysqlConnect.js';
+import { withErrorHandler } from '../../_utils/errorHandler.js';
+import { IUser } from '../../_utils/dbConnect.js';
 
 export default withErrorHandler(async function (req: VercelRequest, res: VercelResponse) {
   if (req.method === 'PUT') {
     try {
       const { User } = await connectToDatabase();
-      const { id } = req.query; // Access id from req.query for dynamic routes
+      const { id } = req.query;
 
       if (!id || typeof id !== 'string') {
-        res.status(400).json({ error: 'User ID is required' });
+        return res.status(400).json({ error: 'User ID is required' });
       }
 
       const { name, email, phone, role } = req.body;
 
       if (!name || !email || !role) {
-        res.status(400).json({ error: 'Name, email, and role are required' });
+        return res.status(400).json({ error: 'Name, email, and role are required' });
       }
 
       // Basic email format validation
       if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        res.status(400).json({ error: 'Please enter a valid email address.' });
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
-      // Find user by primary key
-      const user = (await User.findByPk(id as string)) as UserInstance | null;
+      // Find user
+      const user = await User.findById(id);
 
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
+        return res.status(404).json({ error: 'User not found' });
       }
 
       // Check for email uniqueness if email is being changed
       if (email.toLowerCase() !== user.email.toLowerCase()) {
-        const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
-          res.status(409).json({ error: 'A user with this email already exists.' });
+          return res.status(409).json({ error: 'A user with this email already exists.' });
         }
       }
 
       // Update user
-      await user.update({
-        name,
-        email: email.toLowerCase(),
-        phone: phone || undefined,
-        role
-      });
+      user.name = name;
+      user.email = email.toLowerCase();
+      user.phone = phone || undefined;
+      user.role = role;
+      await user.save();
 
       // Return updated user data (without password)
-      const userData = user.toJSON();
-      delete userData.password;
+      const userData = user.toObject();
+      delete (userData as any).password;
       res.status(200).json(userData);
     } catch (error: any) {
       console.error('Failed to update user:', error);
@@ -61,20 +59,17 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
   } else if (req.method === 'DELETE') {
     try {
       const { User } = await connectToDatabase();
-      const { id } = req.query; // Access id from req.query for dynamic routes
+      const { id } = req.query;
 
       if (!id || typeof id !== 'string') {
-        res.status(400).json({ error: 'User ID is required' });
+        return res.status(400).json({ error: 'User ID is required' });
       }
 
-      // Use Sequelize's destroy method for deletion
-      const result = await User.destroy({
-        where: { id: id }
-      });
+      // Delete user
+      const user = await User.findByIdAndDelete(id);
 
-      // result will be 0 if no records were deleted (i.e., not found)
-      if (result === 0) {
-        res.status(404).json({ error: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
       res.status(204).send(''); // 204 No Content for successful deletion
