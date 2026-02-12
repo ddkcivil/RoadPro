@@ -8,22 +8,22 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL
 let sequelize: Sequelize;
 
 if (isProduction) {
-  // Production: Use MySQL
-  const mysqlUri = process.env.MYSQL_URI;
+  // Production: Use Vercel Postgres
+  const postgresUrl = process.env.POSTGRES_URL;
 
-  if (!mysqlUri) {
-    console.error('MYSQL_URI environment variable is not defined for production!');
-    throw new Error('MYSQL_URI environment variable is not defined!');
+  if (!postgresUrl) {
+    console.error('POSTGRES_URL environment variable is not defined for production!');
+    throw new Error('POSTGRES_URL environment variable is not defined!');
   }
 
-  sequelize = new Sequelize(mysqlUri, {
-    dialect: 'mysql',
+  sequelize = new Sequelize(postgresUrl, {
+    dialect: 'postgres',
     logging: false,
     dialectOptions: {
-      // ssl: {
-      //   require: true,
-      //   rejectUnauthorized: false,
-      // },
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
     },
   });
 } else {
