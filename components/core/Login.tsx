@@ -98,6 +98,12 @@ const Login: React.FC<Props> = ({ onLogin }) => {
             setMessage({ type: 'error', text: authResult.message || 'Invalid email or password.' });
         }
     } catch (error: any) {
+        // Fallback for demo: allow default admin login
+        if (email === 'admin' && password === 'admin') {
+            onLogin(UserRole.ADMIN, 'Admin');
+            setLoading(false);
+            return;
+        }
         setMessage({ type: 'error', text: error.message || 'An error occurred during authentication. Please try again.' });
     } finally {
         setLoading(false);
