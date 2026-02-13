@@ -30,7 +30,7 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
       }
 
       // Find user
-      const user = await User.findById(id);
+      const user = await User.findOne({ id });
 
       if (!user) {
         res.status(404).json({ error: 'User not found' });
@@ -72,7 +72,7 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
       }
 
       // Delete user
-      const user = await User.findByIdAndDelete(id);
+      const user = await User.findOneAndDelete({ id });
 
       if (!user) {
         res.status(404).json({ error: 'User not found' });

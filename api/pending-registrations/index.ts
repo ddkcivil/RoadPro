@@ -1,16 +1,15 @@
 // api/pending-registrations/index.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from '../_utils/mysqlConnect.js'; // Changed import path
-import { generateUniqueId } from '../_utils/uuidUtils.js'; // Import from local _utils
-import { withErrorHandler } from '../_utils/errorHandler.js'; // Adjust path as needed
-import { PendingRegistrationCreationAttributes } from '../_utils/mysqlConnect.js';
+import { connectToDatabase } from '../_utils/dbConnect.js';
+import { generateUniqueId } from '../_utils/uuidUtils.js';
+import { withErrorHandler } from '../_utils/errorHandler.js';
 
 export default withErrorHandler(async function (req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const { PendingRegistration } = await connectToDatabase();
       // Fetch all pending registrations
-      const pendingRegistrations = await PendingRegistration.findAll();
+      const pendingRegistrations = await PendingRegistration.find();
       res.status(200).json(pendingRegistrations);
     } catch (error: any) {
       console.error('Failed to fetch pending registrations:', error);
@@ -18,7 +17,7 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
     }
   } else if (req.method === 'POST') {
     try {
-      const { PendingRegistration, User } = await connectToDatabase(); // Get User model as well
+      const { PendingRegistration, User } = await connectToDatabase();
       const { name, email, phone, requestedRole } = req.body;
 
       if (!name || !email || !requestedRole) {
@@ -33,28 +32,30 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
       }
 
       // Check if a pending registration with this email already exists
-      const existingPending = await PendingRegistration.findOne({ where: { email: email.toLowerCase() } });
+      const existingPending = await PendingRegistration.findOne({ email: email.toLowerCase() });
       if (existingPending) {
         res.status(409).json({ error: 'A pending registration with this email already exists.' });
         return;
       }
 
-      // Check if a user with this email already exists in the approved users collection
-      const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
+      // Check if a user with this email already exists
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
       if (existingUser) {
         res.status(409).json({ error: 'A user with this email already exists.' });
         return;
       }
 
-      // Create a new pending registration using Sequelize's create method
-      const newPendingRegistration = await PendingRegistration.create({
+      // Create a new pending registration
+      const newPendingRegistration = new PendingRegistration({
         id: generateUniqueId(),
         name,
         email: email.toLowerCase(),
         phone: phone || '',
         requestedRole,
-        status: 'pending', // Default status
-      } as any);
+        status: 'pending'
+      });
+
+      await newPendingRegistration.save();
 
       res.status(201).json({
         message: 'Registration submitted successfully. Awaiting administrator approval.',
