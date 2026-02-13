@@ -69,7 +69,8 @@ import {
   Layers,
   Trees,
   Download,
-  Plus
+  Plus,
+  Landmark
 } from 'lucide-react';
 import { UserRole, Project, AppSettings, Message, UserWithPermissions, Permission } from './types';
 import { PermissionsService } from './services/auth/permissionsService';
