@@ -2,20 +2,49 @@ import React, { useState, useMemo } from 'react';
 import { Project, UserRole, AppSettings, ContractBill, SubcontractorBill, RFI, VariationOrder } from '../../types';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 import { getCurrencySymbol } from '../../utils/formatting/currencyUtils';
-import { 
-    Box, Typography, Button, Paper, Grid, Table, TableBody, TableCell,
-    TableHead, TableRow, Chip, IconButton, Stack, Divider, Card,
-    CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, InputAdornment, Tabs, Tab, FormControl, InputLabel, 
-    Select, MenuItem, Autocomplete, LinearProgress, Tooltip, Alert
-} from '@mui/material';
-import { 
+
+import {
     Receipt, Printer, Plus, Calculator, History, X, Save, 
     ArrowRight, ArrowLeft, Landmark, FileCheck, TrendingUp, Edit3,
     AlertTriangle, CheckCircle2, FileSpreadsheet, FileDiff, Search,
     Clock, User, DollarSign, FileText, CheckCircle, Send, Calendar,
     Eye, Edit2, ShieldCheck, MessageSquare
 } from 'lucide-react';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Progress } from '~/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+
 
 interface Props {
   project: Project;
@@ -25,7 +54,7 @@ interface Props {
 }
 
 const FinancialManagementHub: React.FC<Props> = ({ project, settings, onProjectUpdate, userRole }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("overview");
   
   // === CONTRACT BILLING STATE ===
   const [selectedIpcId, setSelectedIpcId] = useState<string | null>(null);
@@ -97,7 +126,7 @@ const FinancialManagementHub: React.FC<Props> = ({ project, settings, onProjectU
       totalBilled,
       totalSubBilled,
       balanceToBill: revisedContract - totalBilled,
-      paymentPercentage: totalBilled > 0 ? (totalBilled / revisedContract) * 100 : 0
+      paymentPercentage: revisedContract > 0 ? (totalBilled / revisedContract) * 100 : 0
     };
   }, [project.boq, contractBills, subcontractorBills]);
   
@@ -120,7 +149,8 @@ const FinancialManagementHub: React.FC<Props> = ({ project, settings, onProjectU
     return rfis.filter(rfi => {
       const matchesSearch = rfi.title.toLowerCase().includes(rfiSearchTerm.toLowerCase()) ||
                            rfi.description?.toLowerCase().includes(rfiSearchTerm.toLowerCase());
-      const matchesTask = rfiTaskFilter === 'all' || rfi.taskId === rfiTaskFilter;
+      // Placeholder for actual task filtering
+      const matchesTask = rfiTaskFilter === 'all' || rfi.taskId === rfiTaskFilter; 
       return matchesSearch && matchesTask;
     });
   }, [rfis, rfiSearchTerm, rfiTaskFilter]);
@@ -146,588 +176,430 @@ const FinancialManagementHub: React.FC<Props> = ({ project, settings, onProjectU
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', overflowY: 'auto', p: 2 }}>
-      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-        <Box>
-          <Typography variant="h5" fontWeight="900">Financial Management Hub</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Unified billing, RFI, and variation order management
-          </Typography>
-        </Box>
-        <Box display="flex" gap={1}>
-          <Button 
-            variant="outlined" 
-            startIcon={<Receipt size={16}/>} 
-            onClick={handleCreateContractBill}
-          >
-            New Contract Bill
+    <div className="p-4 h-[calc(100vh-140px)] overflow-y-auto">
+      <div className="flex justify-between mb-6 items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Financial Management Hub</h1>
+          <p className="text-sm text-gray-500">Unified billing, RFI, and variation order management</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleCreateContractBill}>
+            <Receipt className="mr-2 h-4 w-4" /> New Contract Bill
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<DollarSign size={16}/>} 
-            onClick={handleCreateSubBill}
-          >
-            New Sub Bill
+          <Button variant="outline" onClick={handleCreateSubBill}>
+            <DollarSign className="mr-2 h-4 w-4" /> New Sub Bill
           </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<FileDiff size={16}/>} 
-            onClick={handleCreateVo}
-          >
-            New Variation
+          <Button onClick={handleCreateVo}>
+            <FileDiff className="mr-2 h-4 w-4" /> New Variation
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Financial Overview" icon={<TrendingUp size={16} />} iconPosition="start" />
-          <Tab label={`Contract Bills (${contractBills.length})`} icon={<Receipt size={16} />} iconPosition="start" />
-          <Tab label={`Subcontractor Bills (${subcontractorBills.length})`} icon={<Landmark size={16} />} iconPosition="start" />
-          <Tab label={`RFIs (${rfis.length})`} icon={<MessageSquare size={16} />} iconPosition="start" />
-          <Tab label={`Variations (${variationOrders.length})`} icon={<FileDiff size={16} />} iconPosition="start" />
-        </Tabs>
+      <Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-5 h-12">
+            <TabsTrigger value="overview">
+              <TrendingUp className="mr-2 h-4 w-4" /> Overview
+            </TabsTrigger>
+            <TabsTrigger value="contract-bills">
+              <Receipt className="mr-2 h-4 w-4" /> Contract Bills ({contractBills.length})
+            </TabsTrigger>
+            <TabsTrigger value="sub-bills">
+              <Landmark className="mr-2 h-4 w-4" /> Sub Bills ({subcontractorBills.length})
+            </TabsTrigger>
+            <TabsTrigger value="rfis">
+              <MessageSquare className="mr-2 h-4 w-4" /> RFIs ({rfis.length})
+            </TabsTrigger>
+            <TabsTrigger value="variations">
+              <FileDiff className="mr-2 h-4 w-4" /> Variations ({variationOrders.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <Box p={3}>
-          {/* Financial Overview Tab */}
-          {activeTab === 0 && (
-            <Box>
-              <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={6} lg={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {formatCurrency(financialStats.originalContract, settings)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Original Contract
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={6} lg={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {formatCurrency(financialStats.variations, settings)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Variations
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={6} lg={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {formatCurrency(financialStats.revisedContract, settings)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Revised Contract
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={6} lg={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="info.main" fontWeight="bold">
-                        {financialStats.paymentPercentage.toFixed(1)}%
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Payment Progress
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+          <TabsContent value="overview" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Original Contract</h3>
+                  <p className="text-2xl font-bold text-primary">
+                    {formatCurrency(financialStats.originalContract, settings)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Variations</h3>
+                  <p className="text-2xl font-bold text-amber-500">
+                    {formatCurrency(financialStats.variations, settings)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Revised Contract</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(financialStats.revisedContract, settings)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Payment Progress</h3>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {financialStats.paymentPercentage.toFixed(1)}%
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>Contract Billing</Typography>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={financialStats.paymentPercentage} 
-                        sx={{ mb: 2 }}
-                      />
-                      <Typography variant="body2">
-                        Billed: {formatCurrency(financialStats.totalBilled, settings)}
-                      </Typography>
-                      <Typography variant="body2">
-                        Balance: {formatCurrency(financialStats.balanceToBill, settings)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>Subcontractor Payments</Typography>
-                      <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                        {formatCurrency(financialStats.totalSubBilled, settings)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Subcontractor Payments
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contract Billing</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Progress value={financialStats.paymentPercentage} className="mb-4" />
+                  <p className="text-sm">Billed: {formatCurrency(financialStats.totalBilled, settings)}</p>
+                  <p className="text-sm">Balance: {formatCurrency(financialStats.balanceToBill, settings)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Subcontractor Payments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-indigo-600">
+                    {formatCurrency(financialStats.totalSubBilled, settings)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Total Subcontractor Payments</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-          {/* Contract Bills Tab */}
-          {activeTab === 1 && (
-            <Box>
-              <Paper variant="outlined" sx={{ borderRadius: 3, p: 2, mb: 3 }}>
-                <Typography variant="h6">Contract Bills</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Interim Payment Certificates and contract billing records
-                </Typography>
-              </Paper>
-              
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'slate.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Bill Number</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+          <TabsContent value="contract-bills" className="p-4">
+            <h2 className="text-lg font-semibold mb-2">Contract Bills</h2>
+            <p className="text-sm text-muted-foreground mb-4">Interim Payment Certificates and contract billing records</p>
+            
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Bill Number</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contractBills.length > 0 ? contractBills.map(bill => (
+                    <TableRow key={bill.id}>
+                      <TableCell className="font-medium">{bill.billNumber}</TableCell>
+                      <TableCell>{new Date(bill.date).toLocaleDateString()}</TableCell>
+                      <TableCell className="font-bold">{formatCurrency(bill.totalAmount || 0, settings)}</TableCell>
+                      <TableCell>
+                        <Badge variant="default" className="bg-green-100 text-green-700">Generated</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {contractBills.map(bill => (
-                      <TableRow key={bill.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
-                            {bill.billNumber}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {new Date(bill.date).toLocaleDateString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
-                            {formatCurrency(bill.totalAmount || 0, settings)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label="Generated" 
-                            size="small" 
-                            color="success"
-                            variant="filled"
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small">
-                            <Printer size={16} />
-                          </IconButton>
-                          <IconButton size="small">
-                            <Eye size={16} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                
-                {contractBills.length === 0 && (
-                  <Typography textAlign="center" color="text.secondary" py={4}>
-                    No contract bills found
-                  </Typography>
-                )}
-              </Paper>
-            </Box>
-          )}
-
-          {/* Subcontractor Bills Tab */}
-          {activeTab === 2 && (
-            <Box>
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {subcontractorBills.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Bills
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {subcontractorBills.filter(b => b.status === 'Paid').length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Paid
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {subcontractorBills.filter(b => b.status === 'Pending').length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Pending
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="info.main" fontWeight="bold">
-                        {formatCurrency(
-                          subcontractorBills.reduce((sum, b) => sum + (b.netAmount || 0), 0), 
-                          settings
-                        )}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Value
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'slate.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Subcontractor</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Bill Number</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Period</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                        No contract bills found.
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {subcontractorBills.map(bill => {
-                      const subcontractor = subcontractors.find(s => s.id === bill.subcontractorId);
-                      return (
-                        <TableRow key={bill.id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold">
-                              {subcontractor?.name || 'Unknown'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{bill.billNumber}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold">
-                              {formatCurrency(bill.netAmount || 0, settings)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={bill.status} 
-                              size="small" 
-                              color={
-                                bill.status === 'Paid' ? 'success' : 
-                                bill.status === 'Pending' ? 'warning' : 'default'
-                              }
-                              variant="filled"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <IconButton size="small">
-                              <Printer size={16} />
-                            </IconButton>
-                            <IconButton size="small">
-                              <Eye size={16} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
 
-          {/* RFIs Tab */}
-          {activeTab === 3 && (
-            <Box>
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {rfiStats.total}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total RFIs
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {rfiStats.pending}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Pending
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {rfiStats.approved}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Approved
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="error.main" fontWeight="bold">
-                        {rfiStats.rejected}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Rejected
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+          <TabsContent value="sub-bills" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total Bills</h3>
+                  <p className="text-2xl font-bold text-primary">{subcontractorBills.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Paid</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    {subcontractorBills.filter(b => b.status === 'Paid').length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Pending</h3>
+                  <p className="text-2xl font-bold text-amber-500">
+                    {subcontractorBills.filter(b => b.status === 'Pending').length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total Value</h3>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(
+                      subcontractorBills.reduce((sum, b) => sum + (b.netAmount || 0), 0), 
+                      settings
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-              <Paper variant="outlined" sx={{ borderRadius: 3, p: 2, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      placeholder="Search RFIs..."
-                      value={rfiSearchTerm}
-                      onChange={(e) => setRfiSearchTerm(e.target.value)}
-                      InputProps={{
-                        startAdornment: <Search size={18} style={{ marginRight: 8 }} />
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Task Filter</InputLabel>
-                      <Select
-                        value={rfiTaskFilter}
-                        label="Task Filter"
-                        onChange={(e) => setRfiTaskFilter(e.target.value)}
-                      >
-                        <MenuItem value="all">All Tasks</MenuItem>
-                        {/* Add actual tasks here */}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'slate.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>RFI Number</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Title</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Date</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredRfis.map(rfi => (
-                      <TableRow key={rfi.id} hover>
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Subcontractor</TableHead>
+                    <TableHead>Bill Number</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subcontractorBills.length > 0 ? subcontractorBills.map(bill => {
+                    const subcontractor = subcontractors.find(s => s.id === bill.subcontractorId);
+                    return (
+                      <TableRow key={bill.id}>
+                        <TableCell className="font-medium">{subcontractor?.name || 'Unknown'}</TableCell>
+                        <TableCell>{bill.billNumber}</TableCell>
+                        <TableCell className="font-bold">{formatCurrency(bill.netAmount || 0, settings)}</TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
-                            RFI-{rfi.id?.slice(0, 6)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{rfi.title}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={rfi.status} 
-                            size="small" 
-                            color={
-                              rfi.status === 'Approved' ? 'success' : 
-                              rfi.status === 'Pending' ? 'warning' : 'error'
+                          <Badge 
+                            variant={
+                              bill.status === 'Paid' ? 'default' : 
+                              bill.status === 'Pending' ? 'secondary' : 'outline'
                             }
-                            variant="filled"
-                          />
+                            className={
+                                bill.status === 'Paid' ? 'bg-green-100 text-green-700' : 
+                                bill.status === 'Pending' ? 'bg-amber-100 text-amber-700' : ''
+                            }
+                          >
+                            {bill.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2">
-                            {new Date(rfi.date).toLocaleDateString()}
-                          </Typography>
+                          {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()}
                         </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small">
-                            <Eye size={16} />
-                          </IconButton>
-                          <IconButton size="small">
-                            <Edit2 size={16} />
-                          </IconButton>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
-
-          {/* Variations Tab */}
-          {activeTab === 4 && (
-            <Box>
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {voStats.total}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Variations
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {voStats.approved}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Approved
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {voStats.pending}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Pending
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="info.main" fontWeight="bold">
-                        {formatCurrency(voStats.totalValue, settings)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Value
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              <Paper variant="outlined" sx={{ borderRadius: 3, p: 2, mb: 3 }}>
-                <TextField
-                  fullWidth
-                  placeholder="Search variations..."
-                  value={voSearchTerm}
-                  onChange={(e) => setVoSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: <Search size={18} style={{ marginRight: 8 }} />
-                  }}
-                />
-              </Paper>
-
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'slate.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>VO Number</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Title</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Reason</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+                    );
+                  }) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                        No subcontractor bills found.
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredVos.map(vo => (
-                      <TableRow key={vo.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
-                            {vo.voNumber}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{vo.title}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{vo.reason}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
-                            {formatCurrency(vo.totalAmount || 0, settings)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={vo.status || 'Pending'} 
-                            size="small" 
-                            color={vo.status === 'Approved' ? 'success' : 'warning'}
-                            variant="filled"
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small">
-                            <Eye size={16} />
-                          </IconButton>
-                          <IconButton size="small">
-                            <Edit2 size={16} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
-        </Box>
-      </Paper>
-    </Box>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rfis" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total RFIs</h3>
+                  <p className="text-2xl font-bold text-primary">{rfiStats.total}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Pending</h3>
+                  <p className="text-2xl font-bold text-amber-500">{rfiStats.pending}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Approved</h3>
+                  <p className="text-2xl font-bold text-green-600">{rfiStats.approved}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Rejected</h3>
+                  <p className="text-2xl font-bold text-red-600">{rfiStats.rejected}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="mb-6">
+              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="relative w-full sm:w-auto flex-grow">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search RFIs..." 
+                    value={rfiSearchTerm}
+                    onChange={(e) => setRfiSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+                <div className="w-full sm:w-auto">
+                  <Select value={rfiTaskFilter} onValueChange={setRfiTaskFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Tasks" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Tasks</SelectItem>
+                      {/* Add actual tasks here */}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>RFI Number</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRfis.length > 0 ? filteredRfis.map(rfi => (
+                    <TableRow key={rfi.id}>
+                      <TableCell className="font-medium">RFI-{rfi.id?.slice(0, 6)}</TableCell>
+                      <TableCell>{rfi.title}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            rfi.status === 'Approved' ? 'default' : 
+                            rfi.status === 'Pending' ? 'secondary' : 'destructive'
+                          }
+                          className={
+                            rfi.status === 'Approved' ? 'bg-green-100 text-green-700' : 
+                            rfi.status === 'Pending' ? 'bg-amber-100 text-amber-700' : ''
+                          }
+                        >
+                          {rfi.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(rfi.date).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon"><Edit2 className="h-4 w-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                        No RFIs found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="variations" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total Variations</h3>
+                  <p className="text-2xl font-bold text-primary">{voStats.total}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Approved</h3>
+                  <p className="text-2xl font-bold text-green-600">{voStats.approved}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Pending</h3>
+                  <p className="text-2xl font-bold text-amber-500">{voStats.pending}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total Value</h3>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(voStats.totalValue, settings)}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search variations..." 
+                    value={voSearchTerm}
+                    onChange={(e) => setVoSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>VO Number</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredVos.length > 0 ? filteredVos.map(vo => (
+                    <TableRow key={vo.id}>
+                      <TableCell className="font-medium">{vo.voNumber}</TableCell>
+                      <TableCell>{vo.title}</TableCell>
+                      <TableCell>{vo.reason}</TableCell>
+                      <TableCell className="font-bold">{formatCurrency(vo.totalAmount || 0, settings)}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={vo.status === 'Approved' ? 'default' : 'secondary'}
+                          className={vo.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}
+                        >
+                          {vo.status || 'Pending'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon"><Edit2 className="h-4 w-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                        No variation orders found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </div>
   );
 };
 

@@ -428,6 +428,9 @@ export interface ProjectDocument {
   size: string;
   folder: string;
   subject: string;
+  description?: string;
+  uploadDate?: string;
+  uploadedBy?: string;
   tags: string[];
   refNo?: string;
   letterDate?: string; // Date from the document itself
@@ -456,6 +459,9 @@ export interface DailyReport {
   reportNumber: string;
   status: 'Draft' | 'Submitted' | 'Approved';
   submittedBy: string;
+  weather?: string;
+  remarks?: string;
+  workItems?: DailyWorkItem[];
   workToday: DailyWorkItem[];
   photos?: SitePhoto[];
 }
@@ -970,6 +976,7 @@ export interface SitePhoto {
   location: string;
   category: 'Earthwork' | 'Structures' | 'Pavement' | 'General' | 'Safety';
   url: string;
+  uploadedBy?: string;
   aiAnalysis?: string;
   isAnalyzed: boolean;
 }

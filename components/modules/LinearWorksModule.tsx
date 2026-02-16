@@ -1,19 +1,21 @@
-
 import React, { useState, useMemo } from 'react';
-import { 
-    Box, Typography, Button, Card, Grid, TextField, 
-    FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, 
-    DialogContent, DialogActions, Chip, Tabs, Tab, Paper,
-    Table, TableBody, TableCell, TableHead, TableRow, Stack, 
-    LinearProgress, IconButton, Tooltip, Divider, InputAdornment,
-    ToggleButtonGroup, ToggleButton, Snackbar
-} from '@mui/material';
 import { Project, UserRole, LinearWorkLog } from '../../types';
 import { 
     Plus, Trash2, Layers, MapPin, History, Filter, 
     TrendingUp, Ruler, Navigation, ShieldCheck, 
     Construction, Waves, Footprints, Grid2X2
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
 
 const ArrowRightIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
@@ -44,7 +46,6 @@ const WORK_LAYERS: Record<string, string[]> = {
 const LinearWorksModule: React.FC<Props> = ({ project, onProjectUpdate, userRole }) => {
   const [activeCategory, setActiveCategory] = useState('Pavement');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [newLog, setNewLog] = useState<Partial<LinearWorkLog>>({ 
       category: 'Pavement', 
       date: new Date().toISOString().split('T')[0],
@@ -90,122 +91,145 @@ const LinearWorksModule: React.FC<Props> = ({ project, onProjectUpdate, userRole
   };
 
   const handleExport = () => {
-      setSnackbarOpen(true);
+      toast("Preparing high-fidelity PDF export of linear works history...");
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-        <Box display="flex" justifyContent="space-between" mb={4} alignItems="center">
-            <Box>
-                <Typography variant="h5" fontWeight="900">Linear Operations</Typography>
-                <Typography variant="body2" color="text.secondary">Kilometer-wise progress of pavement and utilities</Typography>
-            </Box>
-            <Stack direction="row" spacing={2}>
-                <Button variant="outlined" startIcon={<History size={18}/>} sx={{ borderRadius: 2 }} onClick={handleExport}>Export History</Button>
-                <Button variant="contained" startIcon={<Plus size={18}/>} onClick={() => setIsLogModalOpen(true)} sx={{ borderRadius: 2 }}>Log Progress</Button>
-            </Stack>
-        </Box>
+    <div className="animate-in fade-in duration-500">
+        <div className="flex justify-between mb-4 items-center">
+            <div>
+                <h1 className="text-2xl font-bold">Linear Operations</h1>
+                <p className="text-muted-foreground">Kilometer-wise progress of pavement and utilities</p>
+            </div>
+            <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleExport}><History className="mr-2 h-4 w-4" />Export History</Button>
+                <Button onClick={() => setIsLogModalOpen(true)}><Plus className="mr-2 h-4 w-4" />Log Progress</Button>
+            </div>
+        </div>
 
-        <Paper variant="outlined" sx={{ mb: 4, borderRadius: 4, bgcolor: 'white', overflow: 'hidden' }}>
-            <Tabs 
-                value={activeCategory} 
-                onChange={(e, v) => setActiveCategory(v)} 
-                sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'slate.50' }}
-            >
-                {LINEAR_CATEGORIES.map(cat => (
-                    <Tab 
-                        key={cat.id} 
-                        value={cat.id} 
-                        label={cat.label} 
-                        icon={cat.icon} 
-                        iconPosition="start"
-                        sx={{ fontWeight: 'bold', minHeight: 60 }}
-                    />
-                ))}
-            </Tabs>
+        <Card>
+            <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                <TabsList>
+                    {LINEAR_CATEGORIES.map(cat => (
+                        <TabsTrigger key={cat.id} value={cat.id}>
+                            {cat.icon}
+                            <span className="ml-2">{cat.label}</span>
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
             
-            <Box p={3}>
-                <Grid container spacing={3}>
-                    {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                    <Grid item xs={12} lg={4}>
-                        <Typography variant="caption" fontWeight="900" color="text.secondary" sx={{ letterSpacing: 1, display: 'block', mb: 2 }}>CATEGORY COVERAGE</Typography>
-                        <Stack spacing={2.5}>
-                            {stats.map(s => (
-                                <Box key={s.layer}>
-                                    <Box display="flex" justifyContent="space-between" mb={0.5}>
-                                        <Typography variant="caption" fontWeight="bold">{s.layer}</Typography>
-                                        <Typography variant="caption" fontWeight="900" color="primary">{s.totalKm.toFixed(3)} Km</Typography>
-                                    </Box>
-                                    <LinearProgress variant="determinate" value={Math.min(100, (s.totalKm / 15) * 100)} sx={{ height: 6, borderRadius: 3, bgcolor: 'slate.100' }} />
-                                </Box>
-                            ))}
-                        </Stack>
-                    </Grid>
+                <TabsContent value={activeCategory} className="p-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-1">
+                            <h2 className="text-sm font-semibold mb-2">CATEGORY COVERAGE</h2>
+                            <div className="space-y-4">
+                                {stats.map(s => (
+                                    <div key={s.layer}>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm font-medium">{s.layer}</span>
+                                            <span className="text-sm font-bold text-primary">{s.totalKm.toFixed(3)} Km</span>
+                                        </div>
+                                        <Progress value={Math.min(100, (s.totalKm / 15) * 100)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                    {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                    <Grid item xs={12} lg={8}>
-                        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                            <Box p={2} borderBottom={1} borderColor="divider" display="flex" justifyContent="space-between" alignItems="center">
-                                <Typography variant="subtitle2" fontWeight="bold">History: {activeCategory}</Typography>
-                                <IconButton size="small"><Filter size={16}/></IconButton>
-                            </Box>
-                            <Table size="small">
-                                <TableHead sx={{ bgcolor: 'slate.50' }}>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Layer</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Range</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Side</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredLogs.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(log => (
-                                        <TableRow key={log.id} hover>
-                                            <TableCell sx={{ fontSize: '0.8rem' }}>{log.date}</TableCell>
-                                            <TableCell><Typography variant="body2" fontWeight="bold">{log.layer}</Typography></TableCell>
-                                            <TableCell><Chip label={`${log.startChainage.toFixed(3)} - ${log.endChainage.toFixed(3)}`} size="small" variant="outlined" sx={{ fontSize: 9, fontFamily: 'monospace' }} /></TableCell>
-                                            <TableCell><Chip label={log.side} size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: 8 }} /></TableCell>
-                                            <TableCell align="right"><IconButton size="small" color="error" onClick={() => handleDeleteLog(log.id)}><Trash2 size={16}/></IconButton></TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </Box>
-        </Paper>
+                        <div className="lg:col-span-2">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex justify-between items-center">
+                                        <CardTitle>History: {activeCategory}</CardTitle>
+                                        <Button variant="ghost" size="icon"><Filter className="h-4 w-4" /></Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Layer</TableHead>
+                                                <TableHead>Range</TableHead>
+                                                <TableHead>Side</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredLogs.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(log => (
+                                                <TableRow key={log.id}>
+                                                    <TableCell>{log.date}</TableCell>
+                                                    <TableCell>{log.layer}</TableCell>
+                                                    <TableCell>{`${log.startChainage.toFixed(3)} - ${log.endChainage.toFixed(3)}`}</TableCell>
+                                                    <TableCell>{log.side}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(log.id)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </Card>
 
-        <Dialog open={isLogModalOpen} onClose={() => setIsLogModalOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
-            <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1.5 }}><Ruler className="text-indigo-600" /> Log Progress</DialogTitle>
+        <Dialog open={isLogModalOpen} onOpenChange={setIsLogModalOpen}>
             <DialogContent>
-                <Stack spacing={3} pt={2}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Layer</InputLabel>
-                        <Select value={newLog.layer} label="Layer" onChange={e => setNewLog({...newLog, layer: e.target.value})}>
-                            {(WORK_LAYERS[activeCategory] || []).map(l => (<MenuItem key={l} value={l}>{l}</MenuItem>))}
+                <DialogHeader>
+                    <DialogTitle className="flex items-center"><Ruler className="mr-2 text-indigo-600" /> Log Progress</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="layer" className="text-right">Layer</Label>
+                        <Select value={newLog.layer} onValueChange={value => setNewLog({...newLog, layer: value})}>
+                            <SelectTrigger id="layer" className="col-span-3">
+                                <SelectValue placeholder="Select a layer" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(WORK_LAYERS[activeCategory] || []).map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
+                            </SelectContent>
                         </Select>
-                    </FormControl>
-                    <Grid container spacing={2}>
-                        {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                        <Grid item xs={6}><TextField label="Start Km" type="number" fullWidth size="small" value={newLog.startChainage} onChange={e => setNewLog({...newLog, startChainage: Number(e.target.value)})} /></Grid>
-                        {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                        <Grid item xs={6}><TextField label="End Km" type="number" fullWidth size="small" value={newLog.endChainage} onChange={e => setNewLog({...newLog, endChainage: Number(e.target.value)})} /></Grid>
-                    </Grid>
-                    <ToggleButtonGroup color="primary" value={newLog.side} exclusive onChange={(_, v) => v && setNewLog({...newLog, side: v})} fullWidth size="small">
-                        <ToggleButton value="LHS">LHS</ToggleButton><ToggleButton value="RHS">RHS</ToggleButton><ToggleButton value="Both">BOTH</ToggleButton>
-                    </ToggleButtonGroup>
-                    <TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
-                </Stack>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="startKm" className="text-right">Start Km</Label>
+                        <Input id="startKm" type="number" value={newLog.startChainage} onChange={e => setNewLog({...newLog, startChainage: Number(e.target.value)})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="endKm" className="text-right">End Km</Label>
+                        <Input id="endKm" type="number" value={newLog.endChainage} onChange={e => setNewLog({...newLog, endChainage: Number(e.target.value)})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Side</Label>
+                        <div className="col-span-3">
+                            <Select value={newLog.side} onValueChange={value => setNewLog({...newLog, side: value as any})}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="LHS">LHS</SelectItem>
+                                    <SelectItem value="RHS">RHS</SelectItem>
+                                    <SelectItem value="Both">BOTH</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="date" className="text-right">Date</Label>
+                        <Input id="date" type="date" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsLogModalOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveLog} disabled={!newLog.layer}><ShieldCheck className="mr-2 h-4 w-4" />Certify Log</Button>
+                </DialogFooter>
             </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-                <Button onClick={() => setIsLogModalOpen(false)}>Cancel</Button>
-                <Button variant="contained" onClick={handleSaveLog} disabled={!newLog.layer} startIcon={<ShieldCheck size={18}/>}>Certify Log</Button>
-            </DialogActions>
         </Dialog>
-        <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} message="Preparing high-fidelity PDF export of linear works history..." />
-    </Box>
+    </div>
   );
 };
 

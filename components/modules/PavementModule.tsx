@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
-import { 
-    Box, Typography, Button, Card, Grid, TextField, 
-    FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, 
-    DialogContent, DialogActions, Chip, Tabs, Tab, Paper,
-    Table, TableBody, TableCell, TableHead, TableRow, Stack, LinearProgress, IconButton
-} from '@mui/material';
 import { Project, UserRole, LinearWorkLog } from '../../types';
 import { Plus, Trash2 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 
 interface Props {
   project: Project;
@@ -42,71 +42,83 @@ const PavementModule: React.FC<Props> = ({ project, onProjectUpdate }) => {
   };
 
   return (
-    <Box>
-        <Box display="flex" justifyContent="space-between" mb={3}>
-            <Typography variant="h5" fontWeight="900">Linear Works Registry</Typography>
-            <Button variant="contained" startIcon={<Plus size={18}/>} onClick={() => setIsLogModalOpen(true)}>Record Progress</Button>
-        </Box>
-        <Tabs value={activeCategory} onChange={(e, v) => setActiveCategory(v)} sx={{ mb: 3 }}>
-            <Tab value="Pavement" label="Pavement" sx={{ fontWeight: 'bold' }} />
+    <div>
+        <div className="flex justify-between mb-4">
+            <h1 className="text-2xl font-bold">Linear Works Registry</h1>
+            <Button onClick={() => setIsLogModalOpen(true)}><Plus className="mr-2 h-4 w-4" />Record Progress</Button>
+        </div>
+        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList>
+                <TabsTrigger value="Pavement">Pavement</TabsTrigger>
+            </TabsList>
         </Tabs>
-        {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-        <Grid container spacing={3}>
-            <Grid item xs={12} lg={8}>
-                <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                    <Table size="small">
-                        <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Layer</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Chainage (Km)</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {(project.linearWorks || []).map(log => (
-                                <TableRow key={log.id} hover>
-                                    <TableCell sx={{ fontSize: '0.8rem' }}>{log.date}</TableCell>
-                                    <TableCell><Typography variant="body2" fontWeight="bold">{log.layer}</Typography></TableCell>
-                                    <TableCell><Chip label={`${log.startChainage} - ${log.endChainage}`} size="small" variant="outlined" sx={{ height: 18, fontSize: 9, fontWeight: 'bold' }} /></TableCell>
-                                    <TableCell align="right">
-                                        <IconButton size="small" color="error"><Trash2 size={16}/></IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {(project.linearWorks || []).length === 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell align="center" {...{ colSpan: 4 }} sx={{ py: 6, color: 'text.disabled' }}>No linear work recorded.</TableCell>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Layer</TableHead>
+                                    <TableHead>Chainage (Km)</TableHead>
+                                    <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </Paper>
-            </Grid>
-        </Grid>
-        <Dialog open={isLogModalOpen} onClose={() => setIsLogModalOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
-            <DialogTitle sx={{ fontWeight: 'bold' }}>Log Daily Progress</DialogTitle>
+                            </TableHeader>
+                            <TableBody>
+                                {(project.linearWorks || []).map(log => (
+                                    <TableRow key={log.id}>
+                                        <TableCell>{log.date}</TableCell>
+                                        <TableCell>{log.layer}</TableCell>
+                                        <TableCell>{`${log.startChainage} - ${log.endChainage}`}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {(project.linearWorks || []).length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center">No linear work recorded.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+        <Dialog open={isLogModalOpen} onOpenChange={setIsLogModalOpen}>
             <DialogContent>
-                <Stack spacing={3} pt={2}>
-                    <TextField label="Work Layer" fullWidth size="small" value={newLog.layer || ''} onChange={e => setNewLog({...newLog, layer: e.target.value})} placeholder="e.g. GSB, WMM..." />
-                    {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <TextField label="Start Km" type="number" fullWidth size="small" value={newLog.startChainage} onChange={e => setNewLog({...newLog, startChainage: Number(e.target.value)})} />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField label="End Km" type="number" fullWidth size="small" value={newLog.endChainage} onChange={e => setNewLog({...newLog, endChainage: Number(e.target.value)})} />
-                        </Grid>
-                    </Grid>
-                    <TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
-                </Stack>
+                <DialogHeader>
+                    <DialogTitle>Log Daily Progress</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="work-layer" className="text-right">Work Layer</Label>
+                        <Input id="work-layer" value={newLog.layer || ''} onChange={e => setNewLog({...newLog, layer: e.target.value})} placeholder="e.g. GSB, WMM..." className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="start-km" className="text-right">Start Km</Label>
+                        <Input id="start-km" type="number" value={newLog.startChainage} onChange={e => setNewLog({...newLog, startChainage: Number(e.target.value)})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="end-km" className="text-right">End Km</Label>
+                        <Input id="end-km" type="number" value={newLog.endChainage} onChange={e => setNewLog({...newLog, endChainage: Number(e.target.value)})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="date" className="text-right">Date</Label>
+                        <Input id="date" type="date" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsLogModalOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveLog} disabled={!newLog.layer}>Commit Entry</Button>
+                </DialogFooter>
             </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-                <Button onClick={() => setIsLogModalOpen(false)}>Cancel</Button>
-                <Button variant="contained" onClick={handleSaveLog} disabled={!newLog.layer}>Commit Entry</Button>
-            </DialogActions>
         </Dialog>
-    </Box>
+    </div>
   );
 };
 

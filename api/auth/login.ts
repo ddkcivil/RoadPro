@@ -1,9 +1,9 @@
 // api/auth/login.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from '../_utils/dbConnect.js';
+import { connectToDatabase } from '../_utils/dbConnect.ts';
 import bcrypt from 'bcrypt';
 
-import { withErrorHandler } from '../_utils/errorHandler.js';
+import { withErrorHandler } from '../_utils/errorHandler.ts';
 import { IUser } from '../_utils/dbConnect.js';
 
 export default withErrorHandler(async function (req: VercelRequest, res: VercelResponse) {

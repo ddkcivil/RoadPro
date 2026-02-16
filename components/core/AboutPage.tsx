@@ -1,16 +1,5 @@
 import React from 'react';
 import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Typography, 
-  Grid, 
-  Avatar, 
-  Chip,
-  Divider
-} from '@mui/material';
-import { 
   HardHat, 
   Building2, 
   Users, 
@@ -22,281 +11,170 @@ import {
   MapPin
 } from 'lucide-react';
 
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Badge } from '~/components/ui/badge';
+import { Separator } from '~/components/ui/separator';
+import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { cn } from '~/lib/utils';
+
+
+// NOTE: This is a refactored version of the AboutPage component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
+
 const AboutPage: React.FC = () => {
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box mb={6}>
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
-          <Box sx={{ 
-            width: 56, 
-            height: 56, 
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
-            borderRadius: '16px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            color: 'white' 
-          }}>
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white">
             <HardHat size={28} />
-          </Box>
-          <div>
-            <Typography variant="h3" fontWeight="800" sx={{ letterSpacing: '-0.04em' }}>
-              About RoadMaster<span style={{ color: '#818cf8' }}>.Pro</span>
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ mt: 0.5 }}>
-              Infrastructure Management System
-            </Typography>
           </div>
-        </Box>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              About RoadMaster<span className="text-indigo-600">.Pro</span>
+            </h1>
+            <p className="text-lg text-slate-600 mt-1">Infrastructure Management System</p>
+          </div>
+        </div>
+        <p className="text-muted-foreground max-w-3xl">
           RoadMaster.Pro is a comprehensive construction and infrastructure management platform designed to streamline 
           project execution, enhance collaboration, and optimize resource allocation across all phases of construction projects.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={8}>
-          <Card variant="outlined" sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="700" gutterBottom>
-                Our Mission
-              </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Card className="h-full">
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
+              <p className="text-muted-foreground mb-6">
                 To revolutionize the construction industry by providing an integrated platform that connects all stakeholders, 
                 simplifies complex workflows, and delivers real-time insights for smarter decision-making.
-              </Typography>
+              </p>
               
-              <Typography variant="h5" fontWeight="700" gutterBottom sx={{ mt: 3 }}>
-                What We Do
-              </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
+              <h2 className="text-2xl font-bold mb-4">What We Do</h2>
+              <p className="text-muted-foreground mb-6">
                 RoadMaster.Pro offers end-to-end project management solutions covering commercial operations, 
                 partner coordination, execution tracking, quality assurance, and resource management. Our platform 
                 bridges the gap between planning and execution, ensuring seamless project delivery.
-              </Typography>
+              </p>
               
-              <Typography variant="h5" fontWeight="700" gutterBottom sx={{ mt: 3 }}>
-                Key Features
-              </Typography>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-                    <Box sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      bgcolor: 'primary.main', 
-                      borderRadius: '12px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white' 
-                    }}>
-                      <Calendar size={18} />
-                    </Box>
-                    <Typography variant="body2" fontWeight="600">Real-time Scheduling</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-                    <Box sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      bgcolor: 'primary.main', 
-                      borderRadius: '12px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white' 
-                    }}>
-                      <Building2 size={18} />
-                    </Box>
-                    <Typography variant="body2" fontWeight="600">Project Management</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-                    <Box sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      bgcolor: 'primary.main', 
-                      borderRadius: '12px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white' 
-                    }}>
-                      <Award size={18} />
-                    </Box>
-                    <Typography variant="body2" fontWeight="600">Quality Assurance</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-                    <Box sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      bgcolor: 'primary.main', 
-                      borderRadius: '12px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white' 
-                    }}>
-                      <Users size={18} />
-                    </Box>
-                    <Typography variant="body2" fontWeight="600">Team Collaboration</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
+              <h2 className="text-2xl font-bold mb-4">Key Features</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white">
+                    <Calendar size={18} />
+                  </div>
+                  <p className="font-semibold text-sm">Real-time Scheduling</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white">
+                    <Building2 size={18} />
+                  </div>
+                  <p className="font-semibold text-sm">Project Management</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white">
+                    <Award size={18} />
+                  </div>
+                  <p className="font-semibold text-sm">Quality Assurance</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white">
+                    <Users size={18} />
+                  </div>
+                  <p className="font-semibold text-sm">Team Collaboration</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
         
-        <Grid item xs={12} md={4}>
-          <Card variant="outlined" sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h6" fontWeight="700" gutterBottom>
-                Company Info
-              </Typography>
-              <Box display="flex" alignItems="center" gap={2} mb={3}>
-                <Avatar 
-                  sx={{ 
-                    width: 64, 
-                    height: 64, 
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' 
-                  }}
-                >
+        <div>
+          <Card className="h-full">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">Company Info</h2>
+              <div className="flex items-center gap-3 mb-6">
+                <Avatar className="h-16 w-16 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
                   <HardHat size={32} />
                 </Avatar>
-                <Box>
-                  <Typography variant="h6" fontWeight="700">RoadMaster.Pro</Typography>
-                  <Typography variant="body2" color="text.secondary">Infrastructure Solutions</Typography>
-                </Box>
-              </Box>
+                <div>
+                  <h3 className="text-lg font-bold">RoadMaster.Pro</h3>
+                  <p className="text-sm text-muted-foreground">Infrastructure Solutions</p>
+                </div>
+              </div>
               
-              <Divider sx={{ my: 2 }} />
+              <Separator className="my-4" />
               
-              <Typography variant="h6" fontWeight="700" gutterBottom>
-                Founded
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mb={3}>
-                2024
-              </Typography>
+              <h3 className="text-lg font-bold mb-2">Founded</h3>
+              <p className="text-muted-foreground mb-6">2024</p>
               
-              <Divider sx={{ my: 2 }} />
+              <Separator className="my-4" />
               
-              <Typography variant="h6" fontWeight="700" gutterBottom>
-                Headquarters
-              </Typography>
-              <Box display="flex" alignItems="center" gap={1.5} mb={3}>
-                <MapPin size={16} color="#6366f1" />
-                <Typography variant="body2" color="text.secondary">
-                  Global Platform
-                </Typography>
-              </Box>
+              <h3 className="text-lg font-bold mb-2">Headquarters</h3>
+              <div className="flex items-center gap-2 mb-6">
+                <MapPin className="h-4 w-4 text-indigo-600" />
+                <p className="text-muted-foreground">Global Platform</p>
+              </div>
               
-              <Divider sx={{ my: 2 }} />
+              <Separator className="my-4" />
               
-              <Typography variant="h6" fontWeight="700" gutterBottom>
-                Specialties
-              </Typography>
-              <Box display="flex" flexWrap="wrap" gap={1}>
-                <Chip label="Construction" size="small" sx={{ mb: 1 }} />
-                <Chip label="Project Management" size="small" sx={{ mb: 1 }} />
-                <Chip label="Infrastructure" size="small" sx={{ mb: 1 }} />
-                <Chip label="Collaboration" size="small" sx={{ mb: 1 }} />
-                <Chip label="Analytics" size="small" sx={{ mb: 1 }} />
-              </Box>
+              <h3 className="text-lg font-bold mb-2">Specialties</h3>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">Construction</Badge>
+                <Badge variant="secondary">Project Management</Badge>
+                <Badge variant="secondary">Infrastructure</Badge>
+                <Badge variant="secondary">Collaboration</Badge>
+                <Badge variant="secondary">Analytics</Badge>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       
-      <Card variant="outlined" sx={{ mt: 4, borderRadius: 3 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" fontWeight="700" gutterBottom>
-            Our Vision
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-bold mb-4">Our Vision</h2>
+          <p className="text-muted-foreground mb-6">
             To become the leading infrastructure management platform globally, connecting millions of professionals 
             and enabling the successful completion of critical construction projects worldwide. We envision a future 
             where technology eliminates inefficiencies, enhances safety, and accelerates project timelines.
-          </Typography>
+          </p>
           
-          <Typography variant="h5" fontWeight="700" gutterBottom sx={{ mt: 3 }}>
-            Core Values
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center" p={2}>
-                <Box sx={{ 
-                  width: 48, 
-                  height: 48, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  mx: 'auto', 
-                  mb: 2,
-                  color: 'white'
-                }}>
-                  <Globe size={20} />
-                </Box>
-                <Typography variant="h6" fontWeight="700">Integrity</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Honest and transparent practices in all our interactions
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center" p={2}>
-                <Box sx={{ 
-                  width: 48, 
-                  height: 48, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  mx: 'auto', 
-                  mb: 2,
-                  color: 'white'
-                }}>
-                  <Award size={20} />
-                </Box>
-                <Typography variant="h6" fontWeight="700">Excellence</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Commitment to delivering superior products and services
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box textAlign="center" p={2}>
-                <Box sx={{ 
-                  width: 48, 
-                  height: 48, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  mx: 'auto', 
-                  mb: 2,
-                  color: 'white'
-                }}>
-                  <Users size={20} />
-                </Box>
-                <Typography variant="h6" fontWeight="700">Collaboration</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Working together to achieve shared success
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          <h2 className="text-2xl font-bold mb-4">Core Values</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 text-white">
+                <Globe size={20} />
+              </div>
+              <h3 className="text-lg font-bold mb-1">Integrity</h3>
+              <p className="text-sm text-muted-foreground">
+                Honest and transparent practices in all our interactions
+              </p>
+            </div>
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 text-white">
+                <Award size={20} />
+              </div>
+              <h3 className="text-lg font-bold mb-1">Excellence</h3>
+              <p className="text-sm text-muted-foreground">
+                Commitment to delivering superior products and services
+              </p>
+            </div>
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 text-white">
+                <Users size={20} />
+              </div>
+              <h3 className="text-lg font-bold mb-1">Collaboration</h3>
+              <p className="text-sm text-muted-foreground">
+                Working together to achieve shared success
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </Container>
+    </div>
   );
 };
 

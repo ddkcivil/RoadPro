@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Typography, Button, Paper, Grid, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, 
-  DialogActions, TextField, MenuItem, Select, FormControl, InputLabel, 
-  IconButton, Chip, Avatar, Card, CardContent, Tabs, Tab, Alert,
-  FormControlLabel, Switch, InputAdornment, InputBase
-} from '@mui/material';
-import { 
-  Plus, Edit, Trash2, Save, X, Calendar, DollarSign, 
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Badge } from '~/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Textarea } from '~/components/ui/textarea';
+import {
+  Plus, Edit, Trash2, Save, X, Calendar, DollarSign,
   FileText, CheckCircle, AlertTriangle, User, Clock, Search
 } from 'lucide-react';
 import { Project, UserRole, AppSettings, Subcontractor, SubcontractorBill } from '../../types';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 import { getCurrencySymbol } from '../../utils/formatting/currencyUtils';
-
-
 
 interface Props {
   project: Project;
@@ -24,7 +27,7 @@ interface Props {
 }
 
 const SubcontractorBillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate, userRole }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("0");
   const [isBillModalOpen, setIsBillModalOpen] = useState(false);
   const [currentBill, setCurrentBill] = useState<Partial<SubcontractorBill> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +50,7 @@ const SubcontractorBillingModule: React.FC<Props> = ({ project, settings, onProj
   // Get all subcontractors and bills
   const subcontractors = project.agencies?.filter(a => a.type === 'subcontractor') || [];
   const bills = project.subcontractorBills || [];
-  
+
   // Filter bills based on search term
   const filteredBills = bills.filter(bill => {
     if (!searchTerm) return true;
@@ -108,17 +111,17 @@ const SubcontractorBillingModule: React.FC<Props> = ({ project, settings, onProj
   // Save or update a bill
   const handleSaveBill = () => {
     const updatedProject = { ...project };
-    
+
     if (isEditing && currentBill?.id) {
       // Update existing bill
-      updatedProject.subcontractorBills = updatedProject.subcontractorBills?.map(bill => 
+      updatedProject.subcontractorBills = updatedProject.subcontractorBills?.map(bill =>
         bill.id === currentBill.id ? { ...billForm } as SubcontractorBill : bill
       ) || [];
     } else {
       // Add new bill
       updatedProject.subcontractorBills = [...(project.subcontractorBills || []), billForm as SubcontractorBill];
     }
-    
+
     onProjectUpdate(updatedProject);
     setIsBillModalOpen(false);
     setBillForm({
@@ -163,371 +166,328 @@ const SubcontractorBillingModule: React.FC<Props> = ({ project, settings, onProj
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', gap: 3 }}>
-      <Paper sx={{ width: 300, borderRadius: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden' }} variant="outlined">
-        <Box p={2.5} borderBottom="1px solid #f1f5f9" bgcolor="slate.50">
-          <Typography variant="h6" fontWeight="900">Subcontractor Billing</Typography>
-          <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+    <div className="h-[calc(100vh-140px)] flex gap-3">
+      <Card className="w-80 rounded-xl flex flex-col overflow-hidden border">
+        <CardHeader className="pb-4 border-b border-slate-100 bg-slate-50">
+          <CardTitle className="text-lg font-extrabold">Subcontractor Billing</CardTitle>
+          <p className="text-sm text-muted-foreground">
             Manage subcontractor bills and payments
-          </Typography>
-                  
-          <TextField 
-            fullWidth size="small" placeholder="Search bills..." 
-            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={16} className="text-slate-400" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 2 }}
-          />
-                  
-          <Button 
-            fullWidth variant="contained" 
-            startIcon={<Plus size={18}/>} 
+          </p>
+
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Input
+              placeholder="Search bills..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <Button
+            className="w-full mt-4 rounded-xl"
             onClick={handleCreateBill}
-            sx={{ borderRadius: 3 }}
           >
+            <Plus size={18} className="mr-2" />
             New Bill
           </Button>
-        </Box>
-        
-        <Box flex={1} p={2} overflow="auto">
-          <Typography variant="subtitle2" fontWeight="bold" mb={2}>BILLING SUMMARY</Typography>
-          
-          <Grid container spacing={1.5}>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Total Bills</Typography>
-                <Typography variant="h6" fontWeight="bold">{billingSummary.totalBills}</Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Total Amount</Typography>
-                <Typography variant="h6" fontWeight="bold">{formatCurrency(billingSummary.totalAmount, settings)}</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-          
-          <Grid container spacing={1.5} mt={1}>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Pending</Typography>
-                <Typography variant="h6" fontWeight="bold" color="warning.main">{formatCurrency(billingSummary.pendingAmount, settings)}</Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Paid</Typography>
-                <Typography variant="h6" fontWeight="bold" color="success.main">{formatCurrency(billingSummary.paidAmount, settings)}</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-          
-          <Box mt={3}>
-            <Typography variant="subtitle2" fontWeight="bold" mb={1}>STATUS FILTERS</Typography>
-            <Box display="flex" gap={1} flexWrap="wrap">
-              <Chip label="All" size="small" variant="outlined" clickable onClick={() => setActiveTab(0)} />
-              <Chip label="Draft" size="small" variant="outlined" clickable onClick={() => setActiveTab(1)} />
-              <Chip label="Submitted" size="small" variant="outlined" clickable onClick={() => setActiveTab(2)} />
-              <Chip label="Approved" size="small" variant="outlined" clickable onClick={() => setActiveTab(3)} />
-              <Chip label="Paid" size="small" variant="outlined" clickable onClick={() => setActiveTab(4)} />
-            </Box>
-          </Box>
-        </Box>
-      </Paper>
+        </CardHeader>
 
-      <Box flex={1} overflow="auto">
-        <Tabs 
-          value={activeTab} 
-          onChange={(e, newVal) => setActiveTab(newVal)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="All Bills" />
-          <Tab label="Drafts" />
-          <Tab label="Pending" />
-          <Tab label="Approved" />
-          <Tab label="Paid" />
+        <div className="flex-1 p-4 overflow-auto">
+          <h3 className="text-sm font-bold mb-4">BILLING SUMMARY</h3>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="p-4 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Total Bills</p>
+              <p className="text-lg font-bold">{billingSummary.totalBills}</p>
+            </Card>
+            <Card className="p-4 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Total Amount</p>
+              <p className="text-lg font-bold">{formatCurrency(billingSummary.totalAmount, settings)}</p>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Card className="p-4 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Pending</p>
+              <p className="text-lg font-bold text-yellow-600">{formatCurrency(billingSummary.pendingAmount, settings)}</p>
+            </Card>
+            <Card className="p-4 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Paid</p>
+              <p className="text-lg font-bold text-green-600">{formatCurrency(billingSummary.paidAmount, settings)}</p>
+            </Card>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-bold mb-3">STATUS FILTERS</h3>
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="outline" className="cursor-pointer" onClick={() => setActiveTab("0")}>All</Badge>
+              <Badge variant="outline" className="cursor-pointer" onClick={() => setActiveTab("1")}>Draft</Badge>
+              <Badge variant="outline" className="cursor-pointer" onClick={() => setActiveTab("2")}>Submitted</Badge>
+              <Badge variant="outline" className="cursor-pointer" onClick={() => setActiveTab("3")}>Approved</Badge>
+              <Badge variant="outline" className="cursor-pointer" onClick={() => setActiveTab("4")}>Paid</Badge>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex-1 overflow-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="border-b">
+          <TabsList>
+            <TabsTrigger value="0">All Bills</TabsTrigger>
+            <TabsTrigger value="1">Drafts</TabsTrigger>
+            <TabsTrigger value="2">Pending</TabsTrigger>
+            <TabsTrigger value="3">Approved</TabsTrigger>
+            <TabsTrigger value="4">Paid</TabsTrigger>
+          </TabsList>
         </Tabs>
 
-        <Box p={3}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Bill #</TableCell>
-                  <TableCell>Subcontractor</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Net Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Period To</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredBills.map((bill) => {
-                  const subcontractor = subcontractors.find(s => s.id === bill.subcontractorId);
-                  return (
-                    <TableRow key={bill.id}>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold">{bill.billNumber || 'N/A'}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', width: 24, height: 24 }}>
+        <div className="p-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bill #</TableHead>
+                <TableHead>Subcontractor</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Net Amount</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Period To</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBills.map((bill) => {
+                const subcontractor = subcontractors.find(s => s.id === bill.subcontractorId);
+                return (
+                  <TableRow key={bill.id}>
+                    <TableCell>
+                      <div className="font-medium">{bill.billNumber || 'N/A'}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarFallback>
                             <User size={14} />
-                          </Avatar>
-                          <Typography variant="body2">{subcontractor?.name || 'Unknown'}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" noWrap title={bill.description}>
-                          {bill.description.substring(0, 30)}{bill.description.length > 30 ? '...' : ''}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight="bold">
-                          {formatCurrency(bill.netAmount, settings)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{bill.date}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{bill.periodTo || 'N/A'}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={bill.status} 
-                          size="small"
-                          color={
-                            bill.status === 'Draft' ? 'default' : 
-                            bill.status === 'Submitted' ? 'warning' : 
-                            bill.status === 'Approved' ? 'info' : 
-                            bill.status === 'Paid' ? 'success' : 'default'
-                          }
-                          sx={{ fontSize: '0.7rem', height: 20 }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton 
-                          size="small" 
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{subcontractor?.name || 'Unknown'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm max-w-xs truncate" title={bill.description}>
+                        {bill.description.substring(0, 30)}{bill.description.length > 30 ? '...' : ''}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="font-medium">
+                        {formatCurrency(bill.netAmount, settings)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{bill.date}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{bill.periodTo || 'N/A'}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        bill.status === 'Draft' ? 'secondary' :
+                        bill.status === 'Submitted' ? 'default' :
+                        bill.status === 'Approved' ? 'default' :
+                        bill.status === 'Paid' ? 'default' : 'secondary'
+                      }>
+                        {bill.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleEditBill(bill)}
-                          title="Edit Bill"
                         >
                           <Edit size={16} />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleDeleteBill(bill.id)}
-                          title="Delete Bill"
                         >
                           <Trash2 size={16} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+
           {filteredBills.length === 0 && (
-            <Box textAlign="center" py={8}>
+            <div className="text-center py-16">
               <FileText size={60} className="mx-auto mb-4 opacity-30" />
-              <Typography variant="h6" fontWeight="bold">No bills found</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <h3 className="text-lg font-bold">No bills found</h3>
+              <p className="text-sm text-muted-foreground">
                 {searchTerm ? 'No bills match your search' : 'Create your first subcontractor bill to get started'}
-              </Typography>
-              <Button 
-                variant="contained" 
-                startIcon={<Plus size={16}/>} 
-                sx={{ mt: 2, borderRadius: 3 }}
+              </p>
+              <Button
+                className="mt-4 rounded-xl"
                 onClick={handleCreateBill}
               >
+                <Plus size={16} className="mr-2" />
                 Create New Bill
               </Button>
-            </Box>
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Bill Modal */}
-      <Dialog 
-        open={isBillModalOpen} 
-        onClose={handleCancel} 
-        maxWidth="md" 
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <DollarSign className="text-indigo-600"/>
-            <Typography variant="h6" fontWeight="900">
-              {isEditing ? 'Edit Bill' : 'Create New Bill'}
-            </Typography>
-          </Box>
-          <IconButton onClick={handleCancel}>
-            <X size={20} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="subcontractor-select-label">Subcontractor</InputLabel>
-                <Select
-                  labelId="subcontractor-select-label"
-                  value={billForm.subcontractorId || ''}
-                  label="Subcontractor"
-                  onChange={(e) => handleFormChange('subcontractorId', e.target.value)}
-                >
+      <Dialog open={isBillModalOpen} onOpenChange={handleCancel}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <DollarSign className="text-indigo-600" size={20} />
+            {isEditing ? 'Edit Bill' : 'Create New Bill'}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="subcontractor-select">Subcontractor</Label>
+              <Select
+                value={billForm.subcontractorId || ''}
+                onValueChange={(value) => handleFormChange('subcontractorId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select subcontractor" />
+                </SelectTrigger>
+                <SelectContent>
                   {subcontractors.map((sub) => (
-                    <MenuItem key={sub.id} value={sub.id}>{sub.name}</MenuItem>
+                    <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Bill Number"
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bill-number">Bill Number</Label>
+              <Input
+                id="bill-number"
                 value={billForm.billNumber || ''}
                 onChange={(e) => handleFormChange('billNumber', e.target.value)}
-                margin="normal"
+                placeholder="Enter bill number"
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Gross Amount"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gross-amount">Gross Amount</Label>
+              <Input
+                id="gross-amount"
                 type="number"
                 value={billForm.grossAmount || 0}
                 onChange={(e) => handleFormChange('grossAmount', parseFloat(e.target.value) || 0)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">{getCurrencySymbol(settings.currency)}</InputAdornment>
-                }}
+                placeholder="0.00"
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Net Amount"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="net-amount">Net Amount</Label>
+              <Input
+                id="net-amount"
                 type="number"
                 value={billForm.netAmount || 0}
                 onChange={(e) => handleFormChange('netAmount', parseFloat(e.target.value) || 0)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">{getCurrencySymbol(settings.currency)}</InputAdornment>
-                }}
+                placeholder="0.00"
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Retention (%)"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="retention-percent">Retention (%)</Label>
+              <Input
+                id="retention-percent"
                 type="number"
                 value={billForm.retentionPercent || 0}
                 onChange={(e) => handleFormChange('retentionPercent', parseFloat(e.target.value) || 0)}
-                margin="normal"
+                placeholder="0"
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Bill Date"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bill-date">Bill Date</Label>
+              <Input
+                id="bill-date"
                 type="date"
                 value={billForm.date || ''}
                 onChange={(e) => handleFormChange('date', e.target.value)}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Period From"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="period-from">Period From</Label>
+              <Input
+                id="period-from"
                 type="date"
                 value={billForm.periodFrom || ''}
                 onChange={(e) => handleFormChange('periodFrom', e.target.value)}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Period To"
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="period-to">Period To</Label>
+              <Input
+                id="period-to"
                 type="date"
                 value={billForm.periodTo || ''}
                 onChange={(e) => handleFormChange('periodTo', e.target.value)}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
               />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                multiline
-                rows={3}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bill-description">Description</Label>
+              <Textarea
+                id="bill-description"
                 value={billForm.description || ''}
                 onChange={(e) => handleFormChange('description', e.target.value)}
-                margin="normal"
+                placeholder="Enter bill description"
+                rows={3}
               />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="status-select-label">Status</InputLabel>
-                <Select
-                  labelId="status-select-label"
-                  value={billForm.status || 'Draft'}
-                  label="Status"
-                  onChange={(e) => handleFormChange('status', e.target.value)}
-                >
-                  <MenuItem value="Draft">Draft</MenuItem>
-                  <MenuItem value="Submitted">Submitted</MenuItem>
-                  <MenuItem value="Approved">Approved</MenuItem>
-                  <MenuItem value="Paid">Paid</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bill-status">Status</Label>
+              <Select
+                value={billForm.status || 'Draft'}
+                onValueChange={(value) => handleFormChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Submitted">Submitted</SelectItem>
+                  <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCancel} startIcon={<X size={16}/>} sx={{ borderRadius: 3 }}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSaveBill} 
-            startIcon={<Save size={16}/>} 
-            sx={{ borderRadius: 3 }}
+        <DialogFooter className="bg-muted/50">
+          <Button variant="outline" onClick={handleCancel}>
+            <X size={16} className="mr-2" />
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveBill}
             disabled={!billForm.subcontractorId || !billForm.description || billForm.netAmount === 0}
           >
+            <Save size={16} className="mr-2" />
             {isEditing ? 'Update Bill' : 'Create Bill'}
           </Button>
-        </DialogActions>
+        </DialogFooter>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

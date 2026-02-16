@@ -1,7 +1,7 @@
 // api/projects/[id]/index.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from '../../_utils/mysqlConnect.js'; // Changed import path
-// No longer need mongoose
+
+import { connectToDatabase } from '../../_utils/dbConnect.ts';
 
 import { withErrorHandler } from '../../_utils/errorHandler.js'; // Adjust path as needed
 
@@ -15,7 +15,7 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
   if (req.method === 'GET') {
     try {
       const { Project } = await connectToDatabase();
-      const project = await Project.findByPk(id as string); // Sequelize: findByPk
+      const project = await Project.findById(id as string);
 
       if (!project) {
         res.status(404).json({ error: 'Project not found' });
@@ -31,18 +31,15 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
       const { Project } = await connectToDatabase();
       const projectData = req.body;
       
-      // Sequelize: update method returns [affectedCount, affectedRows]
-      const [affectedCount] = await Project.update(
-        { ...projectData }, // Exclude ID from update object
-        { where: { id: id } }
+      const updatedProject = await Project.findByIdAndUpdate(
+        id as string,
+        { ...projectData },
+        { new: true } // Return the modified document rather than the original
       );
 
-      if (affectedCount === 0) {
-        res.status(404).json({ error: 'Project not found or no changes made' });
+      if (!updatedProject) {
+        res.status(404).json({ error: 'Project not found' });
       }
-
-      // Fetch the updated project to return it
-      const updatedProject = await Project.findByPk(id as string);
       
       res.status(200).json(updatedProject);
     } catch (error: any) {
@@ -52,12 +49,9 @@ export default withErrorHandler(async function (req: VercelRequest, res: VercelR
   } else if (req.method === 'DELETE') {
     try {
       const { Project } = await connectToDatabase();
-      // Sequelize: destroy method returns the number of deleted rows
-      const deletedRowCount = await Project.destroy({
-        where: { id: id as string }
-      });
+      const deletedProject = await Project.findByIdAndDelete(id as string);
       
-      if (deletedRowCount === 0) {
+      if (!deletedProject) {
         res.status(404).json({ error: 'Project not found' });
       }
       

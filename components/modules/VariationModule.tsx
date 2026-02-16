@@ -1,21 +1,28 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-    Box, Typography, Button, Paper, Grid, Table, TableBody, TableCell, 
-    TableHead, TableRow, Chip, IconButton, Stack, Divider, Card, 
-    CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, InputAdornment, List, ListItem, ListItemText,
-    Avatar, LinearProgress, Autocomplete, Alert, Tooltip,
-    ListItemSecondaryAction
-} from '@mui/material';
-import { Project, UserRole, AppSettings, VariationOrder, VariationItem, BOQItem, WorkCategory } from '../../types';
-import { formatCurrency } from '../../utils/formatting/exportUtils';
-import { 
     FileDiff, Plus, Search, Trash2, Save, X, 
     CheckCircle2, AlertTriangle, TrendingUp, History, 
     Calculator, Receipt, Info, ArrowRight, DollarSign,
     CheckCircle, Clock, FileEdit, Send, FileX, Calendar
 } from 'lucide-react';
+import { Project, UserRole, AppSettings, VariationOrder, VariationItem, BOQItem, WorkCategory } from '../../types';
+import { formatCurrency } from '../../utils/formatting/exportUtils';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Textarea } from '~/components/ui/textarea';
+import { Separator } from '~/components/ui/separator';
 
 interface Props {
   project: Project;
@@ -164,396 +171,380 @@ const VariationModule: React.FC<Props> = ({ project, settings, onProjectUpdate, 
     const canApprove = [UserRole.ADMIN, UserRole.PROJECT_MANAGER].includes(userRole);
 
     return (
-        <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', gap: 3 }} className="animate-in fade-in duration-500">
-            <Paper sx={{ width: 340, display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden' }} variant="outlined">
-                <Box p={2.5} borderBottom="1px solid #f1f5f9" bgcolor="slate.50">
-                    <Typography variant="h6" fontWeight="900">Contract Variations</Typography>
-                    <Button 
-                        fullWidth variant="contained" sx={{ mt: 2, borderRadius: 3 }} 
-                        startIcon={<Plus size={18}/>}
-                        onClick={() => setIsCreateModalOpen(true)}
-                    >
-                        Initialize Draft
+        <div className="h-[calc(100vh-140px)] flex gap-3 animate-in fade-in duration-500">
+            <Card className="w-80 flex flex-col">
+                <CardHeader className="border-b px-4 py-3">
+                    <CardTitle className="text-lg font-bold">Contract Variations</CardTitle>
+                    <Button className="mt-3 w-full" onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />Initialize Draft
                     </Button>
-                </Box>
-                <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                    <Box p={2}>
-                        <TextField 
-                            fullWidth size="small" placeholder="Search variations..." 
+                </CardHeader>
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-4">
+                        <Input 
+                            placeholder="Search variations..." 
                             value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                            InputProps={{ startAdornment: <Search size={14} className="mr-2 text-slate-400" /> }}
+                            // Assuming Input can take an icon prop, if not, adjust or wrap with an icon component
+                            // icon={<Search className="h-4 w-4 text-muted-foreground" />} 
                         />
-                    </Box>
-                    <List disablePadding>
+                    </div>
+                    <div>
                         {[...variationOrders].reverse().map(vo => (
-                            <ListItem key={vo.id} disablePadding>
-                                <Paper 
-                                    elevation={0}
-                                    sx={{ 
-                                        width: '100%', m: 1, p: 2.5, cursor: 'pointer', borderRadius: 3, 
-                                        border: '1px solid',
-                                        borderColor: selectedVoId === vo.id ? 'primary.main' : 'divider',
-                                        bgcolor: selectedVoId === vo.id ? 'indigo.50/30' : 'white',
-                                        '&:hover': { bgcolor: 'slate.50' }
-                                    }}
+                            <div key={vo.id}>
+                                <Card 
+                                    className={`m-2 p-4 cursor-pointer hover:bg-muted 
+                                                ${selectedVoId === vo.id ? 'border-primary bg-primary/10' : ''}`}
                                     onClick={() => setSelectedVoId(vo.id)}
                                 >
-                                    <Box display="flex" justifyContent="space-between" mb={1}>
-                                        <Typography variant="caption" fontWeight="900" color="primary">{vo.voNumber}</Typography>
-                                        <Chip 
-                                            label={vo.status.toUpperCase()} size="small" 
-                                            color={vo.status === 'Approved' ? 'success' : vo.status === 'Rejected' ? 'error' : vo.status === 'Submitted' ? 'info' : 'warning'}
-                                            sx={{ height: 18, fontSize: 8, fontWeight: 'black' }}
-                                        />
-                                    </Box>
-                                    <Typography variant="body2" fontWeight="900" noWrap sx={{ mb: 1 }}>{vo.title}</Typography>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                            <Calendar size={10}/> {vo.date}
-                                        </Typography>
-                                        <Typography variant="caption" fontWeight="bold" color={vo.totalImpact >= 0 ? 'success.main' : 'error.main'}>
+                                    <div className="flex justify-between mb-1">
+                                        <Badge variant="outline" className="text-xs font-bold text-primary">{vo.voNumber}</Badge>
+                                        <Badge 
+                                            variant={vo.status === 'Approved' ? 'default' : vo.status === 'Rejected' ? 'destructive' : vo.status === 'Submitted' ? 'secondary' : 'outline'}
+                                            className="text-xs"
+                                        >
+                                            {vo.status.toUpperCase()}
+                                        </Badge>
+                                    </div>
+                                    <p className="font-bold line-clamp-1 mb-1">{vo.title}</p>
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/> {vo.date}</span>
+                                        <span className={`font-bold ${vo.totalImpact >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             {formatCurrency(vo.totalImpact, settings)}
-                                        </Typography>
-                                    </Box>
-                                </Paper>
-                            </ListItem>
+                                        </span>
+                                    </div>
+                                </Card>
+                            </div>
                         ))}
-                    </List>
-                </Box>
-            </Paper>
+                    </div>
+                </div>
+            </Card>
 
-            <Box flex={1} sx={{ overflowY: 'auto' }}>
-                <Stack spacing={3}>
-                    <Paper sx={{ p: 3, borderRadius: 3, bgcolor: 'white' }} variant="outlined">
-                        {/* Fix: Added item prop to Grid components with xs/md props */}
-                        <Grid container spacing={4} alignItems="center">
-                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                            <Grid item xs={12} md={4}>
-                                <Typography variant="caption" fontWeight="900" color="text.secondary" gutterBottom display="block" sx={{ letterSpacing: 1 }}>REVISED CONTRACT TOTAL</Typography>
-                                <Typography variant="h4" fontWeight="900">{formatCurrency(financialSummary.revised, settings)}</Typography>
-                                <Typography variant="caption" fontWeight="bold" color="text.disabled">Original: {formatCurrency(financialSummary.original, settings)}</Typography>
-                            </Grid>
-                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                            <Grid item xs={12} md={4}>
-                                <Typography variant="caption" fontWeight="900" color="text.secondary" gutterBottom display="block" sx={{ letterSpacing: 1 }}>NET CHANGE IMPACT</Typography>
-                                <Typography variant="h4" fontWeight="900" color={financialSummary.variation >= 0 ? 'success.main' : 'error.main'}>
-                                    {formatCurrency(financialSummary.variation, settings)}
-                                </Typography>
-                                <Box display="flex" alignItems="center" gap={1} mt={1}>
-                                    <LinearProgress 
-                                        variant="determinate" value={Math.min(100, Math.abs(financialSummary.percent) * 5)} 
-                                        sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: 'slate.100' }}
-                                    />
-                                    <Typography variant="caption" fontWeight="900">{financialSummary.percent.toFixed(2)}%</Typography>
-                                </Box>
-                            </Grid>
-                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                            <Grid item xs={12} md={4}>
-                                <Stack spacing={1}>
-                                    <Button fullWidth variant="outlined" size="small" startIcon={<History size={16}/>} sx={{ borderRadius: 3 }} onClick={() => alert('Financial History view would open here')}>Financial History</Button>
-                                    <Button fullWidth variant="outlined" size="small" startIcon={<TrendingUp size={16}/>} sx={{ borderRadius: 3 }} onClick={() => alert('Variation S-Curve visualization would open here')}>Variation S-Curve</Button>
-                                </Stack>
-                            </Grid>
-                        </Grid>
-                    </Paper>
+            <div className="flex-1 overflow-y-auto">
+                <div className="space-y-4">
+                    <Card>
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                                <div>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase mb-1">REVISED CONTRACT TOTAL</p>
+                                    <p className="text-3xl font-bold">{formatCurrency(financialSummary.revised, settings)}</p>
+                                    <p className="text-sm text-muted-foreground">Original: {formatCurrency(financialSummary.original, settings)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase mb-1">NET CHANGE IMPACT</p>
+                                    <p className={`text-3xl font-bold ${financialSummary.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {formatCurrency(financialSummary.variation, settings)}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Progress value={Math.min(100, Math.abs(financialSummary.percent) * 5)} className="flex-1" />
+                                        <p className="text-sm font-bold">{financialSummary.percent.toFixed(2)}%</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Button variant="outline" className="w-full" onClick={() => toast.info('Financial History view would open here')}><History className="mr-2 h-4 w-4"/>Financial History</Button>
+                                    <Button variant="outline" className="w-full" onClick={() => toast.info('Variation S-Curve visualization would open here')}><TrendingUp className="mr-2 h-4 w-4"/>Variation S-Curve</Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {viewingVO ? (
-                        <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                            <Box p={3} borderBottom="1px solid #f1f5f9" bgcolor="slate.50" display="flex" justifyContent="space-between" alignItems="center">
-                                <Box display="flex" gap={2} alignItems="center">
-                                    <Avatar sx={{ bgcolor: 'indigo.600', color: 'white', width: 48, height: 48 }} variant="rounded"><FileDiff size={24}/></Avatar>
-                                    <Box>
-                                        <Typography variant="h6" fontWeight="900">{viewingVO.title}</Typography>
-                                        <Typography variant="caption" color="text.secondary">REF: {viewingVO.voNumber} • STATUS: <b>{viewingVO.status.toUpperCase()}</b></Typography>
-                                    </Box>
-                                </Box>
-                                <Stack direction="row" spacing={1.5}>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between p-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                                        <FileDiff className="h-6 w-6"/>
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-xl font-bold">{viewingVO.title}</CardTitle>
+                                        <p className="text-sm text-muted-foreground">REF: {viewingVO.voNumber} • STATUS: <b className="uppercase">{viewingVO.status}</b></p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
                                     {viewingVO.status === 'Draft' && (
                                         <>
-                                            <IconButton color="error" onClick={() => handleDeleteVO(viewingVO.id)}><Trash2 size={20}/></IconButton>
-                                            <Button variant="contained" color="primary" startIcon={<Send size={18}/>} onClick={() => updateVOStatus(viewingVO.id, 'Submitted')} sx={{ borderRadius: 3 }}>Submit for Review</Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteVO(viewingVO.id)}><Trash2 className="h-5 w-5"/></Button>
+                                            <Button onClick={() => updateVOStatus(viewingVO.id, 'Submitted')}><Send className="mr-2 h-4 w-4"/>Submit for Review</Button>
                                         </>
                                     )}
                                     {viewingVO.status === 'Submitted' && canApprove && (
                                         <>
-                                            <Button variant="outlined" color="error" startIcon={<FileX size={18}/>} onClick={() => updateVOStatus(viewingVO.id, 'Rejected')} sx={{ borderRadius: 3 }}>Reject</Button>
-                                            <Button variant="contained" color="success" startIcon={<CheckCircle2 size={18}/>} onClick={() => updateVOStatus(viewingVO.id, 'Approved')} sx={{ borderRadius: 3 }}>Approve & Sync</Button>
+                                            <Button variant="outline" className="text-red-500 hover:bg-red-500/10" onClick={() => updateVOStatus(viewingVO.id, 'Rejected')}><FileX className="mr-2 h-4 w-4"/>Reject</Button>
+                                            <Button onClick={() => updateVOStatus(viewingVO.id, 'Approved')}><CheckCircle2 className="mr-2 h-4 w-4"/>Approve & Sync</Button>
                                         </>
                                     )}
                                     {viewingVO.status === 'Approved' && (
-                                        <Chip icon={<CheckCircle size={14}/>} label="APPROVED & SYNCED" color="success" sx={{ fontWeight: 'bold', px: 1 }} />
+                                        <Badge><CheckCircle className="mr-2 h-4 w-4"/>APPROVED & SYNCED</Badge>
                                     )}
                                     {viewingVO.status === 'Rejected' && (
-                                        <Button variant="outlined" startIcon={<FileEdit size={18}/>} onClick={() => updateVOStatus(viewingVO.id, 'Draft')} sx={{ borderRadius: 3 }}>Revise Draft</Button>
+                                        <Button variant="outline" onClick={() => updateVOStatus(viewingVO.id, 'Draft')}><FileEdit className="mr-2 h-4 w-4"/>Revise Draft</Button>
                                     )}
-                                </Stack>
-                            </Box>
-                            <CardContent sx={{ p: 4 }}>
-                                {/* Fix: Added item prop to Grid components with xs/md props */}
-                                <Grid container spacing={6}>
-                                    {/* Fix: Added item prop to Grid components with xs/md props */}
-                                    <Grid item xs={12} md={4}>
-                                        <Typography variant="caption" fontWeight="900" color="text.secondary" gutterBottom display="block" sx={{ letterSpacing: 1 }}>TECHNICAL JUSTIFICATION</Typography>
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50', borderStyle: 'dashed', borderRadius: 3 }}>
-                                            <Typography variant="body2" sx={{ lineHeight: 1.6 }}>{viewingVO.reason || 'No written justification provided.'}</Typography>
-                                        </Paper>
-                                        <Box mt={4}>
-                                            <Typography variant="caption" fontWeight="900" color="text.secondary" gutterBottom display="block">AUDIT SUMMARY</Typography>
-                                            <Stack spacing={1.5} mt={2}>
-                                                <Box display="flex" alignItems="center" gap={1.5}>
-                                                    <Avatar sx={{ width: 24, height: 24, bgcolor: 'slate.200', fontSize: 10, fontWeight: 'bold' }}>PM</Avatar>
-                                                    <Typography variant="caption">Proposed by: Site Engineering Team</Typography>
-                                                </Box>
-                                                <Box display="flex" alignItems="center" gap={1.5}>
-                                                    <Clock size={14} className="text-slate-400"/>
-                                                    <Typography variant="caption">Created on: {viewingVO.date}</Typography>
-                                                </Box>
-                                            </Stack>
-                                        </Box>
-                                    </Grid>
-                                    {/* Fix: Added item prop to Grid components with xs/md props */}
-                                    <Grid item xs={12} md={8}>
-                                        <Typography variant="caption" fontWeight="900" color="text.secondary" gutterBottom display="block" sx={{ letterSpacing: 1 }}>SCHEDULE OF AMENDMENTS</Typography>
-                                        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mt: 1.5 }}>
-                                            <Table size="small">
-                                                <TableHead sx={{ bgcolor: 'slate.50' }}>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase mb-2">TECHNICAL JUSTIFICATION</p>
+                                        <Card className="p-4 bg-muted border-dashed">
+                                            <p className="text-sm leading-relaxed">{viewingVO.reason || 'No written justification provided.'}</p>
+                                        </Card>
+                                        <div className="mt-4">
+                                            <p className="text-xs font-bold text-muted-foreground uppercase mb-2">AUDIT SUMMARY</p>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">PM</div>
+                                                    <p className="text-sm">Proposed by: Site Engineering Team</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="h-4 w-4 text-muted-foreground"/>
+                                                    <p className="text-sm">Created on: {viewingVO.date}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <p className="text-xs font-bold text-muted-foreground uppercase mb-2">SCHEDULE OF AMENDMENTS</p>
+                                        <Card>
+                                            <Table>
+                                                <TableHeader>
                                                     <TableRow>
-                                                        <TableCell sx={{ fontWeight: 'bold' }}>Work Description</TableCell>
-                                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Delta Qty</TableCell>
-                                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Net Value</TableCell>
+                                                        <TableHead>Work Description</TableHead>
+                                                        <TableHead className="text-right">Delta Qty</TableHead>
+                                                        <TableHead className="text-right">Rate</TableHead>
+                                                        <TableHead className="text-right">Net Value</TableHead>
+                                                        <TableHead className="text-center"></TableHead>
                                                     </TableRow>
-                                                </TableHead>
+                                                </TableHeader>
                                                 <TableBody>
                                                     {viewingVO.items.map(item => (
-                                                        <TableRow key={item.id} hover>
+                                                        <TableRow key={item.id}>
                                                             <TableCell>
-                                                                <Typography variant="body2" fontWeight="bold">{item.description}</Typography>
-                                                                <Chip label={item.isNewItem ? 'NON-SCHEDULED' : 'BOQ LINKED'} size="small" sx={{ fontSize: 8, height: 16, mt: 0.5 }} color={item.isNewItem ? 'secondary' : 'default'} variant="outlined" />
+                                                                <p className="font-bold line-clamp-1">{item.description}</p>
+                                                                <Badge variant="outline" className="text-xs mt-1">
+                                                                    {item.isNewItem ? 'NON-SCHEDULED' : 'BOQ LINKED'}
+                                                                </Badge>
                                                             </TableCell>
-                                                            <TableCell align="right">
-                                                                <Typography variant="body2" fontWeight="bold" color={item.quantityDelta >= 0 ? 'success.main' : 'error.main'}>
+                                                            <TableCell className="text-right">
+                                                                <p className={`font-bold ${item.quantityDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                                                     {item.quantityDelta >= 0 ? '+' : ''}{item.quantityDelta} {item.unit}
-                                                                </Typography>
+                                                                </p>
                                                             </TableCell>
-                                                            <TableCell align="right">{formatCurrency(item.rate, settings)}</TableCell>
-                                                            <TableCell align="right">
-                                                                <Typography variant="body2" fontWeight="900">
-                                                                    {currency}{(item.quantityDelta * item.rate).toLocaleString()}
-                                                                </Typography>
+                                                            <TableCell className="text-right">{formatCurrency(item.rate, settings)}</TableCell>
+                                                            <TableCell className="text-right font-bold">
+                                                                {currency}{(item.quantityDelta * item.rate).toLocaleString()}
+                                                            </TableCell>
+                                                            <TableCell className="text-center">
+                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItemFromVO(item.id)}>
+                                                                    <X className="h-4 w-4"/>
+                                                                </Button>
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
-                                                    <TableRow sx={{ bgcolor: 'slate.900' }}>
-                                                        <TableCell colSpan={3} align="right">
-                                                            <Typography variant="caption" color="white" fontWeight="900" sx={{ letterSpacing: 1 }}>TOTAL VO IMPACT</Typography>
+                                                    <TableRow className="bg-gray-900 text-white">
+                                                        <TableCell colSpan={3} className="text-right text-white text-xs font-bold uppercase">TOTAL VO IMPACT</TableCell>
+                                                        <TableCell className="text-right text-white text-base font-bold">
+                                                            {formatCurrency(viewingVO.totalImpact, settings)}
                                                         </TableCell>
-                                                        <TableCell align="right">
-                                                            <Typography variant="subtitle2" color="white" fontWeight="900">
-                                                                {formatCurrency(viewingVO.totalImpact, settings)}
-                                                            </Typography>
-                                                        </TableCell>
+                                                        <TableCell></TableCell>
                                                     </TableRow>
                                                 </TableBody>
                                             </Table>
-                                        </Paper>
-                                    </Grid>
-                                </Grid>
+                                        </Card>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     ) : (
-                        <Box py={15} textAlign="center" color="text.disabled" bgcolor="white" borderRadius={3} border="1px dashed #e2e8f0">
-                            <FileDiff size={80} className="mx-auto mb-4 opacity-10"/>
-                            <Typography variant="h6" fontWeight="bold">No Variation Selected</Typography>
-                            <Typography variant="body2">Select a record from the registry or create a new draft to begin.</Typography>
-                        </Box>
+                        <Card className="p-12 text-center border-dashed">
+                            <FileDiff className="mx-auto h-20 w-20 text-muted-foreground opacity-20 mb-4"/>
+                            <h3 className="text-xl font-bold">No Variation Selected</h3>
+                            <p className="text-muted-foreground">Select a record from the registry or create a new draft to begin.</p>
+                        </Card>
                     )}
-                </Stack>
-            </Box>
+                </div>
+            </div>
 
-            <Dialog 
-                open={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                maxWidth="lg" 
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 3, height: '90vh' } }}
-            >
-                <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                        <Calculator className="text-indigo-600"/>
-                        <Typography variant="h6" fontWeight="900">Draft Variation Order Worksheet</Typography>
-                    </Box>
-                    <IconButton onClick={() => setIsCreateModalOpen(false)}><X/></IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ p: 0, bgcolor: 'slate.50' }}>
-                    <Box p={4}>
-                        {/* Fix: Added item prop to Grid components with xs/md props */}
-                        <Grid container spacing={4}>
-                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                            <Grid item xs={12} md={5}>
-                                <Stack spacing={3}>
-                                    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-                                        <Typography variant="caption" fontWeight="900" color="text.secondary" sx={{ display: 'block', mb: 2.5, letterSpacing: 1 }}>CONTRACTUAL DETAILS</Typography>
-                                        <Stack spacing={3}>
-                                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={7}>
-                                                    <TextField 
-                                                        fullWidth label="Amendment Title" size="small" placeholder="e.g. KM 4-5 Add. Work"
-                                                        value={voForm.title} onChange={e => setVoForm({...voForm, title: e.target.value})}
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={5}>
-                                                    <TextField fullWidth label="VO Ref #" size="small" value={voForm.voNumber} disabled />
-                                                </Grid>
-                                            </Grid>
-                                            <TextField 
-                                                fullWidth label="Technical Justification" multiline rows={4} size="small"
-                                                placeholder="Detail the technical necessity..."
-                                                value={voForm.reason} onChange={e => setVoForm({...voForm, reason: e.target.value})}
-                                            />
-                                        </Stack>
-                                    </Paper>
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader className="border-b pb-4">
+                        <DialogTitle className="flex items-center text-xl font-bold">
+                            <Calculator className="mr-2 h-6 w-6 text-indigo-600"/>
+                            Draft Variation Order Worksheet
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <Card className="p-4 space-y-4">
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase">CONTRACTUAL DETAILS</h3>
+                                    <div>
+                                        <Label htmlFor="title">Amendment Title</Label>
+                                        <Input 
+                                            id="title" placeholder="e.g. KM 4-5 Add. Work"
+                                            value={voForm.title} onChange={e => setVoForm({...voForm, title: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="vo-ref">VO Ref #</Label>
+                                            <Input id="vo-ref" value={voForm.voNumber} disabled />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="vo-date">Date</Label>
+                                            <Input id="vo-date" type="date" value={voForm.date} onChange={e => setVoForm({...voForm, date: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="justification">Technical Justification</Label>
+                                        <Textarea 
+                                            id="justification" placeholder="Detail the technical necessity..."
+                                            value={voForm.reason} onChange={e => setVoForm({...voForm, reason: e.target.value})}
+                                        />
+                                    </div>
+                                </Card>
 
-                                    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: 'indigo.900', color: 'white' }}>
-                                        <Typography variant="caption" fontWeight="900" sx={{ opacity: 0.7, display: 'block', mb: 2, letterSpacing: 1 }}>STAGING WORK ITEMS</Typography>
-                                        <Stack spacing={2.5}>
-                                            <Autocomplete<BOQItem>
-                                                size="small"
-                                                options={project.boq || []}
-                                                getOptionLabel={(o) => `[${o.itemNo}] ${o.description.slice(0, 40)}...`}
-                                                onChange={(_, v) => {
-                                                    if (v) setTempItem({ 
-                                                        boqItemId: v.id, description: v.description, 
-                                                        unit: v.unit, rate: v.rate, isNewItem: false 
+                                <Card className="p-4 bg-indigo-900 text-white mt-6 space-y-4">
+                                    <h3 className="text-xs font-bold text-indigo-200 uppercase">STAGING WORK ITEMS</h3>
+                                    <div>
+                                        <Label htmlFor="boq-component" className="text-white">Existing BOQ Component</Label>
+                                        <Select
+                                            onValueChange={value => {
+                                                const boqItem = project.boq.find(b => b.id === value);
+                                                if (boqItem) {
+                                                    setTempItem({ 
+                                                        boqItemId: boqItem.id, description: boqItem.description, 
+                                                        unit: boqItem.unit, rate: boqItem.rate, isNewItem: false 
                                                     });
-                                                }}
-                                                renderInput={(params) => {
-                                                    /* Fix: Handled Autocomplete InputProps with explicit cast to prevent ref incompatibility errors */
-                                                    const { InputProps, ...rest } = params;
-                                                    return (
-                                                        <TextField 
-                                                            {...rest} 
-                                                            label="Existing BOQ Component" 
-                                                            variant="filled" 
-                                                            sx={{ bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1.5 }} 
-                                                            InputLabelProps={{ sx: { color: 'white' } }} 
-                                                            InputProps={{ ...InputProps } as any}
-                                                        />
-                                                    );
-                                                }}
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger id="boq-component" className="bg-indigo-800 text-white border-indigo-700">
+                                                <SelectValue placeholder="Select a BOQ item" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-indigo-800 text-white">
+                                                {project.boq.map(boq => (
+                                                    <SelectItem key={boq.id} value={boq.id}>[{boq.itemNo}] {boq.description}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Separator className="bg-indigo-700" />
+                                    <div>
+                                        <Label htmlFor="new-item-description" className="text-white">OR NEW SCOPE Item Description</Label>
+                                        <Input 
+                                            id="new-item-description" 
+                                            value={tempItem.description} onChange={e => setTempItem({...tempItem, description: e.target.value, isNewItem: true, boqItemId: undefined})}
+                                            className="bg-indigo-800 text-white border-indigo-700"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="qty-delta" className="text-white">Qty Delta</Label>
+                                            <Input 
+                                                id="qty-delta" type="number" 
+                                                value={tempItem.quantityDelta} onChange={e => setTempItem({...tempItem, quantityDelta: Number(e.target.value)})}
+                                                className="bg-indigo-800 text-white border-indigo-700"
                                             />
-                                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }}><Typography variant="caption" sx={{ color: 'white', opacity: 0.5 }}>OR NEW SCOPE</Typography></Divider>
-                                            <TextField 
-                                                size="small" label="Item Description" variant="filled" sx={{ bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1.5 }} 
-                                                InputLabelProps={{ sx: { color: 'white' } }} 
-                                                value={tempItem.description} onChange={e => setTempItem({...tempItem, description: e.target.value, isNewItem: true, boqItemId: undefined})}
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="unit" className="text-white">Unit</Label>
+                                            <Input 
+                                                id="unit" 
+                                                value={tempItem.unit} onChange={e => setTempItem({...tempItem, unit: e.target.value})}
+                                                className="bg-indigo-800 text-white border-indigo-700"
                                             />
-                                            <Box display="flex" gap={2}>
-                                                <TextField 
-                                                    size="small" label="Qty Delta" type="number" variant="filled" sx={{ bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1.5 }} 
-                                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                                    value={tempItem.quantityDelta} onChange={e => setTempItem({...tempItem, quantityDelta: Number(e.target.value)})}
-                                                />
-                                                <TextField 
-                                                    size="small" label="Unit" variant="filled" sx={{ bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1.5 }} 
-                                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                                    value={tempItem.unit} onChange={e => setTempItem({...tempItem, unit: e.target.value})}
-                                                />
-                                            </Box>
-                                            <TextField 
-                                                size="small" label="Agreed Rate" type="number" variant="filled" sx={{ bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1.5 }} 
-                                                InputLabelProps={{ sx: { color: 'white' } }}
-                                                value={tempItem.rate} onChange={e => setTempItem({...tempItem, rate: Number(e.target.value)})}
-                                            />
-                                            <Button 
-                                                fullWidth variant="contained" color="secondary" 
-                                                startIcon={<Plus/>} onClick={handleAddItemToVO}
-                                                disabled={!tempItem.description || !tempItem.quantityDelta}
-                                                sx={{ borderRadius: 3 }}
-                                            >
-                                                Stage for Review
-                                            </Button>
-                                        </Stack>
-                                    </Paper>
-                                </Stack>
-                            </Grid>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="agreed-rate" className="text-white">Agreed Rate</Label>
+                                        <Input 
+                                            id="agreed-rate" type="number" 
+                                            value={tempItem.rate} onChange={e => setTempItem({...tempItem, rate: Number(e.target.value)})}
+                                            className="bg-indigo-800 text-white border-indigo-700"
+                                        />
+                                    </div>
+                                    <Button 
+                                        className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90" 
+                                        onClick={handleAddItemToVO}
+                                        disabled={!tempItem.description || !tempItem.quantityDelta}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4"/> Stage for Review
+                                    </Button>
+                                </Card>
+                            </div>
 
-                            {/* Fix: Added item prop to Grid components with xs/md props */}
-                            <Grid item xs={12} md={7}>
-                                <Paper variant="outlined" sx={{ height: '100%', borderRadius: 4, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'white' }}>
-                                    <Box p={3} borderBottom={1} borderColor="divider" bgcolor="slate.50" display="flex" justifyContent="space-between" alignItems="center">
-                                        <Box>
-                                            <Typography variant="subtitle1" fontWeight="900" display="flex" alignItems="center" gap={1}>
-                                                <Receipt size={20} className="text-indigo-600"/> Impact Ledger
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">Current staged changes</Typography>
-                                        </Box>
-                                        <Box textAlign="right">
-                                            <Typography variant="caption" fontWeight="900" color="text.secondary" display="block">TOTAL NET VALUE</Typography>
-                                            <Typography variant="h5" fontWeight="900" color="indigo.700">
-                                                {formatCurrency(voForm.items?.reduce((acc, i) => acc + (i.quantityDelta * i.rate), 0) || 0, settings)}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                    <Box flex={1} overflow="auto">
-                                        <Table size="small" stickyHeader>
-                                            <TableHead sx={{ bgcolor: 'white' }}>
+                            <div>
+                                <Card className="h-full flex flex-col">
+                                    <CardHeader className="border-b">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <CardTitle className="flex items-center text-lg font-bold">
+                                                    <Receipt className="mr-2 h-5 w-5 text-indigo-600"/> Impact Ledger
+                                                </CardTitle>
+                                                <p className="text-sm text-muted-foreground">Current staged changes</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold text-muted-foreground uppercase">TOTAL NET VALUE</p>
+                                                <p className="text-3xl font-bold text-indigo-700">
+                                                    {formatCurrency(voForm.items?.reduce((acc, i) => acc + (i.quantityDelta * i.rate), 0) || 0, settings)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 overflow-auto p-0">
+                                        <Table>
+                                            <TableHeader>
                                                 <TableRow>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>Delta Qty</TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                                                    <TableCell align="center"></TableCell>
+                                                    <TableHead>Description</TableHead>
+                                                    <TableHead className="text-right">Delta Qty</TableHead>
+                                                    <TableHead className="text-right">Rate</TableHead>
+                                                    <TableHead className="text-right">Amount</TableHead>
+                                                    <TableHead className="text-center"></TableHead>
                                                 </TableRow>
-                                            </TableHead>
+                                            </TableHeader>
                                             <TableBody>
                                                 {voForm.items?.map(item => (
                                                     <TableRow key={item.id}>
                                                         <TableCell>
-                                                            <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 200 }}>{item.description}</Typography>
-                                                            <Typography variant="caption" color="text.disabled">{item.isNewItem ? 'EXTRA WORK' : 'BOQ ITEM'}</Typography>
+                                                            <p className="font-bold line-clamp-1">{item.description}</p>
+                                                            <Badge variant="outline" className="text-xs mt-1">
+                                                                {item.isNewItem ? 'NON-SCHEDULED' : 'BOQ LINKED'}
+                                                            </Badge>
                                                         </TableCell>
-                                                        <TableCell align="right">
-                                                            <Typography variant="caption" fontWeight="900" color={item.quantityDelta >= 0 ? 'success.main' : 'error.main'}>
+                                                        <TableCell className="text-right">
+                                                            <p className={`font-bold ${item.quantityDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                                                 {item.quantityDelta >= 0 ? '+' : ''}{item.quantityDelta} {item.unit}
-                                                            </Typography>
+                                                            </p>
                                                         </TableCell>
-                                                        <TableCell align="right"><Typography variant="caption">{formatCurrency(item.rate, settings)}</Typography></TableCell>
-                                                        <TableCell align="right">
-                                                            <Typography variant="caption" fontWeight="bold">
-                                                                {currency}{(item.quantityDelta * item.rate).toLocaleString()}
-                                                            </Typography>
+                                                        <TableCell className="text-right">{formatCurrency(item.rate, settings)}</TableCell>
+                                                        <TableCell className="text-right font-bold">
+                                                            {currency}{(item.quantityDelta * item.rate).toLocaleString()}
                                                         </TableCell>
-                                                        <TableCell align="center">
-                                                            <IconButton size="small" color="error" onClick={() => handleRemoveItemFromVO(item.id)}>
-                                                                <X size={14}/>
-                                                            </IconButton>
+                                                        <TableCell className="text-center">
+                                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItemFromVO(item.id)}>
+                                                                <X className="h-4 w-4"/>
+                                                            </Button>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
                                         </Table>
-                                    </Box>
-                                    <Box p={3} textAlign="right" borderTop={1} borderColor="divider">
-                                        <Button onClick={() => setIsCreateModalOpen(false)} sx={{ mr: 2, borderRadius: 3 }}>Discard</Button>
+                                    </CardContent>
+                                    <DialogFooter className="p-4 border-t">
+                                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Discard</Button>
                                         <Button 
-                                            variant="contained" 
                                             onClick={handleSaveVODraft}
                                             disabled={!voForm.items?.length || !voForm.title}
-                                            startIcon={<Save/>}
-                                            sx={{ px: 6, py: 1.5, borderRadius: 3 }}
                                         >
-                                            Store Draft
+                                            <Save className="mr-2 h-4 w-4"/> Store Draft
                                         </Button>
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        </Grid>
-                    </Box>
+                                    </DialogFooter>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

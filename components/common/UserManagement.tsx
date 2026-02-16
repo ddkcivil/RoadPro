@@ -1,39 +1,45 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, useMemo } from 'react';
 import { User, UserRole } from '../../types';
 import { apiService } from '../../services/api/apiService';
-import { UserPlus, Trash2, Mail, Shield, Edit3, Upload, X, Save } from 'lucide-react';
-import { 
-  Avatar, 
-  Box, 
-  Typography, 
-  Button, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  IconButton,
-  Chip,
-  Stack
-} from '@mui/material';
+import { UserPlus, Trash2, Mail, Shield, Edit3, Upload, X, Save, GripVertical } from 'lucide-react';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Badge } from "~/components/ui/badge";
+import { Checkbox } from '~/components/ui/checkbox';
+
+
+
 
 const UserManagement: React.FC = () => {
+  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Load data from API on component mount
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [newUser, setNewUser] = useState({ 
+    name: '', 
+    email: '', 
+    role: UserRole.SITE_ENGINEER as UserRole,
+    phone: ''
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -52,42 +58,14 @@ const UserManagement: React.FC = () => {
     
     loadData();
   }, []);
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUser, setNewUser] = useState({ 
-    name: '', 
-    email: '', 
-    role: UserRole.SITE_ENGINEER as UserRole,
-    phone: ''
-  });
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!newUser.name.trim()) {
-      alert('User name is required');
-      return;
-    }
-    
-    if (!newUser.email.trim()) {
-      alert('Email is required');
-      return;
-    }
-    
-    if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(newUser.email)) {
-      alert('Please enter a valid email address');
-      return;
-    }
-    
-    if (newUser.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(newUser.phone)) {
-      alert('Please enter a valid phone number');
-      return;
-    }
+    if (!newUser.name.trim()) { alert('User name is required'); return; }
+    if (!newUser.email.trim()) { alert('Email is required'); return; }
+    if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(newUser.email)) { alert('Please enter a valid email address'); return; }
+    if (newUser.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(newUser.phone)) { alert('Please enter a valid phone number'); return; }
     
     try {
       const user = await apiService.createUser({
@@ -109,38 +87,17 @@ const UserManagement: React.FC = () => {
 
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!editingUser) return;
     
-    // Validation
-    if (!editingUser.name.trim()) {
-      alert('User name is required');
-      return;
-    }
+    if (!editingUser.name.trim()) { alert('User name is required'); return; }
+    if (!editingUser.email.trim()) { alert('Email is required'); return; }
+    if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(editingUser.email)) { alert('Please enter a valid email address'); return; }
+    if (editingUser.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(editingUser.phone)) { alert('Please enter a valid phone number'); return; }
     
-    if (!editingUser.email.trim()) {
-      alert('Email is required');
-      return;
-    }
-    
-    if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(editingUser.email)) {
-      alert('Please enter a valid email address');
-      return;
-    }
-    
-    if (editingUser.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(editingUser.phone)) {
-      alert('Please enter a valid phone number');
-      return;
-    }
-    
-    // Check for duplicates when changing email
     const duplicate = users.some(u => 
       u.id !== editingUser.id && u.email.toLowerCase() === editingUser.email.toLowerCase()
     );
-    if (duplicate) {
-      alert(`Duplicate: A user with email "${editingUser.email}" already exists.`);
-      return;
-    }
+    if (duplicate) { alert(`Duplicate: A user with email "${editingUser.email}" already exists.`); return; }
 
     try {
       const updatedUser = await apiService.updateUser(editingUser.id, {
@@ -150,7 +107,6 @@ const UserManagement: React.FC = () => {
         role: editingUser.role
       });
 
-      // Update local state
       const updatedUsers = users.map(user =>
         user.id === editingUser.id ? updatedUser : user
       );
@@ -169,7 +125,6 @@ const UserManagement: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await apiService.deleteUser(id);
-        // Update local state
         setUsers(prev => prev.filter(u => u.id !== id));
         alert('User deleted successfully');
       } catch (error: any) {
@@ -185,16 +140,12 @@ const UserManagement: React.FC = () => {
     setAvatarFile(null);
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, isEdit = false) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarFile(file);
-      
-      // Create a preview URL for the selected image
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
+      reader.onloadend = () => { setPreviewUrl(reader.result as string); };
       reader.readAsDataURL(file);
     }
   };
@@ -227,434 +178,292 @@ const UserManagement: React.FC = () => {
     }
   };
 
+
   const getUserRoleColor = (role: UserRole) => {
     switch (role) {
-      case UserRole.ADMIN:
-        return 'primary';
-      case UserRole.PROJECT_MANAGER:
-        return 'secondary';
-      case UserRole.SITE_ENGINEER:
-        return 'info';
-      case UserRole.LAB_TECHNICIAN:
-        return 'warning';
-      case UserRole.SUPERVISOR:
-        return 'success';
-      default:
-        return 'default';
+      case UserRole.ADMIN: return 'bg-red-500/20 text-red-700';
+      case UserRole.PROJECT_MANAGER: return 'bg-blue-500/20 text-blue-700';
+      case UserRole.SITE_ENGINEER: return 'bg-green-500/20 text-green-700';
+      case UserRole.LAB_TECHNICIAN: return 'bg-yellow-500/20 text-yellow-700';
+      case UserRole.SUPERVISOR: return 'bg-purple-500/20 text-purple-700';
+      default: return 'bg-gray-500/20 text-gray-700';
     }
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', overflowY: 'auto', p: 2 }}>
+    <div className="p-4 h-[calc(100vh-140px)] overflow-y-auto">
       {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-          <Typography variant="h6">Loading user data...</Typography>
-        </Box>
+        <div className="flex justify-center items-center h-48">
+          <p className="text-lg text-slate-600">Loading user data...</p>
+        </div>
       )}
       
       {!loading && (
         <>
-      <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-        <Box>
-          <Typography variant="h5" fontWeight="900">User Management</Typography>
-          <Typography variant="body2" color="text.secondary">Manage system access and roles</Typography>
-        </Box>
-        <Box display="flex" gap={1}>
-          <Button 
-            variant="outlined" 
-            startIcon={<UserPlus size={16}/>} 
-            onClick={() => setIsModalOpen(true)}
-            sx={{ paddingX: 1.5, paddingY: 0.75 }}
-          >
-            Add User
-          </Button>
-          {pendingUsers.length > 0 && (
-            <Button 
-              variant="contained" 
-              color="warning"
-              onClick={() => {}}
-              sx={{ paddingX: 1.5, paddingY: 0.75 }}
-            >
-              Pending ({pendingUsers.length})
-            </Button>
-          )}
-        </Box>
-      </Box>
-      
-      {/* Pending Users Section */}
-      {pendingUsers.length > 0 && (
-        <Paper variant="outlined" sx={{ borderRadius: 4, mb: 3 }}>
-          <Box p={2} bgcolor="#fef3c7" borderBottom="1px solid #fbbf24">
-            <Typography variant="h6" fontWeight="bold" color="#92400e">
-              Pending Registrations ({pendingUsers.length})
-            </Typography>
-          </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: 'amber.50' }}>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Requested Role</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Phone</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingUsers.map((user: any) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>
-                      <Stack direction="column" spacing={0.5}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Avatar 
-                            src={user.avatar} 
-                            sx={{ width: 40, height: 40 }}
-                          >
-                            {user.name.charAt(0)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight="bold">{user.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Registered: {new Date(user.createdAt).toLocaleDateString()}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={user.requestedRole} 
-                        size="small" 
-                        color={getUserRoleColor(user.requestedRole as UserRole)}
-                        variant="outlined"
-                        sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Mail size={14} />
-                        <Typography variant="body2">{user.email}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{user.phone || '-'}</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                        <Button 
-                          variant="outlined" 
-                          color="success"
-                          size="small" 
-                          startIcon={<Shield size={16}/>} 
-                          onClick={() => approveUser(user)}
-                        >
-                          Approve
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          color="error" 
-                          size="small" 
-                          startIcon={<X size={16}/>} 
-                          onClick={() => rejectUser(user)}
-                        >
-                          Reject
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      )}
-
-      <Paper variant="outlined" sx={{ borderRadius: 4 }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'slate.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>User</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Role</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Phone</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map(user => (
-                <TableRow key={user.id} hover>
-                  <TableCell>
-                    <Stack direction="column" spacing={0.5}>
-                      <Stack direction="row" alignItems="center" spacing={2}>
-                        <Avatar 
-                          src={user.avatar} 
-                          sx={{ width: 40, height: 40 }}
-                        >
-                          {user.name.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="bold">{user.name}</Typography>
-                          <Chip 
-                            label={user.role} 
-                            size="small" 
-                            color={getUserRoleColor(user.role)}
-                            variant="outlined"
-                            sx={{ fontWeight: 'bold', fontSize: '0.75rem', mt: 0.5 }}
-                          />
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Mail size={14} />
-                      <Typography variant="body2">{user.email}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{user.phone || '-'}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                      <Button 
-                        variant="outlined" 
-                        size="small" 
-                        startIcon={<Edit3 size={16}/>}
-                        onClick={() => openEditModal(user)}
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="outlined" 
-                        color="error" 
-                        size="small" 
-                        startIcon={<Trash2 size={16}/>}
-                        onClick={() => removeUser(user.id)}
-                      >
-                        Delete
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
-      {/* Add User Modal */}
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <UserPlus className="text-indigo-600" /> Add New User
-        </DialogTitle>
-        <DialogContent>
-          <Box component="form" onSubmit={handleAddUser} sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-              <Avatar 
-                src={previewUrl || undefined} 
-                sx={{ width: 64, height: 64, bgcolor: 'slate.200', color: 'slate.600', fontWeight: 'bold', fontSize: 12 }}
-              >
-                {newUser.name ? newUser.name.charAt(0) : 'U'}
-              </Avatar>
-              <Box>
-                <Button 
-                  variant="outlined" 
-                  component="label" 
-                  startIcon={<Upload size={16} />}
-                  sx={{ borderRadius: 2, mr: 1 }}
-                >
-                  Upload Photo
-                  <input 
-                    type="file" 
-                    hidden 
-                    accept="image/*" 
-                    onChange={handleFileChange}
-                  />
+          <div className="flex justify-between mb-4 items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
+              <p className="text-sm text-slate-500">Manage system access and roles</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+              {pendingUsers.length > 0 && (
+                <Button variant="secondary" onClick={() => {}}>
+                  Pending ({pendingUsers.length})
                 </Button>
-                {avatarFile && (
-                  <IconButton 
-                    size="small" 
-                    onClick={clearAvatar}
-                    sx={{ color: 'error.main', ml: 1 }}
-                  >
-                    <X size={16} />
-                  </IconButton>
-                )}
-                <Typography variant="caption" color="text.secondary">
-                  JPG, PNG, Max 5MB
-                </Typography>
-              </Box>
-            </Stack>
-            
-            <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-              <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 80 }}>
-                Role:
-              </Typography>
-              <FormControl fullWidth margin="normal" sx={{ m: 0 }}>
-                <Select 
-                  value={newUser.role} 
-                  onChange={e => setNewUser({...newUser, role: e.target.value as UserRole})}
-                  size="small"
-                >
-                  {Object.values(UserRole).map(role => (
-                    <MenuItem key={role} value={role}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Chip 
-                          label={role} 
-                          size="small" 
-                          color={getUserRoleColor(role as UserRole)}
-                          variant="outlined"
-                          sx={{ height: 20, fontSize: '0.75rem' }}
-                        />
-                      </Stack>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-            
-            <TextField 
-              required
-              label="Full Name" 
-              fullWidth 
-              value={newUser.name} 
-              onChange={e => setNewUser({...newUser, name: e.target.value})} 
-              margin="normal"
-            />
-            <TextField 
-              required
-              label="Email" 
-              type="email" 
-              fullWidth 
-              value={newUser.email} 
-              onChange={e => setNewUser({...newUser, email: e.target.value})} 
-              margin="normal"
-            />
-            <TextField 
-              label="Phone" 
-              fullWidth 
-              value={newUser.phone} 
-              onChange={e => setNewUser({...newUser, phone: e.target.value})} 
-              margin="normal"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, bgcolor: '#f8fafc' }}>
-          <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAddUser}>Add User</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Edit User Modal */}
-      <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-          <Edit3 size={20} className="text-white" /> Edit User
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {editingUser && (
-            <Box component="form" onSubmit={handleEditUser} sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-                <Avatar 
-                  src={previewUrl || editingUser.avatar || undefined} 
-                  sx={{ width: 64, height: 64, bgcolor: 'slate.200', color: 'slate.600', fontWeight: 'bold', fontSize: 12 }}
-                >
-                  {editingUser.name.charAt(0)}
-                </Avatar>
-                <Box>
-                  <Button 
-                    variant="outlined" 
-                    component="label" 
-                    startIcon={<Upload size={16} />}
-                    sx={{ borderRadius: 2, mr: 1 }}
-                  >
-                    Change Photo
-                    <input 
-                      type="file" 
-                      hidden 
-                      accept="image/*" 
-                      onChange={(e) => handleFileChange(e, true)}
-                    />
-                  </Button>
-                  {(previewUrl || avatarFile) && (
-                    <IconButton 
-                      size="small" 
-                      onClick={clearAvatar}
-                      sx={{ color: 'error.main', ml: 1 }}
-                    >
-                      <X size={16} />
-                    </IconButton>
-                  )}
-                  <Typography variant="caption" color="text.secondary">
-                    JPG, PNG, Max 5MB
-                  </Typography>
-                </Box>
-              </Stack>
-              
-              {editingUser && (
-                <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                  <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 80 }}>
-                    Role:
-                  </Typography>
-                  <FormControl fullWidth margin="normal" sx={{ m: 0 }}>
-                    <Select 
-                      value={editingUser.role} 
-                      onChange={e => setEditingUser({...editingUser, role: e.target.value as UserRole})}
-                      size="small"
-                    >
-                      {Object.values(UserRole).map(role => (
-                        <MenuItem key={role} value={role}>
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <Chip 
-                              label={role} 
-                              size="small" 
-                              color={getUserRoleColor(role as UserRole)}
-                              variant="outlined"
-                              sx={{ height: 20, fontSize: '0.75rem' }}
-                            />
-                          </Stack>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Stack>
               )}
-              
-              <TextField 
-                required
-                label="Full Name" 
-                fullWidth 
-                value={editingUser.name} 
-                onChange={e => setEditingUser({...editingUser, name: e.target.value})} 
-                margin="normal"
-              />
-              <TextField 
-                required
-                label="Email" 
-                type="email" 
-                fullWidth 
-                value={editingUser.email} 
-                onChange={e => setEditingUser({...editingUser, email: e.target.value})} 
-                margin="normal"
-              />
-              <TextField 
-                label="Phone" 
-                fullWidth 
-                value={editingUser.phone || ''} 
-                onChange={e => setEditingUser({...editingUser, phone: e.target.value})} 
-                margin="normal"
-              />
-            </Box>
+            </div>
+          </div>
+          
+          {/* Pending Users Section */}
+          {pendingUsers.length > 0 && (
+            <Card className="mb-6 border-amber-300">
+                <CardHeader className="bg-amber-100 border-b border-amber-300">
+                    <CardTitle className="text-xl font-bold text-amber-900">
+                        Pending Registrations ({pendingUsers.length})
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-amber-50">
+                                <TableHead className="font-bold text-sm">User</TableHead>
+                                <TableHead className="font-bold text-sm">Requested Role</TableHead>
+                                <TableHead className="font-bold text-sm">Email</TableHead>
+                                <TableHead className="font-bold text-sm">Phone</TableHead>
+                                <TableHead className="text-right font-bold text-sm">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {pendingUsers.map((user: any) => (
+                                <TableRow key={user.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Avatar>
+                                                <AvatarImage src={user.avatar} />
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold">{user.name}</p>
+                                                <p className="text-xs text-muted-foreground">Registered: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className={getUserRoleColor(user.requestedRole)}>{user.requestedRole}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            <Mail className="h-4 w-4 text-muted-foreground" />
+                                            <span>{user.email}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{user.phone || '-'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => approveUser()}>
+                                                <Shield className="mr-1 h-4 w-4" /> Approve
+                                            </Button>
+                                            <Button variant="destructive" size="sm" onClick={() => rejectUser()}>
+                                                <X className="mr-1 h-4 w-4" /> Reject
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
           )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-          <Button onClick={() => setIsEditModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-          <Button variant="contained" startIcon={<Save size={16} />} onClick={handleEditUser} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Update User</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="font-bold text-sm">User</TableHead>
+                    <TableHead className="font-bold text-sm">Email</TableHead>
+                    <TableHead className="font-bold text-sm">Phone</TableHead>
+                    <TableHead className="text-right font-bold text-sm">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar>
+                            <AvatarImage src={user.avatar} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">{user.name}</p>
+                            <Badge className={getUserRoleColor(user.role)}>{user.role}</Badge>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span>{user.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.phone || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => openEditModal(user)}>
+                            <Edit3 className="mr-1 h-4 w-4" /> Edit
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => removeUser(user.id)}>
+                            <Trash2 className="mr-1 h-4 w-4" /> Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Add User Modal */}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="text-indigo-600" /> Add New User
+                </DialogTitle>
+                <DialogDescription>Fill in the details for the new user.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={previewUrl || undefined} />
+                    <AvatarFallback>{newUser.name ? newUser.name.charAt(0) : 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="grid gap-1">
+                    <Button variant="outline" size="sm" asChild>
+                      <Label htmlFor="avatar-upload">
+                        <Upload className="mr-2 h-4 w-4" /> Upload Photo
+                      </Label>
+                    </Button>
+                    <Input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                    {avatarFile && (
+                      <Button variant="ghost" size="sm" onClick={clearAvatar}>
+                        <X className="mr-2 h-4 w-4" /> Clear Photo
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground">JPG, PNG, Max 5MB</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Full Name</Label>
+                  <Input id="name" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input id="email" type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">Phone</Label>
+                  <Input id="phone" value={newUser.phone} onChange={e => setNewUser({...newUser, phone: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="role" className="text-right">Role</Label>
+                  <Select value={newUser.role} onValueChange={(value: UserRole) => setNewUser({...newUser, role: value})}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(UserRole).map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddUser}>Add User</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit User Modal */}
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Edit3 className="text-indigo-600" /> Edit User
+                </DialogTitle>
+                <DialogDescription>Update user details.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                {editingUser && (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="w-16 h-16">
+                        <AvatarImage src={previewUrl || editingUser.avatar || undefined} />
+                        <AvatarFallback>{editingUser.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid gap-1">
+                        <Button variant="outline" size="sm" asChild>
+                          <Label htmlFor="edit-avatar-upload">
+                            <Upload className="mr-2 h-4 w-4" /> Change Photo
+                          </Label>
+                        </Button>
+                        <Input id="edit-avatar-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleFileChange(e)} />
+                        {(previewUrl || avatarFile) && (
+                          <Button variant="ghost" size="sm" onClick={clearAvatar}>
+                            <X className="mr-2 h-4 w-4" /> Clear Photo
+                          </Button>
+                        )}
+                        <p className="text-xs text-muted-foreground">JPG, PNG, Max 5MB</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-name" className="text-right">Full Name</Label>
+                      <Input id="edit-name" value={editingUser.name} onChange={e => setEditingUser({...editingUser, name: e.target.value})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-email" className="text-right">Email</Label>
+                      <Input id="edit-email" type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-phone" className="text-right">Phone</Label>
+                      <Input id="edit-phone" value={editingUser.phone || ''} onChange={e => setEditingUser({...editingUser, phone: e.target.value})} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-role" className="text-right">Role</Label>
+                      <Select value={editingUser.role} onValueChange={(value: UserRole) => setEditingUser({...editingUser, role: value})}>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(UserRole).map(role => (
+                            <SelectItem key={role} value={role}>{role}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+                <Button onClick={handleEditUser}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
-    </Box>
+    </div>
   );
 };
 

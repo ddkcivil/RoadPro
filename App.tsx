@@ -1,34 +1,5 @@
-﻿import React, { useState, useEffect, useMemo, startTransition, lazy, Suspense } from 'react';
-// PDF imports moved to dynamic imports to avoid Vite optimization issues
-// import { pdfjs } from 'react-pdf';
-// import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import React, { useState, useEffect, useMemo, startTransition, lazy, Suspense } from 'react';
 import { 
-  ThemeProvider, 
-  createTheme, 
-  CssBaseline, 
-  Box, 
-  Drawer, 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  List, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  IconButton, 
-  Avatar, 
-  Button,
-  Fade,
-  Tooltip,
-  ListSubheader,
-  Chip,
-  alpha,
-  Divider,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import {
   Sun,
   Moon,
   LayoutDashboard,
@@ -70,18 +41,21 @@ import {
   Trees,
   Download,
   Plus,
-  Landmark
+  Landmark,
+  GripVertical,
+  Loader2
 } from 'lucide-react';
 import { UserRole, Project, AppSettings, Message, UserWithPermissions, Permission } from './types';
 import { PermissionsService } from './services/auth/permissionsService';
 import { AuditService } from './services/analytics/auditService';
 import { DataCache, getCacheKey } from './utils/data/cacheUtils';
 import { LocalStorageUtils } from './utils/data/localStorageUtils';
-import { sqliteService } from './services/database/sqliteService';
+
 import { DataSyncService } from './services/database/dataSyncService';
 import { apiService } from './services/api/apiService';
 import { prepareProjectWithMaterials } from './utils/migration/materialMigrationUtils';
 import { addSkipLink } from './utils/accessibility/a11yUtils';
+
 import AboutPage from './components/core/AboutPage';
 import ContactPage from './components/core/ContactPage';
 import ErrorBoundary from './components/core/ErrorBoundary';
@@ -94,8 +68,25 @@ import { NotificationProvider } from './contexts/NotificationContext';
 // Components
 import Login from './components/core/Login';
 import DataAnalysisModule from './components/core/DataAnalysisModule';
+import ProjectsList from './components/core/ProjectsList';
 
-// Lazy-loaded components for performance optimization
+// Shadcn UI components
+import { Button } from '~/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '~/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '~/components/ui/dropdown-menu';
+import { Toggle } from '~/components/ui/toggle';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Progress } from '~/components/ui/progress';
+import { Toaster, toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { cn } from '~/lib/utils';
+import { ScrollArea } from '~/components/ui/scroll-area';
+import { Dialog } from '~/components/ui/dialog';
+
+// Lazy-loaded components - keep as is
 const Dashboard = lazy(() => import('./components/core/Dashboard'));
 const BOQModule = lazy(() => import('./components/modules/BOQModule'));
 const BillingModule = lazy(() => import('./components/modules/BillingModule'));
@@ -103,20 +94,17 @@ const VariationModule = lazy(() => import('./components/modules/VariationModule'
 const RFIModule = lazy(() => import('./components/modules/RFIModule'));
 const ScheduleModule = lazy(() => import('./components/modules/ScheduleModule'));
 const DailyReportModule = lazy(() => import('./components/modules/DailyReportModule'));
-// const ProjectsList = lazy(() => import('./components/ProjectsList'));
-import ProjectsList from './components/core/ProjectsList';
 const PortfolioDashboard = lazy(() => import('./components/core/PortfolioDashboard'));
 const AIChatModal = lazy(() => import('./components/utilities/AIChatModal'));
 const UserManagement = lazy(() => import('./components/common/UserManagement'));
 const UserRegistration = lazy(() => import('./components/common/UserRegistration'));
-
 const StaffManagementModule = lazy(() => import('./components/modules/StaffManagementModule'));
 const ResourceManagementHub = lazy(() => import('./components/modules/ResourceManagementHub'));
 const DocumentationHub = lazy(() => import('./components/modules/DocumentationHub'));
 const FinancialManagementHub = lazy(() => import('./components/modules/FinancialManagementHub'));
 const SettingsModule = lazy(() => import('./components/modules/SettingsModule'));
 const ConstructionModule = lazy(() => import('./components/modules/ConstructionModule'));
-const MapModule = lazy(() => import('./components/modules/MapModule'));
+// const MapModule = lazy(() => import('./components/modules/MapModule'));
 const LabModule = lazy(() => import('./components/modules/LabModule'));
 const QualityHub = lazy(() => import('./components/hubs/QualityHub'));
 const LinearWorksModule = lazy(() => import('./components/modules/LinearWorksModule'));
@@ -133,219 +121,11 @@ const PavementModule = lazy(() => import('./components/modules/PavementModule'))
 const AgencyModule = lazy(() => import('./components/modules/AgencyModule'));
 const AssetsModule = lazy(() => import('./components/modules/AssetsModule'));
 const ResourceMatrixModule = lazy(() => import('./components/modules/ResourceMatrixModule'));
-// Old MaterialsResourcesHub removed - replaced by unified MaterialManagementModule
-const FinancialsCommercialHub = lazy(() => import('./components/hubs/FinancialsCommercialHub'));
 const ReportsAnalyticsHub = lazy(() => import('./components/hubs/ReportsAnalyticsHub'));
 const ChandraOCRAnalyzer = lazy(() => import('./components/utilities/ChandraOCRAnalyzer'));
 const MaterialManagementModule = lazy(() => import('./components/modules/MaterialManagementModule'));
 const MPRReportModule = lazy(() => import('./components/modules/MPRReportModule'));
 
-
-const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: { main: '#1A2B3C', light: '#2C4257', dark: '#0A1B2C', contrastText: '#ffffff' }, // Dark Blue
-    secondary: { main: '#000000', light: '#333333', dark: '#000000' }, // Black
-    brown: { main: '#8B4513', light: '#A0522D', dark: '#6B370D', contrastText: '#ffffff' }, // Brown
-    background: { default: '#f8fafc', paper: '#ffffff' },
-    text: { primary: '#0f172a', secondary: '#475569' },
-    divider: 'rgba(0,0,0,0.06)',
-  },
-  typography: {
-    fontFamily: '"Inter", "system-ui", "sans-serif"',
-    h5: { fontWeight: 800, letterSpacing: '-0.02em', fontSize: '1.25rem' },
-    subtitle1: { fontWeight: 600, fontSize: '0.875rem' },
-    button: { textTransform: 'none', fontWeight: 600, letterSpacing: '0.01em', fontSize: '0.875rem' },
-    body1: { fontSize: '0.875rem' },
-    body2: { fontSize: '0.75rem' },
-  },
-  spacing: 4,
-  shape: { borderRadius: 4 },
-  components: {
-    MuiListItemButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '8px',
-          margin: '2px 0',
-          padding: '6px 12px',
-        }
-      }
-    },
-    MuiToolbar: {
-      styleOverrides: {
-        root: {
-          minHeight: '48px !important',
-        }
-      }
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          minHeight: '48px',
-        }
-      }
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          height: '24px',
-          fontSize: '0.75rem',
-        }
-      }
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          padding: '6px 12px',
-          minHeight: '32px',
-          fontSize: '0.875rem',
-          boxShadow: 'none',
-          '&:hover': { boxShadow: '0 2px 8px rgba(79, 70, 229, 0.15)' },
-        },
-        containedPrimary: {
-          background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-          boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
-          '&:hover': { boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)' },
-        },
-        contained: {
-          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
-          '&:hover': { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
-        },
-        outlined: {
-          borderWidth: '1px',
-          padding: '5px 11px',
-          '&:hover': { borderWidth: '1px', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)' },
-        },
-        sizeSmall: {
-          padding: '4px 8px',
-          minHeight: '24px',
-          fontSize: '0.75rem',
-        }
-      }
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        paper: { 
-          border: 'none', 
-          backgroundColor: '#0f172a',
-          color: '#94a3b8',
-          transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-        }
-      }
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          border: '1px solid rgba(0,0,0,0.04)',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.02)',
-          transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.04)',
-          }
-        }
-      }
-    }
-  }
-});
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: { main: '#2C4257', light: '#4B6780', dark: '#1A2B3C', contrastText: '#ffffff' }, // Dark Blue (slightly lighter for dark mode)
-    secondary: { main: '#1A1A1A', light: '#333333', dark: '#000000' }, // Black (slightly lighter for dark mode)
-    brown: { main: '#8B4513', light: '#A0522D', dark: '#6B370D', contrastText: '#ffffff' }, // Brown
-    background: { default: '#020617', paper: '#0f172a' },
-    text: { primary: '#f8fafc', secondary: '#94a3b8' },
-    divider: 'rgba(255,255,255,0.1)',
-  },
-  typography: {
-    fontFamily: '"Inter", "system-ui", "sans-serif"',
-    h5: { fontWeight: 800, letterSpacing: '-0.02em', fontSize: '1.25rem' },
-    subtitle1: { fontWeight: 600, fontSize: '0.875rem' },
-    button: { textTransform: 'none', fontWeight: 600, letterSpacing: '0.01em', fontSize: '0.875rem' },
-    body1: { fontSize: '0.875rem' },
-    body2: { fontSize: '0.75rem' },
-  },
-  spacing: 4,
-  shape: { borderRadius: 4 },
-  components: {
-    MuiListItemButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '8px',
-          margin: '2px 0',
-          padding: '6px 12px',
-        }
-      }
-    },
-    MuiToolbar: {
-      styleOverrides: {
-        root: {
-          minHeight: '48px !important',
-        }
-      }
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          minHeight: '48px',
-        }
-      }
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          height: '24px',
-          fontSize: '0.75rem',
-        }
-      }
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          padding: '8px 16px',
-          boxShadow: 'none',
-          '&:hover': { boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)' },
-        },
-        containedPrimary: {
-          background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-          boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-          '&:hover': { boxShadow: '0 6px 16px rgba(99, 102, 241, 0.4)' },
-        },
-        contained: {
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-          '&:hover': { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)' },
-        },
-        outlined: {
-          borderWidth: '2px',
-          '&:hover': { borderWidth: '2px', boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)' },
-        }
-      }
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        paper: { 
-          border: 'none', 
-          backgroundColor: '#0f172a',
-          color: '#94a3b8',
-          transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-        }
-      }
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-          backgroundImage: 'none',
-        }
-      }
-    }
-  }
-});
 
 const App: React.FC = () => {
   // Register service worker and add accessibility features on component mount
@@ -359,24 +139,7 @@ const App: React.FC = () => {
       localStorage.setItem('roadmaster-users', JSON.stringify([]));
     }
     
-    // Initialize SQLite service and migrate data from localStorage if needed
-    const initializeSQLite = async () => {
-      try {
-        await sqliteService.initialize();
-        
-        // Check if we need to migrate data from localStorage to SQLite
-        const sqliteDataExists = localStorage.getItem('roadmaster-sqlite-db');
-        if (!sqliteDataExists) {
-          console.log('Migrating data from localStorage to SQLite...');
-          await sqliteService.migrateFromLocalStorage();
-          console.log('Data migration to SQLite completed');
-        }
-      } catch (error) {
-        console.error('Error initializing SQLite service:', error);
-      }
-    };
-    
-    initializeSQLite();
+
     
     if ('serviceWorker' in navigator) {
       const registerSW = async () => {
@@ -406,11 +169,17 @@ const App: React.FC = () => {
   }, []);
 
 
-        const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
-        const [themePrimaryColor, setThemePrimaryColor] = useState('#1A2B3C'); // New Dark Blue
-        const [themeSecondaryColor, setThemeSecondaryColor] = useState('#000000'); // New Black
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   
-  // Authentication state
+  useEffect(() => {
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [themeMode]);
+
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated
     const authState = localStorage.getItem('roadmaster-authenticated') === 'true';
@@ -462,8 +231,8 @@ const App: React.FC = () => {
   const [hasSelectedProject, setHasSelectedProject] = useState(false);
   
   // Main app state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   
   // Initialize projects from localStorage or use mock data with caching
@@ -511,137 +280,14 @@ const App: React.FC = () => {
         console.log('Falling back to local sources due to backend error.');
       }
 
-      if (!loadedFromBackend) {
-        try {
-          await sqliteService.initialize();
-          const sqliteProjects = await sqliteService.getAllProjects();
-          
-          if (sqliteProjects.length > 0) {
-            console.log('Projects loaded from SQLite:', sqliteProjects);
-            // Convert SQLite data back to Project objects
-            fetchedProjects = sqliteProjects.map(sqlProject => ({
-              id: sqlProject.id,
-              name: sqlProject.name,
-              code: sqlProject.code,
-              location: sqlProject.location,
-              contractor: sqlProject.contractor,
-              startDate: sqlProject.start_date,
-              endDate: sqlProject.end_date,
-              client: sqlProject.client,
-              engineer: sqlProject.engineer,
-              contractNo: sqlProject.contract_no,
-              boq: sqlProject.boq ? JSON.parse(sqlProject.boq) : [],
-              rfis: sqlProject.rfis ? JSON.parse(sqlProject.rfis) : [],
-              labTests: sqlProject.lab_tests ? JSON.parse(sqlProject.lab_tests) : [],
-              schedule: sqlProject.schedule ? JSON.parse(sqlProject.schedule) : [],
-              structures: sqlProject.structures ? JSON.parse(sqlProject.structures) : [],
-              agencies: sqlProject.agencies ? JSON.parse(sqlProject.agencies) : [],
-              agencyPayments: sqlProject.agency_payments ? JSON.parse(sqlProject.agency_payments) : [],
-              linearWorks: sqlProject.linear_works ? JSON.parse(sqlProject.linear_works) : [],
-              inventory: sqlProject.inventory ? JSON.parse(sqlProject.inventory) : [],
-              inventoryTransactions: sqlProject.inventory_transactions ? JSON.parse(sqlProject.inventory_transactions) : [],
-              vehicles: sqlProject.vehicles ? JSON.parse(sqlProject.vehicles) : [],
-              vehicleLogs: sqlProject.vehicle_logs ? JSON.parse(sqlProject.vehicle_logs) : [],
-              documents: sqlProject.documents ? JSON.parse(sqlProject.documents) : [],
-              sitePhotos: sqlProject.site_photos ? JSON.parse(sqlProject.site_photos) : [],
-              dailyReports: sqlProject.daily_reports ? JSON.parse(sqlProject.daily_reports) : [],
-              preConstruction: sqlProject.pre_construction ? JSON.parse(sqlProject.pre_construction) : [],
-              landParcels: sqlProject.land_parcels ? JSON.parse(sqlProject.land_parcels) : [],
-              mapOverlays: sqlProject.map_overlays ? JSON.parse(sqlProject.map_overlays) : [],
-              hindrances: sqlProject.hindrances ? JSON.parse(sqlProject.hindrances) : [],
-              ncrs: sqlProject.nc_rs ? JSON.parse(sqlProject.nc_rs) : [],
-              contractBills: sqlProject.contract_bills ? JSON.parse(sqlProject.contract_bills) : [],
-              subcontractorBills: sqlProject.subcontractor_bills ? JSON.parse(sqlProject.subcontractor_bills) : [],
-              measurementSheets: sqlProject.measurement_sheets ? JSON.parse(sqlProject.measurement_sheets) : [],
-              staffLocations: sqlProject.staff_locations ? JSON.parse(sqlProject.staff_locations) : [],
-              environmentRegistry: sqlProject.environment_registry ? JSON.parse(sqlProject.environment_registry) : [],
-              lastSynced: sqlProject.last_synced,
-              spreadsheetId: sqlProject.spreadsheet_id,
-              settings: sqlProject.settings ? JSON.parse(sqlProject.settings) : {}
-            }));
-          } else {
-            console.log('No projects from SQLite, checking localStorage.');
-            const savedProjects = localStorage.getItem('roadmaster-projects');
-            if (savedProjects) {
-              fetchedProjects = JSON.parse(savedProjects);
-              console.log('Projects loaded from localStorage.');
-            } else {
-              console.log('No projects found in localStorage.');
-            }
-          }
-        } catch (sqliteError) {
-          console.error('Error loading projects from SQLite:', sqliteError);
-          // Fallback to localStorage if SQLite fails
-          const savedProjects = localStorage.getItem('roadmaster-projects');
-          if (savedProjects) {
-            fetchedProjects = JSON.parse(savedProjects);
-            console.log('Projects loaded from localStorage after SQLite error.');
-          }
-        }
-      }
+
 
       // Update state, localStorage, and cache with the most recent data
       if (fetchedProjects.length > 0) {
         setProjects(fetchedProjects);
         localStorage.setItem('roadmaster-projects', JSON.stringify(fetchedProjects));
         DataCache.set(getCacheKey('projects'), fetchedProjects, { ttl: 10 * 60 * 1000 });
-        // Also update SQLite if loaded from backend or localStorage (to ensure consistency)
-        if (loadedFromBackend || fetchedProjects.length > 0) {
-          try {
-            await sqliteService.initialize();
-            for (const project of fetchedProjects) {
-              const sqliteProjectData = {
-                id: project.id,
-                name: project.name || '',
-                code: project.code || null,
-                location: project.location || '',
-                contractor: project.contractor || '',
-                start_date: project.startDate || null,
-                end_date: project.endDate || null,
-                client: project.client || '',
-                engineer: project.engineer || null,
-                contract_no: project.contractNo || null,
-                boq: JSON.stringify(project.boq || []),
-                rfis: JSON.stringify(project.rfis || []),
-                lab_tests: JSON.stringify(project.labTests || []),
-                schedule: JSON.stringify(project.schedule || []),
-                structures: JSON.stringify(project.structures || []),
-                agencies: JSON.stringify(project.agencies || []),
-                agency_payments: JSON.stringify(project.agencyPayments || []),
-                linear_works: JSON.stringify(project.linearWorks || []),
-                inventory: JSON.stringify(project.inventory || []),
-                inventory_transactions: JSON.stringify(project.inventoryTransactions || []),
-                vehicles: JSON.stringify(project.vehicles || []),
-                vehicle_logs: JSON.stringify(project.vehicleLogs || []),
-                documents: JSON.stringify(project.documents || []),
-                site_photos: JSON.stringify(project.sitePhotos || []),
-                daily_reports: JSON.stringify(project.dailyReports || []),
-                pre_construction: JSON.stringify(project.preConstruction || []),
-                land_parcels: JSON.stringify(project.landParcels || []),
-                map_overlays: JSON.stringify(project.mapOverlays || []),
-                hindrances: JSON.stringify(project.hindrances || []),
-                ncrs: JSON.stringify(project.ncrs || []),
-                contract_bills: JSON.stringify(project.contractBills || []),
-                subcontractor_bills: JSON.stringify(project.subcontractorBills || []),
-                measurement_sheets: JSON.stringify(project.measurementSheets || []),
-                staff_locations: JSON.stringify(project.staffLocations || []),
-                environment_registry: JSON.stringify(project.environmentRegistry || []),
-                last_synced: project.lastSynced,
-                spreadsheet_id: project.spreadsheetId,
-                settings: JSON.stringify(project.settings || {})
-              };
 
-              const existingProjects = await sqliteService.select('projects', ['id'], 'id = ?', [project.id]);
-              if (existingProjects.length > 0) {
-                await sqliteService.update('projects', sqliteProjectData, 'id = ?', [project.id]);
-              } else {
-                await sqliteService.insert('projects', sqliteProjectData);
-              }
-            }
-          } catch (syncError) {
-            console.error('Error syncing projects to SQLite after initial load:', syncError);
-          }
-        }
       }
     };
     
@@ -689,28 +335,8 @@ const App: React.FC = () => {
   });
   
   const [isSyncing, setIsSyncing] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   
-  const theme = useMemo(() => {
-    const baseTheme = themeMode === 'light' ? lightTheme : darkTheme;
-    return createTheme({
-      ...baseTheme,
-      palette: {
-        ...baseTheme.palette,
-        primary: { 
-          main: themePrimaryColor, 
-          light: themePrimaryColor, 
-          dark: themePrimaryColor, 
-          contrastText: '#ffffff' 
-        },
-        secondary: { 
-          main: themeSecondaryColor, 
-          light: themeSecondaryColor, 
-          dark: themeSecondaryColor 
-        },
-      },
-    });
-  }, [themeMode, themePrimaryColor, themeSecondaryColor]);
+
 
   const [appSettings, setAppSettings] = useState<AppSettings>(() => {
     const savedSettings = localStorage.getItem('roadmaster-settings');
@@ -742,11 +368,12 @@ const App: React.FC = () => {
   const currentUser = useMemo(() => {
     // Get users from localStorage, fallback to empty array
     const savedUsers = localStorage.getItem('roadmaster-users');
-    const users = savedUsers ? JSON.parse(savedUsers) : [];
-    
+    let users = savedUsers ? JSON.parse(savedUsers) : [];
+
     // Initialize with empty array if no data exists
     if (!savedUsers) {
-      localStorage.setItem('roadmaster-users', JSON.stringify([]));
+      users = [];
+      localStorage.setItem('roadmaster-users', JSON.stringify(users));
     }
     
     // Find user by ID or use a default user
@@ -787,7 +414,7 @@ const App: React.FC = () => {
           // Get users from localStorage
           const savedUsers = localStorage.getItem('roadmaster-users');
           let users = savedUsers ? JSON.parse(savedUsers) : [];
-          
+
           // Initialize with empty array if no data exists
           if (!savedUsers) {
             users = [];
@@ -901,61 +528,7 @@ const App: React.FC = () => {
         localStorage.setItem('roadmaster-projects', JSON.stringify(updatedProjects));
         DataCache.set(getCacheKey('projects'), updatedProjects, { ttl: 10 * 60 * 1000 }); // 10 minutes
         
-        // Save to SQLite database as well
-        (async () => {
-          try {
-            await sqliteService.initialize();
-            const sqliteProjectData = {
-              id: backendProject.id,
-              name: backendProject.name || '',
-              code: backendProject.code || null,
-              location: backendProject.location || '',
-              contractor: backendProject.contractor || '',
-              start_date: backendProject.startDate || null,
-              end_date: backendProject.endDate || null,
-              client: backendProject.client || '',
-              engineer: backendProject.engineer || null,
-              contract_no: backendProject.contractNo || null,
-              boq: JSON.stringify(backendProject.boq || []),
-              rfis: JSON.stringify(backendProject.rfis || []),
-              lab_tests: JSON.stringify(backendProject.labTests || []),
-              schedule: JSON.stringify(backendProject.schedule || []),
-              structures: JSON.stringify(backendProject.structures || []),
-              agencies: JSON.stringify(backendProject.agencies || []),
-              agency_payments: JSON.stringify(backendProject.agencyPayments || []),
-              linear_works: JSON.stringify(backendProject.linearWorks || []),
-              inventory: JSON.stringify(backendProject.inventory || []),
-              inventory_transactions: JSON.stringify(backendProject.inventoryTransactions || []),
-              vehicles: JSON.stringify(backendProject.vehicles || []),
-              vehicle_logs: JSON.stringify(backendProject.vehicleLogs || []),
-              documents: JSON.stringify(backendProject.documents || []),
-              site_photos: JSON.stringify(backendProject.sitePhotos || []),
-              daily_reports: JSON.stringify(backendProject.dailyReports || []),
-              pre_construction: JSON.stringify(backendProject.preConstruction || []),
-              land_parcels: JSON.stringify(backendProject.landParcels || []),
-              map_overlays: JSON.stringify(backendProject.mapOverlays || []),
-              hindrances: JSON.stringify(backendProject.hindrances || []),
-              nc_rs: JSON.stringify(backendProject.ncrs || []),
-              contract_bills: JSON.stringify(backendProject.contractBills || []),
-              subcontractor_bills: JSON.stringify(backendProject.subcontractorBills || []),
-              measurement_sheets: JSON.stringify(backendProject.measurementSheets || []),
-              staff_locations: JSON.stringify(backendProject.staffLocations || []),
-              environment_registry: JSON.stringify(backendProject.environmentRegistry || []),
-              last_synced: backendProject.lastSynced,
-              spreadsheet_id: backendProject.spreadsheetId,
-              settings: JSON.stringify(backendProject.settings || {})
-            };
 
-            const existingProjects = await sqliteService.select('projects', ['id'], 'id = ?', [backendProject.id]);
-            if (existingProjects.length > 0) {
-              await sqliteService.update('projects', sqliteProjectData, 'id = ?', [backendProject.id]);
-            } else {
-              await sqliteService.insert('projects', sqliteProjectData);
-            }
-          } catch (error) {
-            console.error('Error saving project to SQLite:', error);
-          }
-        })();
         
         return updatedProjects;
       });
@@ -973,7 +546,7 @@ const App: React.FC = () => {
   const handleClearProject = () => {
     startTransition(() => {
       setSelectedProjectId(null);
-      setHasSelectedProject(false);
+      // setHasSelectedProject(false); // This state is no longer needed after refactor.
     });
   };
   
@@ -989,15 +562,7 @@ const App: React.FC = () => {
           DataCache.set(getCacheKey('projects'), updatedProjects, { ttl: 10 * 60 * 1000 }); // 10 minutes
         }, 0);
 
-        // Perform SQLite deletion asynchronously
-        (async () => {
-          try {
-            await sqliteService.initialize();
-            await sqliteService.delete('projects', 'id = ?', [projectId]);
-          } catch (error) {
-            console.error('Error deleting project from SQLite:', error);
-          }
-        })();
+
         
         return updatedProjects;
       });
@@ -1009,7 +574,13 @@ const App: React.FC = () => {
 
   const handleManualSync = () => {
       if (!appSettings.googleSpreadsheetId && !currentProject?.spreadsheetId) {
-          setSnackbarOpen(true);
+          toast("Sync Failed", {
+            description: "Please configure a Google Spreadsheet ID in Settings > Cloud Integrations first.",
+            action: {
+              label: "Close",
+              onClick: () => console.log("Close"),
+            },
+          });
           return;
       }
       setIsSyncing(true);
@@ -1018,21 +589,19 @@ const App: React.FC = () => {
           const now = new Date().toLocaleTimeString();
           if (currentProject) {
             onSaveProject({ ...currentProject, lastSynced: now });
+            toast("Sync Complete", {
+              description: `Project synced successfully at ${now}.`,
+            });
           }
       }, 2000);
   };
 
-  const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setSnackbarOpen(false);
-  };
-
+  // const handleSnackbarClose removed - replaced by useToast
+  
   const overviewItems = useMemo(() => {
     const items = [
       { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard }, 
-      { id: 'map', label: 'GIS Alignment', icon: MapIcon },
+      // { id: 'map', label: 'GIS Alignment', icon: MapIcon },
       { id: 'messages', label: 'Communications', icon: MessageSquare },
       { id: 'documents', label: 'Document Hub', icon: FolderOpen }
     ];
@@ -1080,10 +649,6 @@ const App: React.FC = () => {
         { id: 'resource-matrix', label: 'Resource Matrix', icon: Layers },
         { id: 'quality', label: 'Quality Hub', icon: Shield },
         { id: 'lab', label: 'Material Testing', icon: Scale },
-        { id: 'staff-management', label: 'Staff Management', icon: Users },
-        { id: 'resources', label: 'Resources', icon: Package },
-        { id: 'documentation', label: 'Documentation', icon: FileText },
-        { id: 'financial', label: 'Financial', icon: Landmark },
         { id: 'environment', label: 'EMP Compliance', icon: Trees },
         { id: 'output-export', label: 'Exports & Reports', icon: Download },
         { id: 'data-analysis', label: 'Data Analysis', icon: BarChart3 }
@@ -1097,435 +662,217 @@ const App: React.FC = () => {
   // Render login screen if not authenticated
   if (!isAuthenticated) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <I18nProvider>
-          <NotificationProvider>
-            <Login onLogin={handleLogin} />
-          </NotificationProvider>
-        </I18nProvider>
-      </ThemeProvider>
+      <I18nProvider>
+        <NotificationProvider>
+          <Login onLogin={handleLogin} />
+        </NotificationProvider>
+      </I18nProvider>
     );
   }
     
   // Render project selection screen if authenticated but no project selected
   if (isAuthenticated && !selectedProjectId) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <I18nProvider>
-          <NotificationProvider>
-            <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
-          <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider', py: 1 }}>
-            <Toolbar sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-              <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5, md: 2 }}>
-                <Box sx={{ width: 42, height: 42, background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                  <HardHat size={22} strokeWidth={2.5}/>
-                </Box>
-                <Typography variant="h6" fontWeight="800" sx={{ color: 'text.primary', letterSpacing: '-0.03em' }}>RoadMaster<span style={{ color: '#818cf8' }}>.Pro</span></Typography>
-              </Box>
-              <Box sx={{ flexGrow: 1 }} />
-              <Box display="flex" alignItems="center" gap={1.5}>
-                <IconButton size="small" onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}>
-                  {themeMode === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                </IconButton>
-                <Button
-                  variant="outlined"
-                  startIcon={<LogOut size={16} />}
-                  onClick={() => {
-                    // Log the logout event
-                    AuditService.logLogout(currentUser.id, currentUser.name, selectedProjectId || undefined, currentProject?.name);
-                    
-                    setIsAuthenticated(false);
-                    setUserRole(UserRole.PROJECT_MANAGER);
-                    setUserName('');
-                    setCurrentUserId('u2');
-                    
-                    // Clear authentication state from localStorage
-                    localStorage.removeItem('roadmaster-authenticated');
-                    localStorage.removeItem('roadmaster-user-role');
-                    localStorage.removeItem('roadmaster-user-name');
-                    localStorage.removeItem('roadmaster-current-user-id');
-                  }}
-                  size="small"
-                >
-                  Logout
+      <I18nProvider>
+        <NotificationProvider>
+          <div className="min-h-screen bg-slate-50 flex flex-col">
+            <header className="border-b bg-background p-4 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                  <HardHat size={20} strokeWidth={2.5} />
+                </div>
+                <h1 className="text-lg font-bold text-foreground">RoadMaster<span className="text-primary">.Pro</span></h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}>
+                  <Sun className="h-5 w-5" />
                 </Button>
-              </Box>
-            </Toolbar>
-          </AppBar>
-          
-          <Box p={{ xs: 2, sm: 3, md: 4 }} flex={1} overflow="auto">
-            <Box mb={4}>
-              <Typography variant="h4" fontWeight="900" sx={{ letterSpacing: '-0.04em' }}>Welcome, {userName}</Typography>
-              <Typography variant="body1" color="text.secondary">Select an engineering project to begin</Typography>
-            </Box>
-
-            <ProjectsList
-              projects={projects}
-              userRole={userRole}
-              onSelectProject={handleSelectProject}
-              onSaveProject={onSaveProject}
-              onDeleteProject={onDeleteProject}
-              onOpenModal={(project) => {
-                setEditProject(project);
-                setIsProjectModalOpen(true);
-              }}
-            />
-          </Box>
-        </Box>
-        <ProjectModal
-          open={isProjectModalOpen}
-          onClose={() => setIsProjectModalOpen(false)}
-          onSave={(project) => {
-            onSaveProject(project);
-            setIsProjectModalOpen(false);
-          }}
-          project={editProject}
-        />
-          </NotificationProvider>
-        </I18nProvider>
-      </ThemeProvider>
+                <Button variant="outline" size="sm" onClick={() => {
+                  AuditService.logLogout(currentUser.id, currentUser.name, selectedProjectId || undefined, currentProject?.name);
+                  setIsAuthenticated(false);
+                  setUserRole(UserRole.PROJECT_MANAGER);
+                  setUserName('');
+                  setCurrentUserId('u2');
+                  localStorage.removeItem('roadmaster-authenticated');
+                  localStorage.removeItem('roadmaster-user-role');
+                  localStorage.removeItem('roadmaster-user-name');
+                  localStorage.removeItem('roadmaster-current-user-id');
+                }}>
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
+                </Button>
+              </div>
+            </header>
+            <main className="flex-1 p-6 overflow-auto">
+              <h2 className="text-2xl font-bold mb-4">Welcome, {userName}</h2>
+              <p className="text-md text-slate-600 mb-6">Select an engineering project to begin</p>
+              <ProjectsList
+                projects={projects}
+                userRole={userRole}
+                onSelectProject={handleSelectProject}
+                onSaveProject={onSaveProject}
+                onDeleteProject={onDeleteProject}
+                onOpenModal={(project) => {
+                  setEditProject(project);
+                  setIsProjectModalOpen(true);
+                }}
+              />
+            </main>
+          </div>
+          <ProjectModal
+            open={isProjectModalOpen}
+            onClose={() => setIsProjectModalOpen(false)}
+            onSave={(project) => {
+              onSaveProject(project);
+              setIsProjectModalOpen(false);
+            }}
+            project={editProject}
+          />
+        </NotificationProvider>
+      </I18nProvider>
     );
   }
     
   // Render main application if authenticated and project is selected
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <I18nProvider>
-        <NotificationProvider>
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity="warning" sx={{ width: '100%' }}>
-          Please configure a Google Spreadsheet ID in Settings &gt; Cloud Integrations first.
-        </Alert>
-      </Snackbar>
-      <Box id="main-content" sx={{ display: 'flex', height: 'calc(100vh - 38px)', overflow: 'hidden' }}>
-          
-        <Drawer
-          variant="permanent"
-          sx={{ 
-            width: sidebarCollapsed ? 78 : 260,
-            flexShrink: 0,
-            // Responsive adjustments for mobile
-            [`@media (max-width:768px)`]: {
-              width: sidebarCollapsed ? 58 : 220,
-              '& .MuiDrawer-paper': {
-                width: sidebarCollapsed ? 58 : 220,
-              }
-            },
-            '& .MuiDrawer-paper': { 
-              width: sidebarCollapsed ? 78 : 260,
-              boxSizing: 'border-box',
-              overflowX: 'hidden',
-              // Responsive adjustments for mobile
-              [`@media (max-width:768px)`]: {
-                width: sidebarCollapsed ? 58 : 220,
-              }
-            } 
-          }}
-        >
-          <Box p={sidebarCollapsed ? 1 : 2} display="flex" alignItems="center" gap={1.5} sx={{ mb: 1.5, 
-            // Responsive adjustments for mobile
-            [`@media (max-width:768px)`]: { 
-              p: sidebarCollapsed ? 0.5 : 1.5, 
-              gap: 1, 
-              mb: 1 
-            } 
-          }}>
-            <Box sx={{ width: 42, height: 42, background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                <HardHat size={22} strokeWidth={2.5}/>
-            </Box>
-            {!sidebarCollapsed && <Typography variant="h6" fontWeight="800" sx={{ color: 'white', letterSpacing: '-0.03em' }}>RoadMaster<span style={{ color: '#818cf8' }}>.Pro</span></Typography>}
-          </Box>
-          
-          <Box sx={{ flex: 1, overflowY: 'auto', px: 1.5, 
-            // Responsive adjustments for mobile
-            [`@media (max-width:768px)`]: { 
-              px: 1 
-            } 
-          }}>
-            {navGroups.map(group => (
-              <React.Fragment key={group.title}>
-                {!sidebarCollapsed && (
-                  <ListSubheader sx={{ bgcolor: 'transparent', color: 'rgba(148, 163, 184, 0.4)', fontSize: 10, fontWeight: 800, mt: 3, mb: 1, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                    {group.title}
-                  </ListSubheader>
-                )}
-                {group.items.map(item => (
-                  <Tooltip key={item.id} title={sidebarCollapsed ? item.label : ""} placement="right">
-                    <ListItemButton
-                      selected={activeTab === item.id}
-                      onClick={() => startTransition(() => setActiveTab(item.id))}
-                      sx={{
-                        borderRadius: '12px', mb: 0.5, py: 1.2,
-                        color: activeTab === item.id ? 'white' : '#94a3b8',
-                        bgcolor: activeTab === item.id ? alpha('#4f46e5', 0.2) : 'transparent',
-                        '&:hover': { bgcolor: alpha('#ffffff', 0.05) },
-                        justifyContent: sidebarCollapsed ? 'center' : 'initial'
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: sidebarCollapsed ? 0 : 36, color: 'inherit' }}>
-                        <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-                      </ListItemIcon>
-                      {!sidebarCollapsed && <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13, fontWeight: activeTab === item.id ? 700 : 500 }} />}
-                    </ListItemButton>
-                  </Tooltip>
-                ))}
-              </React.Fragment>
-            ))}
-
-            <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
-            
-            {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.PROJECT_MANAGER) && (
-              <Tooltip title={sidebarCollapsed ? "Settings" : ""} placement="right">
-                  <ListItemButton
-                      selected={activeTab === 'settings'}
-                      onClick={() => startTransition(() => setActiveTab('settings'))}
-                      sx={{
-                          borderRadius: '12px', mb: 0.5, py: 1.2,
-                          color: activeTab === 'settings' ? 'white' : '#94a3b8',
-                          bgcolor: activeTab === 'settings' ? alpha('#4f46e5', 0.2) : 'transparent',
-                          '&:hover': { bgcolor: alpha('#ffffff', 0.05) },
-                          justifyContent: sidebarCollapsed ? 'center' : 'initial'
-                      }}
-                  >
-                      <ListItemIcon sx={{ minWidth: sidebarCollapsed ? 0 : 36, color: 'inherit' }}>
-                          <Settings size={20} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-                      </ListItemIcon>
-                      {!sidebarCollapsed && <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: 13, fontWeight: activeTab === 'settings' ? 700 : 500 }} />}
-                  </ListItemButton>
-              </Tooltip>
-            )}
-          </Box>
-
-          <Box p={2} borderTop="1px solid rgba(255,255,255,0.05)">
-              <ListItemButton onClick={() => {
-                setIsAuthenticated(false);
-                setUserRole(UserRole.PROJECT_MANAGER);
-                setUserName('');
-                setCurrentUserId('u2');
-                
-                // Clear authentication state from localStorage
-                localStorage.removeItem('roadmaster-authenticated');
-                localStorage.removeItem('roadmaster-user-role');
-                localStorage.removeItem('roadmaster-user-name');
-                localStorage.removeItem('roadmaster-current-user-id');
-              }} sx={{ borderRadius: '12px', color: '#fca5a5', '&:hover': { bgcolor: alpha('#ef4444', 0.1) } }}>
-                  <ListItemIcon sx={{ minWidth: sidebarCollapsed ? 0 : 36, color: 'inherit' }}><LogOut size={18}/></ListItemIcon>
-                  {!sidebarCollapsed && <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: 13, fontWeight: 700 }} />}
-              </ListItemButton>
-              <IconButton onClick={() => setSidebarCollapsed(!sidebarCollapsed)} sx={{ color: '#475569', mt: 1, width: '100%' }}>
-                  {sidebarCollapsed ? <ChevronRight size={20}/> : <ChevronLeft size={20}/>} 
-              </IconButton>
-          </Box>
-        </Drawer>
-
-        <Box flexGrow={1} display="flex" flexDirection="column" sx={{ bgcolor: 'background.default' }}>
-          {currentProject ? (
-            <>
-                <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Toolbar sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-                    <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5, md: 2 }} flexGrow={1}>
-                      <Typography variant="h6" fontWeight="800" sx={{ letterSpacing: '-0.02em' }}>{currentProject.name}</Typography>
-                      <Chip label={currentProject.code} size="small" sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 800, fontSize: 10, borderRadius: '6px' }} />
-                      <Box>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => startTransition(() => setSelectedProjectId(null))}
-                        startIcon={<LayoutGrid size={14} />}
-                        sx={{ ml: 1, textTransform: 'none', borderRadius: 2, fontSize: 12 }}
-                      >
-                        Switch Project
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => {
-                          setEditProject(null);
-                          setIsProjectModalOpen(true);
-                        }}
-                        startIcon={<Plus size={16} />}
-                        sx={{ ml: 1, textTransform: 'none', borderRadius: 2, fontSize: 12 }}
-                      >
-                        Create New Project
-                      </Button>
-                      </Box>
-                    </Box>
-
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                      <Tooltip title={isSyncing ? "Synchronizing with Google Sheets..." : `Last Synced: ${currentProject.lastSynced || 'Never'}`}>
-                          <Button 
-                              size="small" 
-                              variant="outlined" 
-                              onClick={handleManualSync}
-                              disabled={isSyncing}
-                              startIcon={isSyncing ? <CircularProgress size={14} color="inherit" /> : (currentProject.spreadsheetId || appSettings.googleSpreadsheetId ? <CloudCog size={16} /> : <CloudOff size={16} />)}
-                              sx={{ borderRadius: 2, textTransform: 'none', fontSize: 11, borderColor: 'divider' }}
+    <I18nProvider>
+      <NotificationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <div className="flex min-h-screen bg-background text-foreground">
+            {/* Sidebar */}
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 lg:hidden">
+                  <MenuIcon className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <SheetHeader className="p-4">
+                  <SheetTitle className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                      <HardHat size={20} strokeWidth={2.5} />
+                    </div>
+                    RoadMaster<span className="text-indigo-600">.Pro</span>
+                  </SheetTitle>
+                  <SheetDescription>Navigation</SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-140px)]">
+                  <nav className="grid items-start gap-2 p-4 pt-0">
+                    {navGroups.map(group => (
+                      <div key={group.title}>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-4 mb-2">{group.title}</h3>
+                        {group.items.map(item => (
+                          <Button
+                            key={item.id}
+                            variant={activeTab === item.id ? "secondary" : "ghost"}
+                            className="w-full justify-start gap-3 mb-1"
+                            onClick={() => startTransition(() => setActiveTab(item.id))}
                           >
-                              {isSyncing ? 'Syncing...' : (currentProject.spreadsheetId || appSettings.googleSpreadsheetId ? 'Live Sheets' : 'Local Only')}
+                            <item.icon className="h-4 w-4" />
+                            {item.label}
                           </Button>
-                      </Tooltip>
-                      
-                      <IconButton size="small" onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}>
-                          {themeMode === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                      </IconButton>
-                      
-                      <NotificationsBadge />
-                      
-                      <IconButton size="small" onClick={() => setIsAIModalOpen(true)} sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } }}>
-                          <Bot size={20} />
-                      </IconButton>
-                      <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: 'center' }} />
-                      <Avatar src={currentUser.avatar} sx={{ width: 34, height: 34, border: '2px solid', borderColor: 'background.paper' }} />
-                    </Box>
-                  </Toolbar>
-                </AppBar>
-
-                <Box p={{ xs: 0.5, sm: 1, md: 1.5 }} flexGrow={1} overflow="auto" tabIndex={-1}>
-                  <ErrorBoundary>
-                    <Suspense fallback={<Box display="flex" justifyContent="center" alignItems="center" height="400px"><CircularProgress /></Box>}>
-                        <Box>
-                        {activeTab === 'dashboard' && <Dashboard project={currentProject} settings={appSettings} onUpdateProject={onSaveProject} onUpdateSettings={(updatedSettings) => {
-                                                setAppSettings(updatedSettings);
-                                                // Save to localStorage
-                                                localStorage.setItem('roadmaster-settings', JSON.stringify(updatedSettings));
-                                              }} />}
-                        {activeTab === 'schedule' && (currentUser as UserWithPermissions).permissions.includes(Permission.SCHEDULE_READ) && <ScheduleModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'construction' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <ConstructionModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'boq' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <BOQModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'variations' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <VariationModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'billing' && (currentUser as UserWithPermissions).permissions.includes(Permission.FINANCE_READ) && <BillingModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'financials' && (currentUser as UserWithPermissions).permissions.includes(Permission.FINANCE_READ) && <FinancialsCommercialHub userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'map' && (currentUser as UserWithPermissions).permissions.includes(Permission.PROJECT_READ) && <MapModule project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'rfis' && (currentUser as UserWithPermissions).permissions.includes(Permission.RFI_READ) && <RFIModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-
-                        {activeTab === 'assets' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <AssetsModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'daily-reports' && (currentUser as UserWithPermissions).permissions.includes(Permission.REPORT_READ) && <DailyReportModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'site-photos' && (currentUser as UserWithPermissions).permissions.includes(Permission.DOCUMENT_READ) && <SitePhotosModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'documents' && (currentUser as UserWithPermissions).permissions.includes(Permission.DOCUMENT_READ) && <DocumentsModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'agencies' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <AgencyModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'ocr-extraction' && (currentUser as UserWithPermissions).permissions.includes(Permission.DOCUMENT_READ) && <ChandraOCRAnalyzer />}
-                        {activeTab === 'fleet' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <FleetModule project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'linear-works' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <LinearWorksModule project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'materials-hub' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <MaterialManagementModule project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'resources' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <ResourceManager project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'resource-matrix' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <ResourceMatrixModule project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'quality' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <QualityHub project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'lab' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <LabModule project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'environment' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <EnvironmentModule project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'reports-analytics' && (currentUser as UserWithPermissions).permissions.includes(Permission.REPORT_READ) && <ReportsAnalyticsHub project={currentProject} userRole={userRole} settings={appSettings} onProjectUpdate={onSaveProject} />}
-
-                        {activeTab === 'data-analysis' && <DataAnalysisModule />}
-                        {activeTab === 'pre-construction' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <PreConstructionModule project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'projects' && (currentUser as UserWithPermissions).permissions.includes(Permission.PROJECT_READ) && <ProjectsList
-                          projects={projects}
-                          userRole={userRole}
-                          onSelectProject={handleSelectProject}
-                          onSaveProject={onSaveProject}
-                          onDeleteProject={onDeleteProject}
-                          onOpenModal={(project) => {
-                            setEditProject(project);
-                            setIsProjectModalOpen(true);
-                          }}
-                        />}
-                        {activeTab === 'pavement' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <PavementModule userRole={userRole} project={currentProject} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'mpr-report' && (currentUser as UserWithPermissions).permissions.includes(Permission.REPORT_READ) && <MPRReportModule project={currentProject} userRole={userRole} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'messages' && (currentUser as UserWithPermissions).permissions.includes(Permission.DOCUMENT_READ) && (
-                          <MessagesModule 
-                            currentUser={currentUser} 
-                            users={LocalStorageUtils.getUsers()} 
-                            messages={messages} 
-                            onSendMessage={(text, receiverId) => {
-                              const newMessage: Message = {
-                                id: `msg-${Date.now()}-${Math.random()}`,
-                                senderId: currentUser.id,
-                                receiverId,
-                                content: text,
-                                timestamp: new Date().toISOString(),
-                                read: false,
-                                projectId: selectedProjectId || undefined
-                              };
-                              setMessages(prev => {
-                                const updatedMessages = [...prev, newMessage];
-                                // Save to localStorage
-                                localStorage.setItem('roadmaster-messages', JSON.stringify(updatedMessages));
-                                
-                                // Update cache
-                                DataCache.set(getCacheKey('messages'), updatedMessages, { ttl: 5 * 60 * 1000 }); // 5 minutes
-                                
-                                return updatedMessages;
-                              });
-                            }} 
-                            projectId={selectedProjectId || ''}
-                          />
-                        )}
-                        {activeTab === 'user-management' && (currentUser as UserWithPermissions).permissions.includes(Permission.USER_READ) && <UserManagement />}
-                        {activeTab === 'user-registration' && <UserRegistration />}
-                        {activeTab === 'staff-management' && <StaffManagementModule />}
-                        {activeTab === 'resources' && <ResourceManagementHub project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'documentation' && <DocumentationHub project={currentProject} userRole={userRole} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'financial' && <FinancialManagementHub project={currentProject} userRole={userRole} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'subcontractors' && (currentUser as UserWithPermissions).permissions.includes(Permission.BOQ_READ) && <SubcontractorModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'subcontractor-billing' && (currentUser as UserWithPermissions).permissions.includes(Permission.FINANCE_READ) && <SubcontractorBillingModule userRole={userRole} project={currentProject} settings={appSettings} onProjectUpdate={onSaveProject} />}
-                        {activeTab === 'settings' && (currentUser as UserWithPermissions).permissions.includes(Permission.SETTINGS_UPDATE) && <SettingsModule settings={appSettings} onUpdate={setAppSettings} />}
-                        {activeTab === 'about' && (currentUser as UserWithPermissions).permissions.includes(Permission.PROJECT_READ) && <AboutPage />}
-                        {activeTab === 'contact' && (currentUser as UserWithPermissions).permissions.includes(Permission.PROJECT_READ) && <ContactPage />}
-                      </Box>
-                  </Suspense>
-                  </ErrorBoundary>
-                </Box>
-              </>
-          ) : (
-            // Show project selection when selectedProjectId exists but project not found
-            <Box id="main-content" p={6} overflow="auto" className="bg-background-default" tabIndex={-1}>
-               <Box mb={6} tabIndex={-1}>
-                  <Typography variant="h4" fontWeight="900" sx={{ letterSpacing: '-0.04em' }}>Project Not Found</Typography>
-                  <Typography variant="body1" color="text.secondary" mb={3}>The selected project could not be found. Please select another project.</Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => startTransition(() => setSelectedProjectId(null))}
-                    startIcon={<LayoutGrid size={16} />}
-                  >
-                    Select Project
+                        ))}
+                      </div>
+                    ))}
+                    <Separator className="my-2" />
+                    <Button
+                      variant={activeTab === 'settings' ? "secondary" : "ghost"}
+                      className="w-full justify-start gap-3 mb-1"
+                      onClick={() => startTransition(() => setActiveTab('settings'))}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Button>
+                  </nav>
+                </ScrollArea>
+                <div className="p-4 border-t">
+                  <Button variant="ghost" className="w-full justify-start gap-3 text-red-500" onClick={() => {
+                    AuditService.logLogout(currentUser.id, currentUser.name, selectedProjectId || undefined, currentProject?.name);
+                    setIsAuthenticated(false);
+                    setUserRole(UserRole.PROJECT_MANAGER);
+                    setUserName('');
+                    setCurrentUserId('u2');
+                    localStorage.removeItem('roadmaster-authenticated');
+                    localStorage.removeItem('roadmaster-user-role');
+                    localStorage.removeItem('roadmaster-user-name');
+                    localStorage.removeItem('roadmaster-current-user-id');
+                  }}>
+                    <LogOut className="h-4 w-4" /> Logout
                   </Button>
-               </Box>
-               <Suspense fallback={<Box display="flex" justifyContent="center" alignItems="center" height="200px"><CircularProgress /></Box>}>
-                 <ProjectsList
-                    projects={projects}
-                    userRole={userRole}
-                    onSelectProject={handleSelectProject}
-                    onSaveProject={onSaveProject}
-                    onDeleteProject={onDeleteProject}
-                    onOpenModal={(project) => {
-                      setEditProject(project);
-                      setIsProjectModalOpen(true);
-                    }}
-                  />
-               </Suspense>
-            </Box>
-          )}
-        </Box>
-      </Box>
-      {isAIModalOpen && currentProject && <AIChatModal project={currentProject} onClose={() => setIsAIModalOpen(false)} />}
-      <ProjectModal
-        open={isProjectModalOpen}
-        onClose={() => {
-          console.log('ProjectModal onClose called');
-          setIsProjectModalOpen(false);
-        }}
-        onSave={(project) => {
-          console.log('ProjectModal onSave called with:', project);
-          onSaveProject(project);
-          setIsProjectModalOpen(false);
-        }}
-        project={editProject}
-      />
-        </NotificationProvider>
-      </I18nProvider>
-    </ThemeProvider>
-  )
-}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Main content area */}
+            <div id="main-content" className="flex flex-col flex-1 overflow-auto">
+              <header className="border-b bg-white p-2 flex justify-between items-center h-14 shrink-0">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-bold">{currentProject?.name || 'No Project Selected'}</h2>
+                  {currentProject?.code && <Badge>{currentProject.code}</Badge>}
+                  <Button variant="outline" size="sm" onClick={() => setSelectedProjectId(null)}>
+                    <LayoutGrid className="mr-2 h-4 w-4" /> Switch Project
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsProjectModalOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> New Project
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={handleManualSync}>
+                        {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudCog className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isSyncing ? "Syncing..." : "Live Sheets"}</TooltipContent>
+                  </Tooltip>
+                  <Toggle
+                    size="sm"
+                    pressed={themeMode === 'dark'} // Control the pressed state based on themeMode
+                    onPressedChange={() => setThemeMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'))}
+                  >
+                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  </Toggle>
+                  <NotificationsBadge />
+                  <Button variant="ghost" size="icon" onClick={() => setIsAIModalOpen(true)}>
+                    <Bot className="h-5 w-5" />
+                  </Button>
+                  <Avatar>
+                    <AvatarImage src={currentUser.avatar} />
+                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </header>
+
+              <main className="flex-1 p-4 overflow-auto bg-slate-50">
+                <ErrorBoundary>
+                  <Suspense fallback={<div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+                    {activeTab === 'dashboard' && <Dashboard project={currentProject} settings={appSettings} onUpdateProject={onSaveProject} onUpdateSettings={setAppSettings} />}
+                    {/* Other module renderings will go here */}
+                    {activeTab === 'about' && <AboutPage />}
+                    {activeTab === 'contact' && <ContactPage />}
+                    {activeTab === 'user-management' && <UserManagement />}
+                    {activeTab === 'user-registration' && <UserRegistration />}
+                    {activeTab === 'boq' && <BOQModule project={currentProject} settings={appSettings} userRole={userRole} onProjectUpdate={onSaveProject} />}
+                    {activeTab === 'financials' && <FinancialManagementHub project={currentProject} userRole={userRole} settings={appSettings} onProjectUpdate={onSaveProject} />}
+                    {activeTab === 'settings' && <SettingsModule settings={appSettings} onUpdate={setAppSettings} />}
+                  </Suspense>
+                </ErrorBoundary>
+              </main>
+            </div>
+
+            {isAIModalOpen && currentProject && <AIChatModal project={currentProject} onClose={() => setIsAIModalOpen(false)} />}
+            <ProjectModal
+              open={isProjectModalOpen}
+              onClose={() => setIsProjectModalOpen(false)}
+              onSave={(project) => { onSaveProject(project); setIsProjectModalOpen(false); }}
+              project={editProject}
+            />
+          </div>
+        </TooltipProvider>
+      </NotificationProvider>
+    </I18nProvider>
+  );
+};
 
 export default App;

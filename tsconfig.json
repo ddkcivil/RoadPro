@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "~/components/*": [
+        "./components/*"
+      ],
+      "~/lib/*": [
+        "./lib/*"
       ]
     },
     "allowImportingTsExtensions": true,

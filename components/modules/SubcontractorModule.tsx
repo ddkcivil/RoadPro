@@ -1,21 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { Project, UserRole, Agency, Subcontractor, SubcontractorPayment, BOQItem, AgencyRateEntry, SubcontractorRateEntry, AppSettings } from '../../types';
-import { 
-  Box, Typography, Button, Card, Grid, 
-  Avatar, Chip, Stack, Paper, 
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, FormControl, InputLabel, Select, MenuItem, Divider,
-  LinearProgress, Table, TableHead, TableRow, TableCell, TableBody,
-  InputAdornment, Tabs, Tab, Alert, IconButton, List, ListItem, ListItemText,
-  Snackbar, Tooltip
-} from '@mui/material';
-import { 
-  Briefcase, FileText, Calendar, MapPin, TrendingUp, Clock, Activity, 
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { Badge } from '~/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner'; // Using sonner for toasts
+
+import {
+  Briefcase, FileText, Calendar, MapPin, TrendingUp, Clock, Activity,
   Plus, Save, X, Edit, Trash2, CheckCircle2, Calculator, Package,
-  DollarSign, Navigation, Eye, HelpCircle
+  DollarSign, HelpCircle
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 import { getCurrencySymbol } from '../../utils/formatting/currencyUtils';
+import { cn } from '~/lib/utils'; // Assuming cn utility is available for conditional classes
 
 interface Props {
   project: Project;
@@ -25,14 +31,16 @@ interface Props {
 }
 
 const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRole, settings }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("0"); // Use string for Shadcn Tabs value
   const [isSubcontractorModalOpen, setIsSubcontractorModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isRatesModalOpen, setIsRatesModalOpen] = useState(false);
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  // Replaced snackbar with sonner toast
+  // const [snackbarOpen, setSnackbarOpen] = useState(false);
+  // const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const subcontractors = project.agencies?.filter(a => a.type === 'subcontractor') || [];
   const subPayments = (project.agencyPayments || []).filter(p => p.agencyId && subcontractors.some(s => s.id === p.agencyId));
@@ -73,9 +81,9 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
   const selectedSubcontractor = subcontractors.find(s => s.id === selectedSubId);
   const selectedSubcontractorRates = selectedSubcontractor?.rates || [];
 
-  const showSnackbar = (message: string) => {
-    setSnackbarMessage(message);
-    setSnackbarOpen(true);
+  // Replaced showSnackbar with toast from sonner
+  const showToast = (message: string) => {
+    toast(message);
   };
 
   const handleAddSubcontractor = () => {
@@ -127,32 +135,32 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
   const handleSaveSubcontractor = () => {
     // Validation
     if (!newSubcontractor.name?.trim()) {
-      showSnackbar('Contractor name is required');
+      showToast('Contractor name is required');
       return;
     }
     
     if (!newSubcontractor.trade?.trim()) {
-      showSnackbar('Trade is required');
+      showToast('Trade is required');
       return;
     }
     
     if (newSubcontractor.contractValue && newSubcontractor.contractValue < 0) {
-      showSnackbar('Contract value must be a positive number');
+      showToast('Contract value must be a positive number');
       return;
     }
     
     if (newSubcontractor.phone && !/^[+]?[0-9\s\-]{8,}$/.test(newSubcontractor.phone)) {
-      showSnackbar('Please enter a valid phone number');
+      showToast('Please enter a valid phone number');
       return;
     }
     
     if (newSubcontractor.email && !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(.\w{2,3})+$/.test(newSubcontractor.email)) {
-      showSnackbar('Please enter a valid email address');
+      showToast('Please enter a valid email address');
       return;
     }
     
     if (newSubcontractor.startDate && newSubcontractor.endDate && new Date(newSubcontractor.startDate) > new Date(newSubcontractor.endDate)) {
-      showSnackbar('Start date cannot be later than end date');
+      showToast('Start date cannot be later than end date');
       return;
     }
 
@@ -263,22 +271,22 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
   const handleSavePayment = () => {
     // Validation
     if (!selectedSubId) {
-      showSnackbar('Please select a subcontractor first');
+      showToast('Please select a subcontractor first');
       return;
     }
     
     if (!paymentForm.amount || isNaN(Number(paymentForm.amount)) || Number(paymentForm.amount) <= 0) {
-      showSnackbar('Please enter a valid positive amount');
+      showToast('Please enter a valid positive amount');
       return;
     }
     
     if (!paymentForm.reference?.trim()) {
-      showSnackbar('Please enter a reference number');
+      showToast('Please enter a reference number');
       return;
     }
     
     if (!paymentForm.date) {
-      showSnackbar('Please select a payment date');
+      showToast('Please select a payment date');
       return;
     }
 
@@ -310,7 +318,7 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
 
   const handleOpenPaymentModal = () => {
     if (!selectedSubId) {
-      showSnackbar('Please select a subcontractor first');
+      showToast('Please select a subcontractor first');
       return;
     }
     setPaymentForm({
@@ -345,153 +353,171 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-      <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-        <Box>
-          <Typography variant="h5" fontWeight="900">Works Execution</Typography>
-          <Typography variant="body2" color="text.secondary">Subcontractor management and progress tracking</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<Plus size={16}/>} onClick={handleAddSubcontractor} sx={{ paddingX: 1.5, paddingY: 0.75 }}>Add Contractor</Button>
-      </Box>
+    <div className="animate-in fade-in duration-500">
+      <div className="flex justify-between mb-2 items-center">
+        <div>
+          <h2 className="text-xl font-extrabold tracking-tight">Works Execution</h2>
+          <p className="text-sm text-muted-foreground">Subcontractor management and progress tracking</p>
+        </div>
+        <Button onClick={handleAddSubcontractor} className="px-3 py-1.5">
+          <Plus size={16} className="mr-2"/>
+          Add Contractor
+        </Button>
+      </div>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 2 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ bgcolor: 'slate.50', borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Subcontractors" icon={<Briefcase size={18}/>} iconPosition="start" />
-          <Tab label="Rates" icon={<Calculator size={18}/>} iconPosition="start" />
-          <Tab label="Payment Ledger" icon={<DollarSign size={18}/>} iconPosition="start" />
+      <div className="border rounded-xl overflow-hidden mb-2">
+        <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(v)}>
+          <TabsList className="bg-slate-50 border-b border-b-gray-200">
+            <TabsTrigger value="0" className="flex items-center gap-2">
+              <Briefcase size={18}/> Subcontractors
+            </TabsTrigger>
+            <TabsTrigger value="1" className="flex items-center gap-2">
+              <Calculator size={18}/> Rates
+            </TabsTrigger>
+            <TabsTrigger value="2" className="flex items-center gap-2">
+              <DollarSign size={18}/> Payment Ledger
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
 
-        <Box p={2}>
-          {activeTab === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Stack spacing={2}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="h6" fontWeight="bold">Subcontractors</Typography>
-                    <Tooltip title="Manage your subcontractor partners and their assignments">
-                      <Box component="span" sx={{ color: 'action.active', cursor: 'help' }}>
-                        <HelpCircle size={16} />
-                      </Box>
-                    </Tooltip>
-                  </Box>
+        <div className="p-2">
+          {activeTab === "0" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="col-span-12 md:col-span-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1">
+                    <h3 className="text-lg font-bold">Subcontractors</h3>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-gray-500 cursor-help">
+                            <HelpCircle size={16} />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Manage your subcontractor partners and their assignments
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   {subcontractors.map(sub => (
-                    <Card 
-                      key={sub.id} 
-                      variant="outlined"
-                      onClick={() => setSelectedSubId(sub.id)} 
-                      sx={{ 
-                        cursor: 'pointer', borderRadius: 3, transition: 'all 0.2s',
-                        bgcolor: selectedSubId === sub.id ? 'indigo.50/20' : 'white',
-                        borderColor: selectedSubId === sub.id ? 'primary.main' : 'divider'
-                      }}
+                    <div
+                      key={sub.id}
+                      onClick={() => setSelectedSubId(sub.id)}
+                      className={cn(
+                        "cursor-pointer rounded-xl transition-all duration-200 border",
+                        selectedSubId === sub.id ? 'bg-indigo-50/20 border-primary' : 'bg-white border-border'
+                      )}
                     >
-                      <Box p={2} display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                      <div className="p-2 flex items-center gap-2">
+                        <Avatar className="bg-blue-100 text-blue-600"> {/* Changed to general blue as primary.light was MUI specific */}
                           <Briefcase size={20}/>
                         </Avatar>
-                        <Box flex={1}>
-                          <Typography variant="subtitle2" fontWeight="bold">{sub.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">{sub.trade}</Typography>
-                          <Box mt={1}>
-                            <Chip 
-                              label={sub.status} 
-                              size="small" 
-                              sx={{ 
-                                fontSize: 10, 
-                                height: 18,
-                                bgcolor: sub.status === 'Active' ? 'success.light' : 
-                                         sub.status === 'Suspended' ? 'error.light' : 'warning.light',
-                                color: sub.status === 'Active' ? 'success.dark' : 
-                                       sub.status === 'Suspended' ? 'error.dark' : 'warning.dark'
-                              }} 
-                            />
-                          </Box>
-                        </Box>
-                        <Stack direction="row" spacing={0.5}>
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditSubcontractor(sub); }}>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-sm">{sub.name}</h4>
+                          <p className="text-xs text-muted-foreground">{sub.trade}</p>
+                          <div className="mt-1">
+                            <Badge
+                              className={cn(
+                                "text-xs h-[18px]",
+                                sub.status === 'Active' && "bg-green-100 text-green-800",
+                                sub.status === 'Suspended' && "bg-red-100 text-red-800",
+                                (sub.status === 'Suspended' || sub.status === 'Completed') && "bg-yellow-100 text-yellow-800"
+                              )}
+                            >
+                              {sub.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleEditSubcontractor(sub); }}>
                             <Edit size={14} />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteSubcontractor(sub.id); }}>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-red-500" onClick={(e) => { e.stopPropagation(); handleDeleteSubcontractor(sub.id); }}>
                             <Trash2 size={14} />
-                          </IconButton>
-                        </Stack>
-                      </Box>
-                    </Card>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                   
                   {subcontractors.length === 0 && (
-                    <Box py={6} textAlign="center" color="text.disabled">
+                    <div className="py-6 text-center text-gray-500">
                       <Briefcase size={48} className="opacity-20 mx-auto mb-3"/>
-                      <Typography variant="h6">No subcontractors registered</Typography>
-                      <Typography variant="body2">Add your first subcontractor to get started</Typography>
-                    </Box>
+                      <h3 className="text-lg">No subcontractors registered</h3>
+                      <p className="text-sm">Add your first subcontractor to get started</p>
+                    </div>
                   )}
-                </Stack>
-              </Grid>
+                </div>
+              </div>
 
-              <Grid item xs={12} md={8}>
+              <div className="col-span-12 md:col-span-8">
                 {selectedSubcontractor ? (
-                  <Stack spacing={3}>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: 4 }}>
-                      <Box display="flex" justifyContent="space-between" mb={3}>
-                        <Box>
-                          <Typography variant="h6" fontWeight="900">{selectedSubcontractor.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">{selectedSubcontractor.trade}</Typography>
-                        </Box>
-                        <Button variant="contained" startIcon={<DollarSign size={16}/>} size="small" onClick={handleOpenPaymentModal}>Record Payment</Button>
-                      </Box>
+                  <div className="flex flex-col gap-3">
+                    <div className="border p-3 rounded-2xl">
+                      <div className="flex justify-between mb-3">
+                        <div>
+                          <h2 className="text-2xl font-extrabold">{selectedSubcontractor.name}</h2>
+                          <p className="text-sm text-muted-foreground">{selectedSubcontractor.trade}</p>
+                        </div>
+                        <Button size="sm" onClick={handleOpenPaymentModal}>
+                          <DollarSign size={16} className="mr-2"/>
+                          Record Payment
+                        </Button>
+                      </div>
                       
-                      <Grid container spacing={2} mb={3}>
-                        <Grid item xs={6} md={3}>
-                          <Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+                        <div className="col-span-6 md:col-span-3">
+                          <div className="border text-center py-2">
                             <FileText size={16}/>
-                            <Typography variant="subtitle1" fontWeight="bold">
+                            <p className="font-bold text-base">
                               {project.boq.filter(item => item.subcontractorId === selectedSubcontractor.id).length}
-                            </Typography>
-                            <Typography variant="caption">BOQ Items</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}>
+                            </p>
+                            <p className="text-xs">BOQ Items</p>
+                          </div>
+                        </div>
+                        <div className="col-span-6 md:col-span-3">
+                          <div className="border text-center py-2">
                             <TrendingUp size={16}/>
-                            <Typography variant="subtitle1" fontWeight="bold">
+                            <p className="font-bold text-base">
                               {calculateSubcontractorProgress(selectedSubcontractor.id)}%
-                            </Typography>
-                            <Typography variant="caption">Progress</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}>
+                            </p>
+                            <p className="text-xs">Progress</p>
+                          </div>
+                        </div>
+                        <div className="col-span-6 md:col-span-3">
+                          <div className="border text-center py-2">
                             <DollarSign size={16}/>
-                            <Typography variant="subtitle1" fontWeight="bold">
+                            <p className="font-bold text-base">
                               {formatCurrency(calculateSubcontractorValue(selectedSubcontractor.id), settings || project.settings)}
-                            </Typography>
-                            <Typography variant="caption">Contract Value</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}>
+                            </p>
+                            <p className="text-xs">Contract Value</p>
+                          </div>
+                        </div>
+                        <div className="col-span-6 md:col-span-3">
+                          <div className="border text-center py-2">
                             <Activity size={16}/>
-                            <Typography variant="subtitle1" fontWeight="bold">
+                            <p className="font-bold text-base">
                               {subPayments
                                 .filter(p => p.agencyId === selectedSubcontractor.id)
                                 .reduce((sum, p) => sum + p.amount, 0)
                                 .toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                            </Typography>
-                            <Typography variant="caption">Total Paid</Typography>
-                          </Paper>
-                        </Grid>
-                      </Grid>
+                            </p>
+                            <p className="text-xs">Total Paid</p>
+                          </div>
+                        </div>
+                      </div>
 
-                      <Typography variant="subtitle2" fontWeight="bold" mb={2}>Assigned BOQ Items</Typography>
-                      <Table size="small">
-                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                      <h4 className="font-bold mb-2">Assigned BOQ Items</h4>
+                      <Table>
+                        <TableHead className="bg-slate-50">
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Item</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Progress</TableCell>
+                            <TableCell className="font-bold">Item</TableCell>
+                            <TableCell className="font-bold">Description</TableCell>
+                            <TableCell align="right" className="font-bold">Quantity</TableCell>
+                            <TableCell align="right" className="font-bold">Rate</TableCell>
+                            <TableCell align="right" className="font-bold">Amount</TableCell>
+                            <TableCell align="right" className="font-bold">Progress</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -500,56 +526,54 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
                             .map(item => (
                               <TableRow key={item.id}>
                                 <TableCell>
-                                  <Typography variant="body2" fontWeight="medium">{item.description}</Typography>
+                                  <p className="text-sm font-medium">{item.description}</p>
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Typography variant="body2">{item.quantity} {item.unit}</Typography>
+                                  <p className="text-sm">{item.quantity} {item.unit}</p>
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Typography variant="body2">{formatCurrency(item.rate, settings || project.settings)}</Typography>
+                                  <p className="text-sm">{formatCurrency(item.rate, settings || project.settings)}</p>
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Typography variant="body2" fontWeight="bold">{formatCurrency(item.quantity * item.rate, settings || project.settings)}</Typography>
+                                  <p className="text-sm font-bold">{formatCurrency(item.quantity * item.rate, settings || project.settings)}</p>
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Typography variant="body2" color="primary">
+                                  <p className="text-sm text-primary">
                                     {item.completedQuantity}/{item.quantity} ({Math.round((item.completedQuantity / item.quantity) * 100)}%)
-                                  </Typography>
+                                  </p>
                                 </TableCell>
                               </TableRow>
                             ))}
                           {project.boq.filter(item => item.subcontractorId === selectedSubcontractor.id).length === 0 && (
                             <TableRow>
-                              <td colSpan={5} style={{ textAlign: 'center', padding: '32px 16px' }}>
-                                <Typography variant="body2" color="text.disabled">No BOQ items assigned to this subcontractor</Typography>
+                              <td colSpan={6} className="text-center p-8 px-4"> {/* Increased colSpan */}
+                                <p className="text-sm text-muted-foreground">No BOQ items assigned to this subcontractor</p>
                               </td>
                             </TableRow>
                           )}
                         </TableBody>
                       </Table>
-                    </Paper>
-                  </Stack>
+                    </div>
+                  </div>
                 ) : (
-                  <Box py={10} textAlign="center" color="text.disabled">
+                  <div className="py-10 text-center text-gray-500">
                     <Briefcase size={60} className="opacity-10 mx-auto mb-4"/>
-                    <Typography variant="h6">Select a subcontractor to view details</Typography>
-                    <Typography variant="body2">Choose from the list to see subcontractor information</Typography>
-                  </Box>
+                    <h3 className="text-lg">Select a subcontractor to view details</h3>
+                    <p className="text-sm">Choose from the list to see subcontractor information</p>
+                  </div>
                 )}
-              </Grid>
-            </Grid>
+              </div>
+            </div>
           )}
 
-          {activeTab === 1 && (
-            <Box>
-              <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <Typography variant="subtitle1" fontWeight="bold">Subcontractor Rates</Typography>
+          {activeTab === "1" && (
+            <div className="p-2">
+              <div className="flex justify-between mb-3 items-center">
+                <h4 className="text-lg font-bold">Subcontractor Rates</h4>
                 <Button 
-                  variant="contained" 
-                  startIcon={<Plus size={16}/>} 
                   onClick={() => {
                     if (!selectedSubId) {
-                      showSnackbar('Please select a subcontractor first');
+                      showToast('Please select a subcontractor first');
                       return;
                     }
                     setRateForm({
@@ -561,19 +585,21 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
                     });
                     setIsRatesModalOpen(true);
                   }}
+                  className="px-3 py-1.5"
                 >
+                  <Plus size={16} className="mr-2"/>
                   Add Rate
                 </Button>
-              </Box>
+              </div>
               
-              <Table size="small">
-                <TableHead sx={{ bgcolor: 'slate.50' }}>
+              <Table>
+                <TableHead className="bg-slate-50">
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>BOQ Item</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Effective Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                    <TableCell className="font-bold">BOQ Item</TableCell>
+                    <TableCell className="font-bold">Description</TableCell>
+                    <TableCell align="right" className="font-bold">Rate</TableCell>
+                    <TableCell className="font-bold">Effective Date</TableCell>
+                    <TableCell className="font-bold">Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -584,52 +610,52 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
                         <TableCell>{boqItem?.itemNo || 'N/A'}</TableCell>
                         <TableCell>{boqItem?.description || rate.description || 'N/A'}</TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" fontWeight="bold">{formatCurrency(rate.rate, settings || project.settings)}</Typography>
+                          <p className="text-sm font-bold">{formatCurrency(rate.rate, settings || project.settings)}</p>
                         </TableCell>
-                        <TableCell>{rate.effectiveDate}</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={rate.status} 
-                            size="small" 
-                            sx={{ 
-                              fontSize: 10, 
-                              height: 18,
-                              bgcolor: rate.status === 'Active' ? 'success.light' : 
-                                       rate.status === 'Expired' ? 'error.light' : 'warning.light',
-                              color: rate.status === 'Active' ? 'success.dark' : 
-                                     rate.status === 'Expired' ? 'error.dark' : 'warning.dark'
-                            }} 
-                          />
+                          <p className="text-sm">{rate.effectiveDate}</p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={cn(
+                              "text-xs h-[18px]",
+                              rate.status === 'Active' && "bg-green-100 text-green-800",
+                              rate.status === 'Expired' && "bg-red-100 text-red-800",
+                              (rate.status === 'Suspended') && "bg-yellow-100 text-yellow-800"
+                            )} 
+                          >
+                            {rate.status}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     );
                   })}
                   {selectedSubcontractorRates.length === 0 && (
                     <TableRow>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '48px 16px' }}>
-                        <Typography variant="body2" color="text.disabled">No rate records found for this subcontractor</Typography>
+                      <td colSpan={5} className="text-center p-8 px-4">
+                        <p className="text-sm text-muted-foreground">No rate records found for this subcontractor</p>
                       </td>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-            </Box>
+            </div>
           )}
 
-          {activeTab === 2 && (
-            <Box>
-              <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <Typography variant="subtitle1" fontWeight="bold">Payment Transactions</Typography>
-              </Box>
+          {activeTab === "2" && (
+            <div className="p-2">
+              <div className="flex justify-between mb-3 items-center">
+                <h4 className="text-lg font-bold">Payment Transactions</h4>
+              </div>
               
-              <Table size="small">
-                <TableHead sx={{ bgcolor: 'slate.50' }}>
+              <Table>
+                <TableHead className="bg-slate-50">
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Subcontractor</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Reference</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                    <TableCell className="font-bold">Date</TableCell>
+                    <TableCell className="font-bold">Subcontractor</TableCell>
+                    <TableCell className="font-bold">Reference</TableCell>
+                    <TableCell className="font-bold">Amount</TableCell>
+                    <TableCell className="font-bold">Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -637,261 +663,287 @@ const SubcontractorModule: React.FC<Props> = ({ project, onProjectUpdate, userRo
                     const sub = subcontractors.find(s => s.id === payment.agencyId);
                     return (
                       <TableRow key={payment.id}>
-                        <TableCell>{payment.date}</TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight="medium">{sub?.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">{sub?.trade}</Typography>
-                        </TableCell>
-                        <TableCell>{payment.reference}</TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">{formatCurrency(payment.amount, settings || project.settings)}</Typography>
+                          <p className="text-sm">{payment.date}</p>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={payment.status} 
-                            size="small" 
-                            sx={{ 
-                              fontSize: 10, 
-                              height: 18,
-                              bgcolor: payment.status === 'Confirmed' ? 'success.light' : 
-                                       payment.status === 'Draft' ? 'info.light' : 'warning.light',
-                              color: payment.status === 'Confirmed' ? 'success.dark' : 
-                                     payment.status === 'Draft' ? 'info.dark' : 'warning.dark'
-                            }} 
-                          />
+                          <p className="text-sm font-medium">{sub?.name}</p>
+                          <p className="text-xs text-muted-foreground">{sub?.trade}</p>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm">{payment.reference}</p>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm font-bold">{formatCurrency(payment.amount, settings || project.settings)}</p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={cn(
+                              "text-xs h-[18px]",
+                              payment.status === 'Confirmed' && "bg-green-100 text-green-800",
+                              payment.status === 'Draft' && "bg-blue-100 text-blue-800", // Assuming info.light is blue
+                              // No warning status for payments
+                            )} 
+                          >
+                            {payment.status}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     );
                   })}
                   {subPayments.length === 0 && (
                     <TableRow>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '48px 16px' }}>
-                        <Typography variant="body2" color="text.disabled">No payment records found</Typography>
+                      <td colSpan={5} className="text-center p-8 px-4">
+                        <p className="text-sm text-muted-foreground">No payment records found</p>
                       </td>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-            </Box>
+            </div>
           )}
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Add/Edit Subcontractor Modal */}
-      <Dialog open={isSubcontractorModalOpen || isEditModalOpen} onClose={() => { setIsSubcontractorModalOpen(false); setIsEditModalOpen(false); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Briefcase className="text-indigo-600" /> {isEditModalOpen ? 'Edit Contractor' : 'Add New Contractor'}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} mt={1}>
-            <TextField 
-              label="Subcontractor Name" 
-              fullWidth 
-              value={newSubcontractor.name} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, name: e.target.value})} 
-              size="small" 
-              required 
-              helperText="Enter the full name of the subcontractor company"
-            />
-            <TextField 
-              label="Trade/Service" 
-              fullWidth 
-              value={newSubcontractor.trade} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, trade: e.target.value})} 
-              size="small" 
-              required 
-            />
-            <TextField 
-              label="Contact Person" 
-              fullWidth 
-              value={newSubcontractor.contactPerson} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, contactPerson: e.target.value})} 
-              size="small" 
-            />
-            <TextField 
-              label="Phone" 
-              fullWidth 
-              value={newSubcontractor.phone} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, phone: e.target.value})} 
-              size="small" 
-            />
-            <TextField 
-              label="Email" 
-              fullWidth 
-              value={newSubcontractor.email} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, email: e.target.value})} 
-              size="small" 
-            />
-            <TextField 
-              label="Address" 
-              fullWidth 
-              value={newSubcontractor.address} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, address: e.target.value})} 
-              size="small" 
-              multiline 
-              rows={2}
-            />
-            <TextField 
-              label="Contract Value" 
-              type="number" 
-              fullWidth 
-              value={newSubcontractor.contractValue} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, contractValue: Number(e.target.value)})} 
-              size="small" 
-              InputProps={{ 
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                inputProps: { min: 0, step: 0.01 }
-              }} 
-            />
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField 
-                  label="Start Date" 
-                  type="date" 
-                  fullWidth 
-                  size="small" 
-                  InputLabelProps={{ shrink: true }} 
-                  value={newSubcontractor.startDate} 
-                  onChange={e => setNewSubcontractor({...newSubcontractor, startDate: e.target.value})} 
-                  InputProps={{ startAdornment: <Calendar size={16} className="text-slate-400 mr-2"/> }}
+      <Dialog open={isSubcontractorModalOpen || isEditModalOpen} onOpenChange={() => { setIsSubcontractorModalOpen(false); setIsEditModalOpen(false); }} >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="font-bold flex items-center gap-1.5">
+              <Briefcase className="text-indigo-600" /> {isEditModalOpen ? 'Edit Contractor' : 'Add New Contractor'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-3 mt-1">
+              <Label htmlFor="subcontractor-name">Subcontractor Name</Label>
+              <Input
+                id="subcontractor-name" 
+                value={newSubcontractor.name} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, name: e.target.value})} 
+                required 
+                placeholder="Enter the full name of the subcontractor company"
+              />
+              <p className="text-sm text-muted-foreground">Enter the full name of the subcontractor company</p>
+
+              <Label htmlFor="trade-service">Trade/Service</Label>
+              <Input
+                id="trade-service" 
+                value={newSubcontractor.trade} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, trade: e.target.value})} 
+                required 
+              />
+              
+              <Label htmlFor="contact-person">Contact Person</Label>
+              <Input
+                id="contact-person" 
+                value={newSubcontractor.contactPerson} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, contactPerson: e.target.value})} 
+              />
+              
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone" 
+                value={newSubcontractor.phone} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, phone: e.target.value})} 
+              />
+              
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email" 
+                value={newSubcontractor.email} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, email: e.target.value})} 
+              />
+              
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address" 
+                value={newSubcontractor.address} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, address: e.target.value})} 
+              >
+                <textarea className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+              </Input>
+              
+              <Label htmlFor="contract-value">Contract Value</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(settings?.currency || project.settings?.currency)}</span>
+                <Input
+                  id="contract-value" 
+                  type="number" 
+                  value={newSubcontractor.contractValue} 
+                  onChange={e => setNewSubcontractor({...newSubcontractor, contractValue: Number(e.target.value)})} 
+                  min={0} 
+                  step={0.01}
+                  className="pl-7" // Adjust padding to make space for the currency symbol
                 />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField 
-                  label="End Date" 
-                  type="date" 
-                  fullWidth 
-                  size="small" 
-                  InputLabelProps={{ shrink: true }} 
-                  value={newSubcontractor.endDate} 
-                  onChange={e => setNewSubcontractor({...newSubcontractor, endDate: e.target.value})} 
-                  InputProps={{ startAdornment: <Calendar size={16} className="text-slate-400 mr-2"/> }}
-                />
-              </Grid>
-            </Grid>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <div className="relative">
+                    <Calendar size={16} className="text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"/>
+                    <Input 
+                      id="start-date" 
+                      type="date" 
+                      value={newSubcontractor.startDate} 
+                      onChange={e => setNewSubcontractor({...newSubcontractor, startDate: e.target.value})} 
+                      className="pl-9" // Adjust padding for icon
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="end-date">End Date</Label>
+                  <div className="relative">
+                    <Calendar size={16} className="text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"/>
+                    <Input 
+                      id="end-date" 
+                      type="date" 
+                      value={newSubcontractor.endDate} 
+                      onChange={e => setNewSubcontractor({...newSubcontractor, endDate: e.target.value})} 
+                      className="pl-9" // Adjust padding for icon
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <Label htmlFor="status">Status</Label>
               <Select 
                 value={newSubcontractor.status} 
-                label="Status" 
-                onChange={e => setNewSubcontractor({...newSubcontractor, status: e.target.value as any})}
+                onValueChange={value => setNewSubcontractor({...newSubcontractor, status: value as any})}
               >
-                <MenuItem value="Active">Active</MenuItem>
-                <MenuItem value="Suspended">Suspended</MenuItem>
-                <MenuItem value="Completed">Completed</MenuItem>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Suspended">Suspended</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                </SelectContent>
               </Select>
-            </FormControl>
             
-            <Typography variant="subtitle2" fontWeight="bold" mt={3} color="primary">Structural Assets & Works</Typography>
-            <TextField 
-              label="Assigned Works" 
-              fullWidth 
-              size="small" 
-              value={newSubcontractor.assignedWorks?.join(', ') || ''} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, assignedWorks: e.target.value.split(',').map(work => work.trim()).filter(work => work)})} 
-              helperText="Enter BOQ item IDs or work descriptions separated by commas"
-            />
-            <TextField 
-              label="Asset Categories" 
-              fullWidth 
-              size="small" 
-              value={newSubcontractor.assetCategories?.join(', ') || ''} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, assetCategories: e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat)})}
-              helperText="e.g., Bridges, Culverts, Retaining Walls"
-            />
-            <TextField 
-              label="Certifications" 
-              fullWidth 
-              size="small" 
-              value={newSubcontractor.certification?.join(', ') || ''} 
-              onChange={e => setNewSubcontractor({...newSubcontractor, certification: e.target.value.split(',').map(cert => cert.trim()).filter(cert => cert)})}
-              helperText="e.g., Structural Engineer License, Safety Certification"
-            />
-          </Stack>
+              <h4 className="text-lg font-bold mt-3 text-primary">Structural Assets & Works</h4>
+              <Label htmlFor="assigned-works">Assigned Works</Label>
+              <Input
+                id="assigned-works" 
+                value={newSubcontractor.assignedWorks?.join(', ') || ''} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, assignedWorks: e.target.value.split(',').map(work => work.trim()).filter(work => work)})} 
+                placeholder="Enter BOQ item IDs or work descriptions separated by commas"
+              />
+              <p className="text-sm text-muted-foreground">Enter BOQ item IDs or work descriptions separated by commas</p>
+
+              <Label htmlFor="asset-categories">Asset Categories</Label>
+              <Input
+                id="asset-categories" 
+                value={newSubcontractor.assetCategories?.join(', ') || ''} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, assetCategories: e.target.value.split(',').map(cat => cat.trim()).filter(cat => cat)})}
+                placeholder="e.g., Bridges, Culverts, Retaining Walls"
+              />
+              <p className="text-sm text-muted-foreground">e.g., Bridges, Culverts, Retaining Walls</p>
+
+              <Label htmlFor="certifications">Certifications</Label>
+              <Input
+                id="certifications" 
+                value={newSubcontractor.certification?.join(', ') || ''} 
+                onChange={e => setNewSubcontractor({...newSubcontractor, certification: e.target.value.split(',').map(cert => cert.trim()).filter(cert => cert)})}
+                placeholder="e.g., Structural Engineer License, Safety Certification"
+              />
+              <p className="text-sm text-muted-foreground">e.g., Structural Engineer License, Safety Certification</p>
+            </div>
+          </div>
+          <DialogFooter className="bg-slate-50 p-3 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setIsSubcontractorModalOpen(false); setIsEditModalOpen(false); }} >
+              <X className="mr-2 h-4 w-4" />Cancel
+            </Button>
+            <Button onClick={handleSaveSubcontractor} className="shadow-md hover:shadow-lg">
+              <Save className="mr-2 h-4 w-4"/>
+              {isEditModalOpen ? 'Update' : 'Save'} Contractor
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3, bgcolor: '#f8fafc' }}>
-          <Button onClick={() => { setIsSubcontractorModalOpen(false); setIsEditModalOpen(false); }} startIcon={<X />}>Cancel</Button>
-          <Button variant="contained" startIcon={<Save/>} onClick={handleSaveSubcontractor}>
-            {isEditModalOpen ? 'Update' : 'Save'} Contractor
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Payment Modal */}
-      <Dialog open={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-          <DollarSign size={20} className="text-white" /> Record Payment
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Stack spacing={3} mt={1}>
-            <TextField 
-              label="Payment Date" 
-              type="date" 
-              fullWidth 
-              size="small" 
-              InputLabelProps={{ shrink: true }} 
-              value={paymentForm.date} 
-              onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} 
-              InputProps={{ startAdornment: <Calendar size={16} className="text-slate-400 mr-2"/> }}
-            />
-            <TextField 
-              label="Amount" 
-              type="number" 
-              fullWidth 
-              size="small" 
-              value={paymentForm.amount} 
-              onChange={e => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value) || 0})}
-              InputProps={{ 
-                startAdornment: <InputAdornment position="start">{getCurrencySymbol(settings?.currency || project.settings?.currency)}</InputAdornment>,
-                inputProps: { min: 0, step: 0.01 }
-              }} 
-              required 
-            />
-            <TextField 
-              label="Reference Number" 
-              fullWidth 
-              size="small" 
-              value={paymentForm.reference} 
-              onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} 
-              required 
-            />
-            <FormControl fullWidth size="small">
-              <InputLabel>Payment Type</InputLabel>
+      <Dialog open={isPaymentModalOpen} onOpenChange={() => setIsPaymentModalOpen(false)} >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader className="font-bold flex items-center gap-1 bg-primary text-white p-2 rounded-t-lg">
+            <DollarSign size={20} className="text-white" /> Record Payment
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-3 mt-1">
+              <Label htmlFor="payment-date">Payment Date</Label>
+              <div className="relative">
+                <Calendar size={16} className="text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"/>
+                <Input 
+                  id="payment-date" 
+                  type="date" 
+                  value={paymentForm.date} 
+                  onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} 
+                  className="pl-9" // Adjust padding for icon
+                />
+              </div>
+
+              <Label htmlFor="amount">Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(settings?.currency || project.settings?.currency)}</span>
+                <Input
+                  id="amount" 
+                  type="number" 
+                  value={paymentForm.amount} 
+                  onChange={e => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value) || 0})}
+                  min={0} 
+                  step={0.01}
+                  required 
+                  className="pl-7" // Adjust padding for currency symbol
+                />
+              </div>
+              
+              <Label htmlFor="reference-number">Reference Number</Label>
+              <Input 
+                id="reference-number" 
+                value={paymentForm.reference} 
+                onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} 
+                required 
+              />
+              
+              <Label htmlFor="payment-type">Payment Type</Label>
               <Select 
                 value={paymentForm.type} 
-                label="Payment Type" 
-                onChange={e => setPaymentForm({...paymentForm, type: e.target.value as any})}
+                onValueChange={value => setPaymentForm({...paymentForm, type: value as any})}
               >
-                <MenuItem value="Bill Payment">Bill Payment</MenuItem>
-                <MenuItem value="Advance">Advance</MenuItem>
-                <MenuItem value="Retention">Retention</MenuItem>
-                <MenuItem value="Final Payment">Final Payment</MenuItem>
+                <SelectTrigger id="payment-type">
+                  <SelectValue placeholder="Select payment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Bill Payment">Bill Payment</SelectItem>
+                  <SelectItem value="Advance">Advance</SelectItem>
+                  <SelectItem value="Retention">Retention</SelectItem>
+                  <SelectItem value="Final Payment">Final Payment</SelectItem>
+                </SelectContent>
               </Select>
-            </FormControl>
-            <TextField 
-              label="Description" 
-              fullWidth 
-              size="small" 
-              value={paymentForm.description} 
-              onChange={e => setPaymentForm({...paymentForm, description: e.target.value})} 
-              multiline 
-              rows={2}
-            />
-          </Stack>
+              
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description" 
+                value={paymentForm.description} 
+                onChange={e => setPaymentForm({...paymentForm, description: e.target.value})} 
+              >
+                <textarea className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+              </Input>
+            </div>
+          </div>
+          <DialogFooter className="bg-gray-50 p-2 flex justify-end gap-2 rounded-b-lg">
+            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)} >
+              <X className="mr-2 h-4 w-4" />Cancel
+            </Button>
+            <Button onClick={handleSavePayment} className="shadow-md hover:shadow-lg">
+              <Save className="mr-2 h-4 w-4" />Save Payment
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-          <Button onClick={() => setIsPaymentModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-          <Button variant="contained" startIcon={<Save size={16} />} onClick={handleSavePayment} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Save Payment</Button>
-        </DialogActions>
       </Dialog>
 
-      <Snackbar 
-        open={snackbarOpen} 
-        autoHideDuration={3000} 
-        onClose={() => setSnackbarOpen(false)} 
-        message={snackbarMessage}
-      />
-    </Box>
+      {/* Snackbar replacement with sonner toast */}
+    </div>
   );
 };
 

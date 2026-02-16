@@ -2,19 +2,22 @@ import React, { useState, useMemo } from 'react';
 import { Project, UserRole, InventoryItem, PurchaseOrder, Material, Vehicle } from '../../types';
 import { getAutofillSuggestions, checkForDuplicates } from '../../utils/data/autofillUtils';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
-import { 
-    Box, Typography, Button, Grid, Table, TableHead, TableRow, TableCell, 
-    TableBody, Paper, Chip, Stack, Card, CardContent, LinearProgress,
-    Tooltip, IconButton, Divider, Avatar, Tabs, Tab, Dialog,
-    DialogTitle, DialogContent, DialogActions, TextField, InputAdornment,
-    List, ListItem, ListItemText, ListItemSecondaryAction, Alert, Checkbox,
-    Autocomplete, Select, MenuItem, FormControl, InputLabel, TableContainer
-} from '@mui/material';
-import { 
-    Package, AlertTriangle, CheckCircle2, TrendingDown, Plus, 
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Badge } from '~/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import {
+    Package, AlertTriangle, CheckCircle2, TrendingDown, Plus,
     ArrowUpRight, ShoppingCart, History, PackageSearch, Filter,
     FileText, Truck, CreditCard, ChevronRight, Calculator,
-    PlusCircle, Trash2, Save, X, Printer, Edit, Car, Fuel, Gauge, 
+    PlusCircle, Trash2, Save, X, Printer, Edit, Car, Fuel, Gauge,
     Wrench, QrCode, TrendingUp, Warehouse, BarChart3, Search
 } from 'lucide-react';
 
@@ -25,8 +28,8 @@ interface Props {
 }
 
 const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, userRole }) => {
-  const [activeTab, setActiveTab] = useState(0);
-  
+  const [activeTab, setActiveTab] = useState("0");
+
   // === INVENTORY MANAGEMENT STATE ===
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [inventoryForm, setInventoryForm] = useState<Partial<InventoryItem>>({
@@ -37,7 +40,7 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
     location: 'Warehouse'
   });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  
+
   // === MATERIAL MANAGEMENT STATE ===
   const [searchTerm, setSearchTerm] = useState('');
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
@@ -54,7 +57,7 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
     status: 'Available',
     criticality: 'Medium'
   });
-  
+
   // === PURCHASE ORDER STATE ===
   const [isPoModalOpen, setIsPoModalOpen] = useState(false);
   const [isPoDetailOpen, setIsPoDetailOpen] = useState(false);
@@ -65,7 +68,7 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
     date: new Date().toISOString().split('T')[0],
     items: []
   });
-  
+
   // === ASSET/FLEET STATE ===
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
@@ -86,7 +89,7 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
   const materials = project.materials || [];
   const purchaseOrders = project.purchaseOrders || [];
   const assets = project.vehicles || [];
-  
+
   // === STATISTICS CALCULATIONS ===
   const inventoryStats = useMemo(() => {
     const critical = inventory.filter(i => i.quantity <= i.reorderLevel);
@@ -113,7 +116,7 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
 
   // === FILTERED DATA ===
   const filteredMaterials = useMemo(() => {
-    return materials.filter(material => 
+    return materials.filter(material =>
       material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       material.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       material.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -165,483 +168,392 @@ const ResourceManagementHub: React.FC<Props> = ({ project, onProjectUpdate, user
   };
 
   const getStatusColor = (quantity: number, reorderLevel: number) => {
-    if (quantity <= reorderLevel) return 'error';
-    if (quantity <= reorderLevel * 1.5) return 'warning';
-    return 'success';
+    if (quantity <= reorderLevel) return 'destructive';
+    if (quantity <= reorderLevel * 1.5) return 'secondary';
+    return 'default';
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', overflowY: 'auto', p: 2 }}>
-      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-        <Box>
-          <Typography variant="h5" fontWeight="900">Resource Management Hub</Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="h-[calc(100vh-140px)] overflow-y-auto p-2">
+      <div className="flex justify-between mb-6 items-center">
+        <div>
+          <h2 className="text-xl font-extrabold tracking-tight">Resource Management Hub</h2>
+          <p className="text-sm text-muted-foreground">
             Unified inventory, materials, assets, and procurement management
-          </Typography>
-        </Box>
-        <Box display="flex" gap={1}>
-          <Button 
-            variant="outlined" 
-            startIcon={<Package size={16}/>} 
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
             onClick={handleAddInventoryItem}
           >
+            <Package size={16} className="mr-2" />
             Add Inventory
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<ShoppingCart size={16}/>} 
+          <Button
+            variant="outline"
             onClick={() => setIsPoModalOpen(true)}
           >
+            <ShoppingCart size={16} className="mr-2" />
             New PO
           </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<Plus size={16}/>} 
+          <Button
             onClick={handleAddMaterial}
           >
+            <Plus size={16} className="mr-2" />
             Add Material
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label={`Inventory (${inventory.length})`} icon={<Warehouse size={16} />} iconPosition="start" />
-          <Tab label={`Materials (${materials.length})`} icon={<Package size={16} />} iconPosition="start" />
-          <Tab label={`Purchase Orders (${purchaseOrders.length})`} icon={<FileText size={16} />} iconPosition="start" />
-          <Tab label={`Assets (${assets.length})`} icon={<Car size={16} />} iconPosition="start" />
+      <Card className="rounded-xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="border-b">
+          <TabsList>
+            <TabsTrigger value="0">
+              <Warehouse size={16} className="mr-2" />
+              Inventory ({inventory.length})
+            </TabsTrigger>
+            <TabsTrigger value="1">
+              <Package size={16} className="mr-2" />
+              Materials ({materials.length})
+            </TabsTrigger>
+            <TabsTrigger value="2">
+              <FileText size={16} className="mr-2" />
+              Purchase Orders ({purchaseOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="3">
+              <Car size={16} className="mr-2" />
+              Assets ({assets.length})
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
 
-        <Box p={3}>
+        <div className="p-6">
           {/* Inventory Tab */}
-          {activeTab === 0 && (
-            <Box>
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="error.main" fontWeight="bold">
-                        {inventoryStats.critical.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Critical Stock
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {inventoryStats.warning.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Low Stock
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {inventoryStats.healthy}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Healthy Stock
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        ₹{inventoryStats.totalValue.toLocaleString()}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Value
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+          {activeTab === "0" && (
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-red-600">
+                      {inventoryStats.critical.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Critical Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {inventoryStats.warning.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Low Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {inventoryStats.healthy}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Healthy Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ₹{inventoryStats.totalValue.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Total Value</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: 'slate.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Item</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Quantity</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Unit</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Reorder Level</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Location</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Reorder Level</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventory.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                          {item.itemName || item.name}
+                        </TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.unit}</TableCell>
+                        <TableCell>{item.reorderLevel}</TableCell>
+                        <TableCell>{item.location}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(item.quantity, item.reorderLevel)}>
+                            {item.quantity <= item.reorderLevel ? 'Critical' :
+                             item.quantity <= item.reorderLevel * 1.5 ? 'Low' : 'Healthy'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setInventoryForm({
+                                  id: item.id,
+                                  itemName: item.itemName || item.name || '',
+                                  quantity: item.quantity,
+                                  unit: item.unit,
+                                  reorderLevel: item.reorderLevel,
+                                  location: item.location
+                                });
+                                setEditingItemId(item.id);
+                                setIsInventoryModalOpen(true);
+                              }}
+                            >
+                              <Edit size={16} className="mr-1" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Trash2 size={16} className="mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {inventory.map(item => (
-                        <TableRow key={item.id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold">
-                              {item.itemName || item.name}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{item.quantity}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{item.unit}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{item.reorderLevel}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{item.location}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={
-                                item.quantity <= item.reorderLevel ? 'Critical' :
-                                item.quantity <= item.reorderLevel * 1.5 ? 'Low' : 'Healthy'
-                              }
-                              size="small"
-                              color={getStatusColor(item.quantity, item.reorderLevel) as any}
-                              variant="filled"
-                              sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
-                                startIcon={<Edit size={16}/>}
-                                onClick={() => {
-                                  setInventoryForm({
-                                    id: item.id,
-                                    itemName: item.itemName || item.name || '',
-                                    quantity: item.quantity,
-                                    unit: item.unit,
-                                    reorderLevel: item.reorderLevel,
-                                    location: item.location
-                                  });
-                                  setEditingItemId(item.id);
-                                  setIsInventoryModalOpen(true);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
-                                color="error"
-                                startIcon={<Trash2 size={16}/>}
-                              >
-                                Delete
-                              </Button>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Box>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
           )}
 
           {/* Materials Tab */}
-          {activeTab === 1 && (
-            <Box>
-              <Box mb={3}>
-                <TextField
-                  fullWidth
-                  placeholder="Search materials..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: <Search size={18} style={{ marginRight: 8 }} />
-                  }}
-                />
-              </Box>
+          {activeTab === "1" && (
+            <div>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search materials..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {materialStats.totalMaterials}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Materials
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {materialStats.lowStock}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Low Stock
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="error.main" fontWeight="bold">
-                        {materialStats.outOfStock}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Out of Stock
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        ₹{materialStats.totalValue.toLocaleString()}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Value
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {materialStats.totalMaterials}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Total Materials</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {materialStats.lowStock}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Low Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-red-600">
+                      {materialStats.outOfStock}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Out of Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      ₹{materialStats.totalValue.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Total Value</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: 'slate.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Material</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Category</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Available</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Unit Cost</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Location</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Material</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Available</TableHead>
+                      <TableHead>Unit Cost</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredMaterials.map(material => (
+                      <TableRow key={material.id}>
+                        <TableCell className="font-medium">
+                          {material.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{material.category}</Badge>
+                        </TableCell>
+                        <TableCell>{material.availableQuantity} {material.unit}</TableCell>
+                        <TableCell>₹{material.unitCost?.toLocaleString()}</TableCell>
+                        <TableCell>{material.location}</TableCell>
+                        <TableCell>
+                          <Badge variant={material.status === 'Available' ? 'default' : 'secondary'}>
+                            {material.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setMaterialForm(material);
+                              setEditingMaterialId(material.id);
+                              setIsMaterialModalOpen(true);
+                            }}
+                          >
+                            <Edit size={16} className="mr-1" />
+                            Edit
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredMaterials.map(material => (
-                        <TableRow key={material.id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold">
-                              {material.name}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={material.category} 
-                              size="small" 
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{material.availableQuantity} {material.unit}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">₹{material.unitCost?.toLocaleString()}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{material.location}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={material.status}
-                              size="small"
-                              color={material.status === 'Available' ? 'success' : 'warning'}
-                              variant="filled"
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button 
-                              variant="outlined" 
-                              size="small" 
-                              startIcon={<Edit size={16}/>}
-                              onClick={() => {
-                                setMaterialForm(material);
-                                setEditingMaterialId(material.id);
-                                setIsMaterialModalOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Box>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
           )}
 
           {/* Purchase Orders Tab */}
-          {activeTab === 2 && (
-            <Box>
-              <Typography variant="h6" mb={2}>Purchase Orders</Typography>
-              <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-                <Typography textAlign="center" color="text.secondary">
+          {activeTab === "2" && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Purchase Orders</h3>
+              <Card className="p-6">
+                <p className="text-center text-muted-foreground">
                   Purchase Order management interface would be implemented here
-                </Typography>
-              </Paper>
-            </Box>
+                </p>
+              </Card>
+            </div>
           )}
 
           {/* Assets Tab */}
-          {activeTab === 3 && (
-            <Box>
-              <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="success.main" fontWeight="bold">
-                        {assetStats.active.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Active Assets
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
-                        {assetStats.maintenance.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        In Maintenance
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="info.main" fontWeight="bold">
-                        {assetStats.idle.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Idle Assets
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        {assets.length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Assets
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+          {activeTab === "3" && (
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {assetStats.active.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Active Assets</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {assetStats.maintenance.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">In Maintenance</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {assetStats.idle.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Idle Assets</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {assets.length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Total Assets</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-              <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: 'slate.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Asset</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Type</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Driver</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Chainage</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Actions</TableCell>
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Asset</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Driver</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Chainage</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {assets.map(asset => (
+                      <TableRow key={asset.id}>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="font-medium">{asset.plateNumber}</div>
+                            <div className="text-sm text-muted-foreground">ID: {asset.id}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{asset.type}</Badge>
+                        </TableCell>
+                        <TableCell>{asset.driver}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            asset.status === 'Active' ? 'default' :
+                            asset.status === 'Maintenance' ? 'secondary' : 'outline'
+                          }>
+                            {asset.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{asset.chainage}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAsset(asset);
+                                setIsQRModalOpen(true);
+                              }}
+                            >
+                              <QrCode size={16} className="mr-1" />
+                              QR Code
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setAssetForm(asset);
+                                setEditingAssetId(asset.id);
+                                setIsAssetModalOpen(true);
+                              }}
+                            >
+                              <Edit size={16} className="mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {assets.map(asset => (
-                        <TableRow key={asset.id} hover>
-                          <TableCell>
-                            <Stack direction="column" spacing={0.5}>
-                              <Typography variant="body2" fontWeight="bold">
-                                {asset.plateNumber}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                ID: {asset.id}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={asset.type} 
-                              size="small" 
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{asset.driver}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={asset.status}
-                              size="small"
-                              color={
-                                asset.status === 'Active' ? 'success' : 
-                                asset.status === 'Maintenance' ? 'warning' : 'default'
-                              }
-                              variant="filled"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{asset.chainage}</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
-                                startIcon={<QrCode size={16}/>}
-                                onClick={() => {
-                                  setSelectedAsset(asset);
-                                  setIsQRModalOpen(true);
-                                }}
-                              >
-                                QR Code
-                              </Button>
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
-                                startIcon={<Edit size={16}/>}
-                                onClick={() => {
-                                  setAssetForm(asset);
-                                  setEditingAssetId(asset.id);
-                                  setIsAssetModalOpen(true);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Box>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
           )}
-        </Box>
-      </Paper>
-    </Box>
+        </div>
+      </Card>
+    </div>
   );
 };
 

@@ -1,27 +1,21 @@
-import React, { useState } from 'react';
-import { User, UserRole } from '../../types';
-import { apiService } from '../../services/api/apiService';
+import React, { useState, ChangeEvent } from 'react';
+import { UserRole } from '../../types';
 import { UserPlus, Mail, Shield, Edit3, Upload, X, Save } from 'lucide-react';
-import { 
-  Avatar, 
-  Box, 
-  Typography, 
-  Button, 
-  Paper, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  IconButton,
-  Chip,
-  Stack,
-  Alert
-} from '@mui/material';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { cn } from '~/lib/utils';
+
+
+// NOTE: This is a refactored version of the UserRegistration component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 const UserRegistration: React.FC = () => {
   const [registrationForm, setRegistrationForm] = useState({ 
@@ -40,29 +34,16 @@ const UserRegistration: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!registrationForm.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
+    if (!registrationForm.name.trim()) { newErrors.name = 'Name is required'; }
+    if (!registrationForm.email.trim()) { newErrors.email = 'Email is required'; } 
+    else if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(registrationForm.email)) { newErrors.email = 'Please enter a valid email address'; }
     
-    if (!registrationForm.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$/.test(registrationForm.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
+    if (!registrationForm.password) { newErrors.password = 'Password is required'; } 
+    else if (registrationForm.password.length < 6) { newErrors.password = 'Password must be at least 6 characters'; }
     
-    if (!registrationForm.password) {
-      newErrors.password = 'Password is required';
-    } else if (registrationForm.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    if (registrationForm.password !== registrationForm.confirmPassword) { newErrors.confirmPassword = 'Passwords do not match'; }
     
-    if (registrationForm.password !== registrationForm.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    if (registrationForm.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(registrationForm.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
+    if (registrationForm.phone && !/^\+?[1-9][\d\-\s]{8,}$/.test(registrationForm.phone)) { newErrors.phone = 'Please enter a valid phone number'; }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -70,30 +51,19 @@ const UserRegistration: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) { return; }
 
     try {
-      // Submit registration to API
-      const pendingUser = await apiService.submitRegistration({
+      await apiService.submitRegistration({
         name: registrationForm.name,
         email: registrationForm.email,
         phone: registrationForm.phone,
         requestedRole: registrationForm.role
       });
-
       setRegistrationSuccess(true);
-      
-      // Reset form
       setRegistrationForm({ 
-        name: '', 
-        email: '', 
-        role: UserRole.SITE_ENGINEER, 
-        phone: '', 
-        password: '', 
-        confirmPassword: '' 
+        name: '', email: '', role: UserRole.SITE_ENGINEER, 
+        phone: '', password: '', confirmPassword: '' 
       });
       setAvatarFile(null);
       setPreviewUrl(null);
@@ -106,12 +76,8 @@ const UserRegistration: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarFile(file);
-      
-      // Create a preview URL for the selected image
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
+      reader.onloadend = () => { setPreviewUrl(reader.result as string); };
       reader.readAsDataURL(file);
     }
   };
@@ -123,180 +89,119 @@ const UserRegistration: React.FC = () => {
 
   if (registrationSuccess) {
     return (
-      <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 2 }}>
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', maxWidth: 500, width: '100%', borderRadius: 4 }}>
-          <UserPlus size={64} className="mx-auto text-green-500 mb-4" />
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Registration Submitted
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            Your account registration has been submitted successfully.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+      <div className="min-h-[calc(100vh-140px)] flex flex-col justify-center items-center p-4">
+        <Card className="p-6 text-center max-w-lg w-full rounded-2xl">
+          <UserPlus className="mx-auto text-green-500 mb-4 h-16 w-16" />
+          <h2 className="text-2xl font-bold mb-2">Registration Submitted</h2>
+          <p className="text-slate-600 mb-4">Your account registration has been submitted successfully.</p>
+          <p className="text-sm text-slate-500 mb-4">
             An administrator will review your request and approve your account.
             You will receive an email notification once your account is approved.
-          </Typography>
-          <Button 
-            variant="contained" 
-            onClick={() => setRegistrationSuccess(false)}
-            sx={{ mt: 2, px: 3, py: 1 }}
-          >
+          </p>
+          <Button onClick={() => setRegistrationSuccess(false)} className="mt-4">
             Register Another Account
           </Button>
-        </Paper>
-      </Box>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', overflowY: 'auto', p: 2 }}>
-      <Box mb={3}>
-        <Typography variant="h5" fontWeight="900">Create Account</Typography>
-        <Typography variant="body2" color="text.secondary">Register for a new RoadMaster Pro account</Typography>
-      </Box>
+    <div className="p-4 overflow-y-auto min-h-[calc(100vh-140px)]">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-800">Create Account</h1>
+        <p className="text-sm text-slate-500">Register for a new RoadMaster Pro account</p>
+      </div>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 4, maxWidth: 600, mx: 'auto' }}>
-        <Box component="form" onSubmit={handleRegister} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-            <Avatar 
-              src={previewUrl || undefined} 
-              sx={{ width: 64, height: 64, bgcolor: 'slate.200', color: 'slate.600', fontWeight: 'bold', fontSize: 12 }}
-            >
-              {registrationForm.name ? registrationForm.name.charAt(0) : 'U'}
+      <Card className="p-6 rounded-2xl max-w-2xl mx-auto">
+        <form onSubmit={handleRegister} className="grid gap-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={previewUrl || undefined} />
+              <AvatarFallback>{registrationForm.name ? registrationForm.name.charAt(0) : 'U'}</AvatarFallback>
             </Avatar>
-            <Box>
-              <Button 
-                variant="outlined" 
-                component="label" 
-                startIcon={<Upload size={16} />}
-                sx={{ borderRadius: 2, mr: 1 }}
-              >
-                Upload Photo
-                <input 
-                  type="file" 
-                  hidden 
-                  accept="image/*" 
-                  onChange={handleFileChange}
-                />
+            <div className="grid gap-1">
+              <Button variant="outline" size="sm" asChild>
+                <Label htmlFor="avatar-upload">
+                  <Upload className="mr-2 h-4 w-4" /> Upload Photo
+                </Label>
               </Button>
+              <Input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
               {avatarFile && (
-                <IconButton 
-                  size="small" 
-                  onClick={clearAvatar}
-                  sx={{ color: 'error.main', ml: 1 }}
-                >
-                  <X size={16} />
-                </IconButton>
+                <Button variant="ghost" size="sm" onClick={clearAvatar}>
+                  <X className="mr-2 h-4 w-4" /> Clear Photo
+                </Button>
               )}
-              <Typography variant="caption" color="text.secondary">
-                JPG, PNG, Max 5MB
-              </Typography>
-            </Box>
-          </Stack>
+              <p className="text-xs text-muted-foreground">JPG, PNG, Max 5MB</p>
+            </div>
+          </div>
           
-          <TextField 
-            required
-            label="Full Name" 
-            fullWidth 
-            value={registrationForm.name} 
-            onChange={e => setRegistrationForm({...registrationForm, name: e.target.value})} 
-            margin="normal"
-            error={!!errors.name}
-            helperText={errors.name}
-          />
-          <TextField 
-            required
-            label="Email" 
-            type="email" 
-            fullWidth 
-            value={registrationForm.email} 
-            onChange={e => setRegistrationForm({...registrationForm, email: e.target.value})} 
-            margin="normal"
-            error={!!errors.email}
-            helperText={errors.email}
-          />
-          <TextField 
-            required
-            label="Password" 
-            type="password" 
-            fullWidth 
-            value={registrationForm.password} 
-            onChange={e => setRegistrationForm({...registrationForm, password: e.target.value})} 
-            margin="normal"
-            error={!!errors.password}
-            helperText={errors.password}
-          />
-          <TextField 
-            required
-            label="Confirm Password" 
-            type="password" 
-            fullWidth 
-            value={registrationForm.confirmPassword} 
-            onChange={e => setRegistrationForm({...registrationForm, confirmPassword: e.target.value})} 
-            margin="normal"
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword}
-          />
-          <TextField 
-            label="Phone" 
-            fullWidth 
-            value={registrationForm.phone} 
-            onChange={e => setRegistrationForm({...registrationForm, phone: e.target.value})} 
-            margin="normal"
-            error={!!errors.phone}
-            helperText={errors.phone}
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Request Role</InputLabel>
-            <Select 
-              value={registrationForm.role} 
-              label="Request Role"
-              onChange={e => setRegistrationForm({...registrationForm, role: e.target.value as UserRole})}
-            >
-              {Object.values(UserRole).map(role => (
-                <MenuItem key={role} value={role}>{role}</MenuItem>
-              ))}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Full Name</Label>
+            <Input id="name" value={registrationForm.name} onChange={e => setRegistrationForm({...registrationForm, name: e.target.value})} className="col-span-3" />
+            {errors.name && <p className="col-start-2 col-span-3 text-sm text-red-500">{errors.name}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">Email</Label>
+            <Input id="email" type="email" value={registrationForm.email} onChange={e => setRegistrationForm({...registrationForm, email: e.target.value})} className="col-span-3" />
+            {errors.email && <p className="col-start-2 col-span-3 text-sm text-red-500">{errors.email}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="password" className="text-right">Password</Label>
+            <Input id="password" type="password" value={registrationForm.password} onChange={e => setRegistrationForm({...registrationForm, password: e.target.value})} className="col-span-3" />
+            {errors.password && <p className="col-start-2 col-span-3 text-sm text-red-500">{errors.password}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="confirmPassword" className="text-right">Confirm Password</Label>
+            <Input id="confirmPassword" type="password" value={registrationForm.confirmPassword} onChange={e => setRegistrationForm({...registrationForm, confirmPassword: e.target.value})} className="col-span-3" />
+            {errors.confirmPassword && <p className="col-start-2 col-span-3 text-sm text-red-500">{errors.confirmPassword}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="phone" className="text-right">Phone</Label>
+            <Input id="phone" value={registrationForm.phone} onChange={e => setRegistrationForm({...registrationForm, phone: e.target.value})} className="col-span-3" />
+            {errors.phone && <p className="col-start-2 col-span-3 text-sm text-red-500">{errors.phone}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="role" className="text-right">Request Role</Label>
+            <Select value={registrationForm.role} onValueChange={(value: UserRole) => setRegistrationForm({...registrationForm, role: value})}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(UserRole).map(role => (
+                  <SelectItem key={role} value={role}>{role}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
+          </div>
           
-          <Alert severity="info" sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>Note:</strong> Your registration will be reviewed by an administrator. 
-              You will receive an email notification when your account is approved.
-            </Typography>
+          <Alert className="mt-4">
+            <AlertTitle>Important Note</AlertTitle>
+            <AlertDescription>
+              Your registration will be reviewed by an administrator. You will receive an email notification when your account is approved.
+            </AlertDescription>
           </Alert>
           
-          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-            <Button 
-              variant="outlined" 
-              onClick={() => {
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" onClick={() => {
                 setRegistrationForm({ 
-                  name: '', 
-                  email: '', 
-                  role: UserRole.SITE_ENGINEER, 
-                  phone: '', 
-                  password: '', 
-                  confirmPassword: '' 
+                  name: '', email: '', role: UserRole.SITE_ENGINEER, 
+                  phone: '', password: '', confirmPassword: '' 
                 });
                 setAvatarFile(null);
                 setPreviewUrl(null);
-              }}
-              sx={{ flex: 1, px: 2, py: 1 }}
+              }} className="flex-1"
             >
               Clear
             </Button>
-            <Button 
-              variant="contained" 
-              type="submit"
-              startIcon={<UserPlus size={16} />}
-              sx={{ flex: 1, px: 2, py: 1 }}
-            >
+            <Button type="submit" className="flex-1">
+              <UserPlus className="mr-2 h-4 w-4" />
               Submit Registration
             </Button>
-          </Box>
-        </Box>
-      </Paper>
-    </Box>
+          </div>
+        </form>
+      </Card>
+    </div>
   );
 };
 

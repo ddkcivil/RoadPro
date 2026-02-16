@@ -1,19 +1,15 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Message } from '../../types';
 import { Send, Search, MoreVertical, Hash, User as UserIcon, Check, CheckCheck, MessageCircle, Mail, Phone, Paperclip, FileText, HardHat } from 'lucide-react';
-import { 
-    Box, 
-    TextField, 
-    Typography, 
-    Avatar, 
-    Badge, 
-    IconButton,
-    InputAdornment,
-    Divider,
-    Tooltip,
-    Button
-} from '@mui/material';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { ScrollArea } from '~/components/ui/scroll-area';
+import { Separator } from '~/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Badge } from '~/components/ui/badge';
+import { Textarea } from '~/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface Props {
   currentUser: User | null;
@@ -68,7 +64,7 @@ const MessagesModule: React.FC<Props> = ({ currentUser, users, messages, project
 
   const handleWhatsAppClick = (phone?: string) => {
       if (!phone) {
-          alert("No phone number available for this user.");
+          toast.info("No phone number available for this user.");
           return;
       }
       // Simple sanitize
@@ -78,14 +74,14 @@ const MessagesModule: React.FC<Props> = ({ currentUser, users, messages, project
 
   const handleEmailClick = (email?: string) => {
       if (!email) {
-          alert("No email address available for this user.");
+          toast.info("No email address available for this user.");
           return;
       }
       window.location.href = `mailto:${email}`;
   };
 
   // Mock handlers for enhancements
-  const handleAttach = () => alert("Attachment Feature: Opens file picker.");
+  const handleAttach = () => toast.info("Attachment Feature: Opens file picker.");
   const handleLinkRFI = () => {
       setInputText(prev => prev + "Ref: RFI/CH/12+500 ");
   };
@@ -96,197 +92,159 @@ const MessagesModule: React.FC<Props> = ({ currentUser, users, messages, project
   const activeUser = getUser(activeChatId);
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+    <div className="flex h-[calc(100vh-140px)] rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
         {/* Sidebar */}
-        <Box sx={{ width: 320, bgcolor: 'action.hover', borderRight: '1px solid', borderColor: 'divider', display: 'flex', flexDirection: 'column' }}>
-            <Box p={3} borderBottom="1px solid" borderColor="divider">
-                <Typography variant="h5" fontWeight="bold" color="text.primary" mb={3}>Messages</Typography>
-                <TextField 
-                    size="small" 
+        <div className="flex w-80 flex-col border-r bg-muted/40">
+            <div className="p-4 border-b">
+                <h2 className="text-2xl font-bold text-foreground mb-3">Messages</h2>
+                <Input 
                     placeholder="Search people..." 
-                    fullWidth 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    InputProps={{
-                        startAdornment: <InputAdornment position="start"><Search size={16} color="disabled" /></InputAdornment>
-                    }}
-                    sx={{ bgcolor: 'background.paper' }}
+                    icon={<Search className="h-4 w-4 text-muted-foreground" />} // Assuming Input can take an icon prop
                 />
-            </Box>
+            </div>
 
-            <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                <Box px={3} py={1.5} textTransform="uppercase" fontSize="0.75rem" fontWeight="bold" color="text.secondary" mt={1}>Channels</Box>
+            <ScrollArea className="flex-1">
+                <div className="px-4 py-2 uppercase text-xs font-bold text-muted-foreground mt-1">Channels</div>
                 
-                <Box 
+                <div 
                     onClick={() => setActiveChatId('general')}
-                    sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 2, 
-                        px: 3, 
-                        py: 2, 
-                        cursor: 'pointer', 
-                        transition: 'all 0.2s', 
-                        bgcolor: activeChatId === 'general' ? 'primary.light' : 'transparent',
-                        borderRight: activeChatId === 'general' ? '4px solid' : 'none',
-                        borderColor: activeChatId === 'general' ? 'primary.main' : 'transparent',
-                        '&:hover': { bgcolor: 'action.hover' }
-                    }}
+                    className={`flex items-center gap-2 px-4 py-3 cursor-pointer transition-all 
+                                ${activeChatId === 'general' ? 'bg-primary/10 border-r-4 border-primary' : 'hover:bg-muted/60'}`}
                 >
-                    <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: 'primary.light', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-                        <Hash size={20} />
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" fontWeight="600" color={activeChatId === 'general' ? 'primary.main' : 'text.primary'}>Project General</Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap>Team announcements</Typography>
-                    </Box>
-                </Box>
+                    <div className="w-10 h-10 rounded-md bg-primary/20 flex items-center justify-center text-primary">
+                        <Hash className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <p className={`font-semibold ${activeChatId === 'general' ? 'text-primary' : 'text-foreground'}`}>Project General</p>
+                        <p className="text-sm text-muted-foreground line-clamp-1">Team announcements</p>
+                    </div>
+                </div>
 
-                <Box px={3} py={1.5} textTransform="uppercase" fontSize="0.75rem" fontWeight="bold" color="text.secondary" mt={2}>Direct Messages</Box>
+                <div className="px-4 py-2 uppercase text-xs font-bold text-muted-foreground mt-4">Direct Messages</div>
                 
                 {filteredUsers.map(user => {
                     const lastMsg = messages.filter(m => (m.senderId === user.id && m.receiverId === currentUser?.id) || (m.senderId === currentUser?.id && m.receiverId === user.id)).pop();
                     const unreadCount = messages.filter(m => m.senderId === user.id && m.receiverId === currentUser?.id && !m.read).length;
 
                     return (
-                        <Box 
+                        <div 
                             key={user.id}
                             onClick={() => setActiveChatId(user.id)}
-                            sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 2, 
-                                px: 3, 
-                                py: 2, 
-                                cursor: 'pointer', 
-                                transition: 'all 0.2s', 
-                                bgcolor: activeChatId === user.id ? 'primary.light' : 'transparent',
-                                borderRight: activeChatId === user.id ? '4px solid' : 'none',
-                                borderColor: activeChatId === user.id ? 'primary.main' : 'transparent',
-                                '&:hover': { bgcolor: 'action.hover' }
-                            }}
+                            className={`flex items-center gap-2 px-4 py-3 cursor-pointer transition-all 
+                                        ${activeChatId === user.id ? 'bg-primary/10 border-r-4 border-primary' : 'hover:bg-muted/60'}`}
                             title={user.phone ? `Phone: ${user.phone}` : ''}
                         >
-                             <Badge badgeContent={unreadCount} color="error" variant="dot" invisible={unreadCount === 0} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-                                <Avatar 
-                                    src={user.avatar}
-                                    sx={{ width: 40, height: 40, bgcolor: 'secondary.light', fontSize: 14 }}
-                                >
-                                    {user.name.charAt(0)}
+                            <div className="relative">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={user.avatar} />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                             </Badge>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" fontWeight="600" color={activeChatId === user.id ? 'primary.main' : 'text.primary'}>{user.name}</Typography>
-                                    {lastMsg && <Typography variant="caption" color="text.secondary">{new Date(lastMsg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Typography>}
-                                </Box>
-                                <Typography variant="caption" color="text.secondary" noWrap>
+                                {unreadCount > 0 && (
+                                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-red-500 ring-2 ring-background" />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center">
+                                    <p className={`font-semibold ${activeChatId === user.id ? 'text-primary' : 'text-foreground'}`}>{user.name}</p>
+                                    {lastMsg && <p className="text-xs text-muted-foreground">{new Date(lastMsg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>}
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-1">
                                     {lastMsg ? (lastMsg.senderId === currentUser?.id ? 'You: ' + lastMsg.content : lastMsg.content) : user.role}
-                                </Typography>
-                            </Box>
-                        </Box>
+                                </p>
+                            </div>
+                        </div>
                     );
                 })}
-            </Box>
-        </Box>
+            </ScrollArea>
+        </div>
 
         {/* Chat Area */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+        <div className="flex flex-1 flex-col bg-background">
              {/* Header */}
-             <Box sx={{ minHeight: 80, bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 4, flexShrink: 0, py: 1 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+             <div className="flex min-h-[80px] items-center justify-between border-b bg-card px-6 py-2 shrink-0">
+                 <div className="flex items-center gap-4">
                      {activeChatId === 'general' ? (
-                         <Box sx={{ width: 48, height: 48, borderRadius: 3, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.contrastText', boxShadow: 2 }}>
-                             <Hash size={24} />
-                         </Box>
+                         <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow">
+                             <Hash className="h-6 w-6" />
+                         </div>
                      ) : (
-                         <Avatar 
-                            src={activeUser?.avatar}
-                            sx={{ width: 48, height: 48, bgcolor: 'secondary.main', fontSize: 20 }}
-                         >
-                             {activeUser?.name.charAt(0)}
+                         <Avatar className="h-12 w-12"> 
+                            <AvatarImage src={activeUser?.avatar} />
+                            <AvatarFallback>{activeUser?.name.charAt(0)}</AvatarFallback>
                          </Avatar>
                      )}
-                     <Box>
-                         <Typography variant="h6" fontWeight="bold" color="text.primary" lineHeight="1.2">
+                     <div>
+                         <h3 className="text-xl font-bold text-foreground leading-tight">
                              {activeChatId === 'general' ? 'Project General' : activeUser?.name}
-                         </Typography>
-                         <Typography variant="caption" color="text.secondary">
+                         </h3>
+                         <p className="text-sm text-muted-foreground">
                              {activeChatId === 'general' ? `${users.length} members` : (
-                                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: { xs: 0.25, sm: 1.5 }, mt: 0.5 }}>
-                                     <Box component="span" sx={{ fontWeight: 'bold', color: 'primary.main', bgcolor: 'primary.light', px: 1, py: 0.25, borderRadius: 1 }}>{activeUser?.role}</Box>
+                                 <span className="flex flex-col sm:flex-row items-start sm:items-center gap-x-3 text-sm mt-1">
+                                     <Badge className="font-bold">{activeUser?.role}</Badge>
                                      {activeUser?.phone && (
-                                         <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontFamily: 'monospace', color: 'text.secondary' }}>
-                                             <Phone size={12} color="disabled"/> {activeUser.phone}
-                                         </Box>
+                                         <span className="flex items-center gap-1 font-mono text-muted-foreground">
+                                             <Phone className="h-3 w-3" /> {activeUser.phone}
+                                         </span>
                                      )}
                                      {activeUser?.email && (
-                                         <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                             <Mail size={12} color="disabled"/> {activeUser.email}
-                                         </Box>
+                                         <span className="flex items-center gap-1 text-muted-foreground">
+                                             <Mail className="h-3 w-3" /> {activeUser.email}
+                                         </span>
                                      )}
-                                 </Box>
+                                 </span>
                              )}
-                         </Typography>
-                     </Box>
-                 </Box>
+                         </p>
+                     </div>
+                 </div>
                  
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                 <div className="flex items-center gap-2">
                      {activeChatId !== 'general' && activeUser && (
                          <>
                              <Button 
-                                variant="outlined"
-                                color="inherit"
-                                size="small" 
-                                startIcon={<Mail size={16} />}
+                                variant="outline"
+                                size="sm" 
                                 onClick={() => handleEmailClick(activeUser.email)}
-                                sx={{ borderColor: 'divider', color: 'text.secondary', display: { xs: 'none', md: 'flex' } }}
+                                className="hidden md:flex"
                              >
-                                Email
+                                <Mail className="mr-2 h-4 w-4" /> Email
                              </Button>
                              <Button 
-                                variant="contained"
-                                color="success"
-                                size="small"
-                                startIcon={<MessageCircle size={16} />}
+                                variant="default"
+                                size="sm"
                                 onClick={() => handleWhatsAppClick(activeUser.phone)} 
-                                sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' }, color: 'white', display: { xs: 'none', md: 'flex' } }}
+                                className="hidden md:flex bg-green-500 hover:bg-green-600 text-white"
                              >
-                                WhatsApp
+                                <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
                              </Button>
                              
                              {/* Mobile Icons */}
-                             <IconButton 
-                                onClick={() => handleEmailClick(activeUser.email)} 
-                                sx={{ display: { xs: 'flex', md: 'none' }, bgcolor: 'action.hover' }}
-                             >
-                                 <Mail size={20} color="disabled" />
-                             </IconButton>
-                             <IconButton 
-                                onClick={() => handleWhatsAppClick(activeUser.phone)} 
-                                sx={{ display: { xs: 'flex', md: 'none' }, bgcolor: 'success.light' }}
-                             >
-                                 <MessageCircle size={20} color="success" />
-                             </IconButton>
+                             <Button variant="ghost" size="icon" onClick={() => handleEmailClick(activeUser.email)} className="md:hidden">
+                                 <Mail className="h-5 w-5 text-muted-foreground" />
+                             </Button>
+                             <Button variant="ghost" size="icon" onClick={() => handleWhatsAppClick(activeUser.phone)} className="md:hidden bg-green-500/10 hover:bg-green-500/20 text-green-600">
+                                 <MessageCircle className="h-5 w-5" />
+                             </Button>
 
-                             <Divider orientation="vertical" flexItem sx={{ height: 24, my: 'auto', mx: 1 }} />
+                             <Separator orientation="vertical" className="h-6 mx-2" />
                          </>
                      )}
-                     <IconButton size="small"><MoreVertical size={20} color="disabled" /></IconButton>
-                 </Box>
-             </Box>
+                     <Button variant="ghost" size="icon"><MoreVertical className="h-5 w-5 text-muted-foreground" /></Button>
+                 </div>
+             </div>
 
              {/* Messages */}
-             <Box sx={{ flex: 1, overflowY: 'auto', p: 4, gap: 2, display: 'flex', flexDirection: 'column' }}>
+             <ScrollArea className="flex-1 p-6 space-y-4">
                  {activeMessages.length === 0 ? (
-                     <Box sx={{ textAlign: 'center', py: 10, opacity: 0.5 }}>
-                         <Box sx={{ width: 64, height: 64, bgcolor: 'action.hover', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                             {activeChatId === 'general' ? <Hash size={32} color="disabled" /> : <MessageCircle size={32} color="disabled" />}
-                         </Box>
-                         <Typography color="text.secondary">
+                     <div className="text-center py-10 opacity-60">
+                         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                             {activeChatId === 'general' ? <Hash className="h-8 w-8 text-muted-foreground" /> : <MessageCircle className="h-8 w-8 text-muted-foreground" />}
+                         </div>
+                         <p className="text-muted-foreground">
                              {activeChatId === 'general' ? 'No announcements yet.' : `Start a conversation with ${activeUser?.name.split(' ')[0]}.`}
-                         </Typography>
-                     </Box>
+                         </p>
+                     </div>
                  ) : (
                      activeMessages.map((msg, index) => {
                          const isMe = msg.senderId === currentUser?.id;
@@ -294,105 +252,78 @@ const MessagesModule: React.FC<Props> = ({ currentUser, users, messages, project
                          const showHeader = index === 0 || activeMessages[index-1].senderId !== msg.senderId;
              
                          return (
-                             <Box key={msg.id} sx={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                                 <Box sx={{ display: 'flex', maxWidth: '70%', flexDirection: isMe ? 'row-reverse' : 'row', gap: 2 }}>
+                             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                 <div className={`flex max-w-[70%] gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                      {!isMe && showHeader && (
-                                         <Avatar 
-                                            src={sender?.avatar}
-                                            sx={{ width: 32, height: 32, fontSize: 12, bgcolor: isMe ? 'primary.main' : 'secondary.light' }}
-                                         >
-                                             {sender?.name.charAt(0)}
+                                         <Avatar className="h-8 w-8"> 
+                                            <AvatarImage src={sender?.avatar} />
+                                            <AvatarFallback>{sender?.name.charAt(0)}</AvatarFallback>
                                          </Avatar>
                                      )}
-                                     {!isMe && !showHeader && <Box sx={{ width: 32 }} />} {/* Spacer */}
+                                     {!isMe && !showHeader && <div className="w-8" />} {/* Spacer */}
                                                   
-                                     <Box>
-                                         {showHeader && !isMe && <Typography variant="caption" color="text.secondary" ml={0.5} mb={0.5}>{sender?.name}</Typography>}
-                                         <Box sx={{ 
-                                             p: 2, 
-                                             borderRadius: '20px', 
-                                             boxShadow: '0 1px 2px rgba(0,0,0,0.05)', 
-                                             fontSize: '0.875rem', 
-                                             position: 'relative', 
-                                             '&:hover': { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
-                                             bgcolor: isMe ? 'primary.main' : 'background.paper',
-                                             color: isMe ? 'primary.contrastText' : 'text.primary',
-                                             borderTopRightRadius: isMe ? '4px' : '20px',
-                                             borderTopLeftRadius: isMe ? '20px' : '4px',
-                                             border: isMe ? 'none' : '1px solid',
-                                             borderColor: isMe ? 'transparent' : 'divider'
-                                         }}>
+                                     <div>
+                                         {showHeader && !isMe && <p className="text-xs text-muted-foreground ml-1 mb-1">{sender?.name}</p>}
+                                         <div className={`p-3 rounded-2xl shadow-sm text-sm relative 
+                                                         ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-card border rounded-tl-sm'}`}>
                                              {msg.content}
-                                             <Box sx={{ 
-                                                 fontSize: '0.75rem', 
-                                                 mt: 0.5, 
-                                                 display: 'flex', 
-                                                 alignItems: 'center', 
-                                                 justifyContent: 'flex-end', 
-                                                 gap: 0.5, 
-                                                 color: isMe ? 'primary.light' : 'text.secondary'
-                                             }}>
+                                             <div className={`text-xs mt-1 flex items-center ${isMe ? 'justify-end text-primary-foreground/80' : 'justify-end text-muted-foreground'}`}>
                                                  {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                 {isMe && (msg.read ? <CheckCheck size={12}/> : <Check size={12}/>)}  {/* Only TWO closing braces here */}
-                                             </Box>
-                                         </Box>
-                                     </Box>
-                                 </Box>
-                             </Box>
+                                                 {isMe && (msg.read ? <CheckCheck className="h-3 w-3 ml-1"/> : <Check className="h-3 w-3 ml-1"/>)}
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
                          );
                      })
                  )}
-                 <Box ref={messagesEndRef} />
-             </Box>
+                 <div ref={messagesEndRef} />
+             </ScrollArea>
 
              {/* Input Area with Enhanced Toolbar */}
-             <Box sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider', p: 2 }}>
-                 <Box sx={{ display: 'flex', gap: 1, mb: 1, px: 1 }}>
-                     <Tooltip title="Attach File">
-                         <IconButton size="small" onClick={handleAttach} sx={{ bgcolor: 'action.hover' }}><Paperclip size={18} color="disabled" /></IconButton>
-                     </Tooltip>
-                     <Tooltip title="Link RFI">
-                         <IconButton size="small" onClick={handleLinkRFI} sx={{ bgcolor: 'action.hover' }}><HardHat size={18} color="disabled" /></IconButton>
-                     </Tooltip>
-                     <Tooltip title="Link BOQ Item">
-                         <IconButton size="small" onClick={handleLinkBOQ} sx={{ bgcolor: 'action.hover' }}><FileText size={18} color="disabled" /></IconButton>
-                     </Tooltip>
-                 </Box>
-                 <form onSubmit={handleSend} style={{ display: 'flex', gap: '8px' }}>
-                     <TextField 
-                         fullWidth 
+             <div className="border-t bg-card p-4">
+                 <div className="flex gap-2 mb-2 px-1">
+                     <TooltipProvider>
+                         <Tooltip>
+                             <TooltipTrigger asChild>
+                                 <Button variant="ghost" size="icon" onClick={handleAttach}><Paperclip className="h-4 w-4 text-muted-foreground" /></Button>
+                             </TooltipTrigger>
+                             <TooltipContent>Attach File</TooltipContent>
+                         </Tooltip>
+                         <Tooltip>
+                             <TooltipTrigger asChild>
+                                 <Button variant="ghost" size="icon" onClick={handleLinkRFI}><HardHat className="h-4 w-4 text-muted-foreground" /></Button>
+                             </TooltipTrigger>
+                             <TooltipContent>Link RFI</TooltipContent>
+                         </Tooltip>
+                         <Tooltip>
+                             <TooltipTrigger asChild>
+                                 <Button variant="ghost" size="icon" onClick={handleLinkBOQ}><FileText className="h-4 w-4 text-muted-foreground" /></Button>
+                             </TooltipTrigger>
+                             <TooltipContent>Link BOQ Item</TooltipContent>
+                         </Tooltip>
+                     </TooltipProvider>
+                 </div>
+                 <form onSubmit={handleSend} className="flex gap-2">
+                     <Textarea 
                          placeholder={`Message ${activeChatId === 'general' ? '#general' : activeUser?.name.split(' ')[0]}...`}
                          value={inputText}
                          onChange={(e) => setInputText(e.target.value)}
-                         variant="outlined"
-                         size="medium"
-                         sx={{ 
-                             '& .MuiOutlinedInput-root': {
-                                 borderRadius: 4,
-                                 bgcolor: 'action.hover',
-                                 '& fieldset': { borderColor: 'divider' }
-                             }
-                         }}
+                         className="flex-1 resize-none min-h-[48px] rounded-lg p-3 bg-muted/60 border-0 focus-visible:ring-offset-0 focus-visible:ring-transparent"
                      />
-                     <IconButton 
+                     <Button 
                          type="submit" 
                          disabled={!inputText.trim()}
-                         sx={{ 
-                             bgcolor: 'primary.main', 
-                             color: 'primary.contrastText', 
-                             width: 56, 
-                             height: 56, 
-                             borderRadius: 4,
-                             '&:hover': { bgcolor: 'primary.dark' },
-                             '&.Mui-disabled': { bgcolor: 'action.disabled', color: 'action.disabled' }
-                         }}
+                         size="icon"
+                         className="h-12 w-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                      >
-                         <Send size={24} />
-                     </IconButton>
+                         <Send className="h-6 w-6" />
+                     </Button>
                  </form>
-             </Box>
-        </Box>
-    </Box>
+             </div>
+        </div>
+    </div>
   );
 };
 

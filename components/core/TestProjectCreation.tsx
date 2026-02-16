@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
-import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Typography, Box, Grid } from '@mui/material';
 import { Plus } from 'lucide-react';
+
+import { Button } from '~/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+
+// NOTE: This is a refactored version of the TestProjectCreation component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 interface Project {
   id: string;
@@ -57,108 +65,99 @@ const TestProjectCreation: React.FC<Props> = ({ onSaveProject }) => {
   return (
     <>
       <Button
-        variant="contained"
-        startIcon={<Plus size={16} />}
+        variant="default"
         onClick={() => setIsOpen(true)}
-        sx={{ mb: 2 }}
+        className="mb-4"
       >
-        Test Create Project
+        <Plus className="mr-2 h-4 w-4" /> Test Create Project
       </Button>
 
-      <Dialog open={isOpen} onClose={() => setIsOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Typography variant="h5" fontWeight="bold">
-            Test Project Creation
-          </Typography>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box mb={2}>
-            <Typography variant="body2" color="text.secondary">
-              Simple test form to verify project creation works
-            </Typography>
-          </Box>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Project Name"
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Test Project Creation</DialogTitle>
+            <DialogDescription>Simple test form to verify project creation works</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Project Name</Label>
+              <Input
+                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Project Code"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="code" className="text-right">Project Code</Label>
+              <Input
+                id="code"
                 value={formData.code}
                 onChange={(e) => setFormData({...formData, code: e.target.value})}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Client"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="client" className="text-right">Client</Label>
+              <Input
+                id="client"
                 value={formData.client}
                 onChange={(e) => setFormData({...formData, client: e.target.value})}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Start Date"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="startDate" className="text-right">Start Date</Label>
+              <Input
+                id="startDate"
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                InputLabelProps={{ shrink: true }}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="End Date"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="endDate" className="text-right">End Date</Label>
+              <Input
+                id="endDate"
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                InputLabelProps={{ shrink: true }}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Contractor"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contractor" className="text-right">Contractor</Label>
+              <Input
+                id="contractor"
                 value={formData.contractor}
                 onChange={(e) => setFormData({...formData, contractor: e.target.value})}
                 required
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Location"
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">Location</Label>
+              <Input
+                id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({...formData, location: e.target.value})}
-                size="small"
+                className="col-span-3"
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+            <Button type="submit" onClick={handleSubmit}>
+              Create Test Project
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Create Test Project
-          </Button>
-        </DialogActions>
       </Dialog>
     </>
   );

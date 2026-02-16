@@ -1,18 +1,24 @@
-
 import React, { useState } from 'react';
-import { 
-    Button, TextField, Grid, Select, MenuItem, FormControl, InputLabel, 
-    Typography, Box, Chip, Card, Paper, Stack, IconButton,
-    Table, TableBody, TableCell, TableHead, TableRow, Divider, 
-    InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions,
-    Alert, LinearProgress, Avatar, Tabs, Tab, CardContent, Snackbar,
-    Accordion, AccordionSummary, AccordionDetails
-} from '@mui/material';
 import { 
     Plus, Calendar, Bell, Target, Trash2, AlertTriangle, 
     CheckCircle2, Clock, MapPin, Filter, Search, X, ChevronDown
 } from 'lucide-react';
 import { Project, PreConstructionTask } from '../../types';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Textarea } from '~/components/ui/textarea';
+import { Separator } from '~/components/ui/separator';
 
 interface Props {
   project: Project;
@@ -47,7 +53,7 @@ const PreConstructionModule: React.FC<Props> = ({ project, onProjectUpdate }) =>
     
     const isDuplicate = project.preConstruction.some(t => t.description.toLowerCase() === newTask.description?.toLowerCase());
     if (isDuplicate) {
-        alert("Duplicate: An activity with this description already exists.");
+        toast.error("Duplicate: An activity with this description already exists.");
         return;
     }
 
@@ -103,11 +109,11 @@ const PreConstructionModule: React.FC<Props> = ({ project, onProjectUpdate }) =>
       setTrackForm({ date: new Date().toISOString().split('T')[0], progressAdded: 0, description: '' });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string) => {
       switch(status) {
           case 'Completed': return 'success';
-          case 'In Progress': return 'info';
-          default: return 'warning';
+          case 'In Progress': return 'default';
+          default: return 'secondary';
       }
   };
 
@@ -118,181 +124,194 @@ const PreConstructionModule: React.FC<Props> = ({ project, onProjectUpdate }) =>
     <div className="space-y-6">
        
        {/* Header with Notification */}
-       <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-        <Box>
-          <Typography variant="caption" fontWeight="900" color="primary" sx={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>PRE-CONSTRUCTION</Typography>
-          <Typography variant="h4" fontWeight="900">Pre-Construction Activities</Typography>
-          <Typography variant="body2" color="text.secondary">Land Acquisition, Clearances, and Surveys</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<Plus size={16}/>} onClick={() => setIsModalOpen(true)} sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}>Add Activity</Button>
-      </Box>
+       <div className="flex justify-between mb-4 items-center">
+        <div>
+          <p className="text-xs font-bold text-primary tracking-widest uppercase">PRE-CONSTRUCTION</p>
+          <h1 className="text-3xl font-black text-foreground">Pre-Construction Activities</h1>
+          <p className="text-sm text-muted-foreground">Land Acquisition, Clearances, and Surveys</p>
+        </div>
+        <Button onClick={() => setIsModalOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Activity</Button>
+      </div>
 
       {/* Daily Notification Banner */}
       {dueTasks.length > 0 && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold">Action Required: {dueTasks.length} Tasks Due or Overdue</Typography>
-              <ul style={{ marginTop: '4px', paddingLeft: '20px' }}>
-                  {dueTasks.map(t => (
-                      <li key={t.id}>{t.description} (Due: {t.estEndDate})</li>
-                  ))}
-              </ul>
+          <Alert variant="default">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Action Required: {dueTasks.length} Tasks Due or Overdue</AlertTitle>
+              <AlertDescription>
+                  <ul className="list-disc list-inside mt-1">
+                      {dueTasks.map(t => (
+                          <li key={t.id}>{t.description} (Due: {t.estEndDate})</li>
+                      ))}
+                  </ul>
+              </AlertDescription>
           </Alert>
       )}
 
       {/* Task Grid */}
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {project.preConstruction.map(task => (
-              <Grid item xs={12} md={6} lg={4} key={task.id}>
-                  <Card variant="outlined" sx={{ borderRadius: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      <CardContent>
-                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                              <Chip 
-                                  label={task.status}
-                                  size="small" 
-                                  color={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'info' : 'warning'} 
-                                  sx={{ fontWeight: 'bold' }} 
-                              />
-                              <IconButton 
-                                size="small" 
-                                onClick={() => handleDeleteTask(task.id)}
-                                title="Delete Activity"
-                              >
-                                  <Trash2 size={14} />
-                              </IconButton>
-                          </Box>
-                          
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary" textTransform="uppercase" mb={1}>
-                              {task.category}
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" mb={2}>
-                              {task.description}
-                          </Typography>
-                          
-                          <Box mb={2}>
-                              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={1}>
-                                  <Calendar size={14} /> Est: {task.estStartDate || 'N/A'} → {task.estEndDate || 'N/A'}
-                              </Typography>
-                          </Box>
-                          
-                          {/* Progress Bar */}
-                          <Box mb={2}>
-                              <Box display="flex" justifyContent="space-between" mb={1}>
-                                  <Typography variant="caption" fontWeight="medium" color="text.secondary">Progress</Typography>
-                                  <Typography variant="caption" fontWeight="bold">{task.progress || 0}%</Typography>
-                              </Box>
-                              <LinearProgress variant="determinate" value={task.progress || 0} color="primary" sx={{ height: 6, borderRadius: 3 }} />
-                          </Box>
-
-                          {task.remarks && (
-                            <Box p={1} bgcolor="slate.50" borderRadius={1}>
-                                <Typography variant="caption" fontStyle="italic">"{task.remarks}"</Typography>
-                            </Box>
-                          )}
-                      </CardContent>
-                      
-                      <Box p={2} borderTop="1px solid" borderColor="divider" mt="auto">
-                          <Button 
-                             fullWidth
-                             variant="outlined"
-                             startIcon={<Target size={14} />}
-                             onClick={() => { setSelectedTaskForTrack(task.id); setIsTrackModalOpen(true); }}
-                          >
-                              Track Daily Progress
+              <Card key={task.id} className="flex flex-col">
+                  <CardContent className="flex-1 p-6">
+                      <div className="flex justify-between items-center mb-2">
+                          <Badge variant={getStatusVariant(task.status || 'Pending')}>{task.status}</Badge>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)} title="Delete Activity">
+                              <Trash2 className="h-4 w-4" />
                           </Button>
-                      </Box>
-                  </Card>
-              </Grid>
+                      </div>
+                      
+                      <p className="text-xs font-bold text-muted-foreground uppercase mb-1">
+                          {task.category}
+                      </p>
+                      <h3 className="text-lg font-bold mb-3">
+                          {task.description}
+                      </h3>
+                      
+                      <div className="mb-4">
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Calendar className="h-4 w-4" /> Est: {task.estStartDate || 'N/A'} → {task.estEndDate || 'N/A'}
+                          </p>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                          <div className="flex justify-between mb-1">
+                              <p className="text-sm text-muted-foreground">Progress</p>
+                              <p className="text-sm font-bold">{task.progress || 0}%</p>
+                          </div>
+                          <Progress value={task.progress || 0} />
+                      </div>
+
+                      {task.remarks && (
+                        <div className="p-2 bg-muted rounded-md text-sm italic text-muted-foreground">
+                            "{task.remarks}"
+                        </div>
+                      )}
+                  </CardContent>
+                  
+                  <div className="p-4 border-t">
+                      <Button 
+                         className="w-full"
+                         variant="outline"
+                         onClick={() => { setSelectedTaskForTrack(task.id); setIsTrackModalOpen(true); }}
+                      >
+                          <Target className="mr-2 h-4 w-4" /> Track Daily Progress
+                      </Button>
+                  </div>
+              </Card>
           ))}
           {project.preConstruction.length === 0 && (
-              <Grid item xs={12}>
-                  <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderStyle: 'dashed', bgcolor: 'slate.50' }}>
-                      <Typography color="text.disabled" fontStyle="italic">No pre-construction activities logged.</Typography>
-                  </Paper>
-              </Grid>
+              <div className="lg:col-span-3">
+                  <Card className="p-12 text-center border-dashed">
+                      <p className="text-muted-foreground italic">No pre-construction activities logged.</p>
+                  </Card>
+              </div>
           )}
-      </Grid>
+      </div>
 
        {/* Add Activity Modal */}
-       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ component: 'form', onSubmit: handleAddTask, sx: { borderRadius: 3 } }}>
-          <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-              <Plus size={20} className="text-white" /> Add Pre-Construction Activity
-          </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-             <Stack spacing={3} mt={1}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Category</InputLabel>
+       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                  <DialogTitle className="flex items-center text-lg font-bold text-primary">
+                      <Plus className="mr-2 h-5 w-5" /> Add Pre-Construction Activity
+                  </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddTask} className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
                   <Select 
                      value={newTask.category}
-                     label="Category"
-                     onChange={e => setNewTask({...newTask, category: e.target.value as any})}
+                     onValueChange={value => setNewTask({...newTask, category: value as any})}
                   >
-                      <MenuItem value="Survey">Survey</MenuItem>
-                      <MenuItem value="Land Acquisition">Land Acquisition</MenuItem>
-                      <MenuItem value="Forest Clearance">Forest Clearance</MenuItem>
-                      <MenuItem value="Utility Shifting">Utility Shifting</MenuItem>
-                      <MenuItem value="Design">Design</MenuItem>
+                      <SelectTrigger id="category">
+                          <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="Survey">Survey</SelectItem>
+                          <SelectItem value="Land Acquisition">Land Acquisition</SelectItem>
+                          <SelectItem value="Forest Clearance">Forest Clearance</SelectItem>
+                          <SelectItem value="Utility Shifting">Utility Shifting</SelectItem>
+                          <SelectItem value="Design">Design</SelectItem>
+                      </SelectContent>
                   </Select>
-                </FormControl>
-                <TextField 
-                  label="Description" required fullWidth size="small" 
-                  value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})}
-                  placeholder="e.g. Joint Verification"
-                />
-                <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                        <TextField 
-                            label="Est. Start" required type="date" fullWidth size="small" 
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input 
+                    id="description" required 
+                    value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})}
+                    placeholder="e.g. Joint Verification"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="est-start">Est. Start</Label>
+                        <Input 
+                            id="est-start" required type="date" 
                             value={newTask.estStartDate} onChange={e => setNewTask({...newTask, estStartDate: e.target.value})}
-                            InputLabelProps={{ shrink: true }}
                         />
-                    </Grid>
-                    <Grid item xs={6}>
-                        <TextField 
-                            label="Est. End" required type="date" fullWidth size="small" 
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="est-end">Est. End</Label>
+                        <Input 
+                            id="est-end" required type="date" 
                             value={newTask.estEndDate} onChange={e => setNewTask({...newTask, estEndDate: e.target.value})}
-                            InputLabelProps={{ shrink: true }}
                         />
-                    </Grid>
-                </Grid>
-                <TextField 
-                  label="Remarks" fullWidth size="small" multiline rows={3}
-                  value={newTask.remarks} onChange={e => setNewTask({...newTask, remarks: e.target.value})}
-                />
-             </Stack>
+                    </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="remarks">Remarks</Label>
+                  <Textarea 
+                    id="remarks" 
+                    value={newTask.remarks} onChange={e => setNewTask({...newTask, remarks: e.target.value})}
+                  />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsModalOpen(false)}><X className="mr-2 h-4 w-4" />Cancel</Button>
+                    <Button type="submit"><CheckCircle2 className="mr-2 h-4 w-4" />Add Activity</Button>
+                </DialogFooter>
+              </form>
           </DialogContent>
-          <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-              <Button onClick={() => setIsModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-              <Button type="submit" variant="contained" startIcon={<CheckCircle2 size={16} />} color="primary" sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Add Activity</Button>
-          </DialogActions>
        </Dialog>
 
       {/* Track Progress Modal */}
-      <Dialog open={isTrackModalOpen} onClose={() => setIsTrackModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ component: 'form', onSubmit: handleTrackSubmit, sx: { borderRadius: 3 } }}>
-         <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-            <Target size={20} className="text-white" /> Track Daily Progress
-         </DialogTitle>
-         <DialogContent sx={{ pt: 3 }}>
-            <Stack spacing={3} mt={1}>
-                <TextField 
-                    label="Date" type="date" required fullWidth size="small" 
-                    value={trackForm.date} onChange={e => setTrackForm({...trackForm, date: e.target.value})}
-                    InputLabelProps={{ shrink: true }}
-                />
-                <TextField 
-                    label="Progress Added (%)" type="number" inputProps={{ min: 0, max: 100 }} required fullWidth size="small" 
-                    value={trackForm.progressAdded} onChange={e => setTrackForm({...trackForm, progressAdded: Number(e.target.value)})} 
-                    helperText="Enter incremental percentage completed today."
-                />
-                <TextField 
-                    label="Description / Activity" required fullWidth size="small" 
-                    placeholder="e.g. Field work done" value={trackForm.description} onChange={e => setTrackForm({...trackForm, description: e.target.value})} 
-                />
-            </Stack>
+      <Dialog open={isTrackModalOpen} onOpenChange={setIsTrackModalOpen}>
+         <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle className="flex items-center text-lg font-bold text-primary">
+                    <Target className="mr-2 h-5 w-5" /> Track Daily Progress
+                </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleTrackSubmit} className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="track-date">Date</Label>
+                    <Input 
+                        id="track-date" type="date" required 
+                        value={trackForm.date} onChange={e => setTrackForm({...trackForm, date: e.target.value})}
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="progress-added">Progress Added (%)</Label>
+                    <Input 
+                        id="progress-added" type="number" required 
+                        value={trackForm.progressAdded} onChange={e => setTrackForm({...trackForm, progressAdded: Number(e.target.value)})} 
+                    />
+                    <p className="text-sm text-muted-foreground">Enter incremental percentage completed today.</p>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="description">Description / Activity</Label>
+                    <Input 
+                        id="description" required 
+                        placeholder="e.g. Field work done" value={trackForm.description} onChange={e => setTrackForm({...trackForm, description: e.target.value})} 
+                    />
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsTrackModalOpen(false)}><X className="mr-2 h-4 w-4" />Cancel</Button>
+                    <Button type="submit"><CheckCircle2 className="mr-2 h-4 w-4" />Update Progress</Button>
+                </DialogFooter>
+            </form>
          </DialogContent>
-         <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-            <Button type="button" onClick={() => setIsTrackModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-            <Button type="submit" variant="contained" startIcon={<CheckCircle2 size={16} />} color="primary" sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Update Progress</Button>
-         </DialogActions>
       </Dialog>
     </div>
   );

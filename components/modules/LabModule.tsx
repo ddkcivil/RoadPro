@@ -1,19 +1,47 @@
 import React, { useState, useMemo } from 'react';
 import { 
-    Button, TextField, Grid, Select, MenuItem, FormControl, InputLabel, 
-    Typography, Box, Chip, Card, Paper, Stack, IconButton,
-    Table, TableBody, TableCell, TableHead, TableRow, Divider, 
-    InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions,
-    Alert, LinearProgress, Avatar, Tabs, Tab, CardContent, Snackbar,
-    Accordion, AccordionSummary, AccordionDetails
-} from '@mui/material';
-import { 
     FlaskConical, Plus, Search, CheckCircle2, XCircle, 
     Trash2, Eye, Printer, AlertTriangle, Microscope,
     ShieldCheck, History, AlertOctagon, TrendingUp, Filter,
     Activity, Beaker, MapPin, ChevronDown
 } from 'lucide-react';
 import { Project, UserRole, LabTest, NCR, User } from '../../types';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Progress } from '~/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/components/ui/accordion';
 
 interface Props {
   project: Project;
@@ -42,7 +70,7 @@ const TEST_PROTOCOLS = {
 };
 
 const LabModule: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("test-entry");
   const [searchTerm, setSearchTerm] = useState('');
   const [isNcrModalOpen, setIsNcrModalOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -110,7 +138,7 @@ const LabModule: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => {
       };
 
       onProjectUpdate({ ...project, labTests: [...labTests, newEntry] });
-      setActiveTab(1);
+      setActiveTab("historical-logs");
       setSnackbarOpen(true);
       setTestForm({ ...testForm, sampleId: '', location: '', testData: {} });
   };
@@ -126,324 +154,339 @@ const LabModule: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => {
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-          <Box>
-              <Typography variant="caption" fontWeight="900" color="primary.main" sx={{ letterSpacing: '0.2em', textTransform: 'uppercase', mb: 0.5, display: 'block' }}>MATERIAL ASSURANCE</Typography>
-              <Typography variant="h4" fontWeight="900" sx={{ letterSpacing: '-0.05em' }}>Lab Registry & Quality Control</Typography>
-          </Box>
-          <Stack direction="row" spacing={1.5}>
-              <Button variant="outlined" startIcon={<History size={16}/>} sx={{ borderRadius: 2, paddingX: 2, paddingY: 1, textTransform: 'none', fontWeight: 600 }}>Monthly Register</Button>
-              <Button variant="contained" color="secondary" startIcon={<Printer size={16}/>} sx={{ borderRadius: 2, paddingX: 2, paddingY: 1, textTransform: 'none', fontWeight: 600 }}>Export Certificate</Button>
-          </Stack>
-      </Box>
+    <div className="p-4 animate-in fade-in duration-500">
+      <div className="flex justify-between mb-6 items-center">
+        <div>
+          <p className="text-xs font-black text-primary uppercase tracking-wider mb-1">Material Assurance</p>
+          <h1 className="text-3xl font-black text-gray-800 tracking-tight">Lab Registry & Quality Control</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <History className="mr-2 h-4 w-4" /> Monthly Register
+          </Button>
+          <Button>
+            <Printer className="mr-2 h-4 w-4" /> Export Certificate
+          </Button>
+        </div>
+      </div>
 
-      <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', borderLeft: '4px solid #4f46e5' }}>
-                  <CardContent sx={{ p: 3 }}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', width: 48, height: 48 }}><Activity size={20}/></Avatar>
-                          <Box>
-                              <Typography variant="caption" fontWeight="bold" color="text.secondary" textTransform="uppercase" fontSize="0.75rem">Total Tests</Typography>
-                              <Typography variant="h4" fontWeight="800" color="text.primary">{stats.total}</Typography>
-                          </Box>
-                      </Stack>
-                  </CardContent>
-              </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', borderLeft: '4px solid #10b981' }}>
-                  <CardContent sx={{ p: 3 }}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', width: 48, height: 48 }}><ShieldCheck size={20}/></Avatar>
-                          <Box>
-                              <Typography variant="caption" fontWeight="bold" color="text.secondary" textTransform="uppercase" fontSize="0.75rem">Pass Rate</Typography>
-                              <Typography variant="h4" fontWeight="800" color="success.main">{stats.passRate}%</Typography>
-                          </Box>
-                      </Stack>
-                      <LinearProgress variant="determinate" value={stats.passRate} color="success" sx={{ mt: 2, height: 8, borderRadius: 4 }} />
-                  </CardContent>
-              </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', borderLeft: '4px solid #ef4444' }}>
-                  <CardContent sx={{ p: 3 }}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar sx={{ bgcolor: 'error.light', color: 'error.main', width: 48, height: 48 }}><AlertOctagon size={20}/></Avatar>
-                          <Box>
-                              <Typography variant="caption" fontWeight="bold" color="text.secondary" textTransform="uppercase" fontSize="0.75rem">Critical Fails</Typography>
-                              <Typography variant="h4" fontWeight="800" color="error.main">{stats.failed}</Typography>
-                          </Box>
-                      </Stack>
-                  </CardContent>
-              </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', borderLeft: '4px solid #3b82f6' }}>
-                  <CardContent sx={{ p: 3 }}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar sx={{ bgcolor: 'info.light', color: 'info.main', width: 48, height: 48 }}><Beaker size={20}/></Avatar>
-                          <Box>
-                              <Typography variant="caption" fontWeight="bold" color="text.secondary" textTransform="uppercase" fontSize="0.75rem">QA Status</Typography>
-                              <Typography variant="h4" fontWeight="800" color="text.primary">Healthy</Typography>
-                          </Box>
-                      </Stack>
-                  </CardContent>
-              </Card>
-          </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card className="border-l-4 border-l-indigo-600">
+          <CardContent className="flex items-center space-x-4 p-4">
+            <Avatar className="h-12 w-12 bg-indigo-100 text-indigo-600">
+              <Activity className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase">Total Tests</p>
+              <p className="text-3xl font-extrabold text-foreground">{stats.total}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-600">
+          <CardContent className="flex items-center space-x-4 p-4">
+            <Avatar className="h-12 w-12 bg-green-100 text-green-600">
+              <ShieldCheck className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase">Pass Rate</p>
+              <p className="text-3xl font-extrabold text-green-600">{stats.passRate}%</p>
+              <Progress value={stats.passRate} className="h-2 mt-2" indicatorColor="bg-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-red-600">
+          <CardContent className="flex items-center space-x-4 p-4">
+            <Avatar className="h-12 w-12 bg-red-100 text-red-600">
+              <AlertOctagon className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase">Critical Fails</p>
+              <p className="text-3xl font-extrabold text-red-600">{stats.failed}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-blue-600">
+          <CardContent className="flex items-center space-x-4 p-4">
+            <Avatar className="h-12 w-12 bg-blue-100 text-blue-600">
+              <Beaker className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase">QA Status</p>
+              <p className="text-3xl font-extrabold text-foreground">Healthy</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: 'white' }}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
-              <Tab label="Test Entry" icon={<FlaskConical size={18}/>} iconPosition="start" sx={{ fontWeight: '600', minHeight: 56, textTransform: 'none', fontSize: '0.875rem' }} />
-              <Tab label="Historical Logs" icon={<History size={18}/>} iconPosition="start" sx={{ fontWeight: '600', minHeight: 56, textTransform: 'none', fontSize: '0.875rem' }} />
-              <Tab label="Material Trends" icon={<TrendingUp size={18}/>} iconPosition="start" sx={{ fontWeight: '600', minHeight: 56, textTransform: 'none', fontSize: '0.875rem' }} />
-          </Tabs>
+      <Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3 h-12">
+            <TabsTrigger value="test-entry">
+              <FlaskConical className="mr-2 h-4 w-4" /> Test Entry
+            </TabsTrigger>
+            <TabsTrigger value="historical-logs">
+              <History className="mr-2 h-4 w-4" /> Historical Logs
+            </TabsTrigger>
+            <TabsTrigger value="material-trends">
+              <TrendingUp className="mr-2 h-4 w-4" /> Material Trends
+            </TabsTrigger>
+          </TabsList>
 
-          <Box p={3}>
-              {activeTab === 0 && (
-                  <Grid container spacing={4}>
-                    <Grid item xs={12} md={4}>
-                        <Accordion defaultExpanded sx={{ borderRadius: 3 }}>
-                            <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: '#f8fafc', borderBottom: 1, borderColor: 'divider' }}>
-                                <Typography variant="subtitle2" fontWeight="900" color="text.secondary" sx={{ letterSpacing: 1 }}>SAMPLE CONTEXT</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Stack spacing={3} mt={1}>
-                                    <TextField label="Batch / Sample ID" fullWidth size="small" placeholder="e.g. CONC/322/2024" value={testForm.sampleId} onChange={e => setTestForm({...testForm, sampleId: e.target.value})} />
-                                    <TextField label="Chainage / GPS Location" fullWidth size="small" value={testForm.location} onChange={e => setTestForm({...testForm, location: e.target.value})} />
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Target Asset</InputLabel>
-                                        <Select value={testForm.assetId} label="Target Asset" onChange={e => setTestForm({...testForm, assetId: e.target.value})}>
-                                            <MenuItem value=""><em>General / Alignment</em></MenuItem>
-                                            {(project.structures || []).map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem> )}
-                                        </Select>
-                                    </FormControl>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Assigned Technician</InputLabel>
-                                        <Select value={testForm.technicianId} label="Assigned Technician" onChange={e => setTestForm({...testForm, technicianId: e.target.value})}>
-                                            {(() => {
-                                              const savedUsers = localStorage.getItem('roadmaster-users');
-                                              const users: User[] = savedUsers ? JSON.parse(savedUsers) : [];
-                                              return users.map(u => <MenuItem key={u.id} value={u.id}>{u.name} ({u.role})</MenuItem> );
-                                            })()}
-                                        </Select>
-                                    </FormControl>
-                                    <TextField label="Testing Date" type="date" InputLabelProps={{ shrink: true }} fullWidth size="small" value={testForm.date} onChange={e => setTestForm({...testForm, date: e.target.value})} />
-                                </Stack>
-                            </AccordionDetails>
-                        </Accordion>
-                    </Grid>
-                  
-                    <Grid item xs={12} md={8}>
-                        <Accordion defaultExpanded sx={{ borderRadius: 3, height: '100%' }}>
-                            <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: '#f8fafc', borderBottom: 1, borderColor: 'divider' }}>
-                                <Typography variant="subtitle2" fontWeight="900" color="text.secondary" sx={{ letterSpacing: 1 }}>ENGINEERING PROTOCOL</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Grid container spacing={2} mb={3} mt={1}>
-                                    <Grid item xs={6}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Material Class</InputLabel>
-                                            <Select value={newTestCategory} label="Material Class" onChange={e => { setNewTestCategory(e.target.value as any); setSelectedType(null); }}>
-                                                {Object.keys(TEST_PROTOCOLS).map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem> )}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Test Standard</InputLabel>
-                                            <Select value={selectedType?.name || ''} label="Test Standard" onChange={e => setSelectedType(TEST_PROTOCOLS[newTestCategory].find((t:any) => t.name === e.target.value))}>
-                                                {(TEST_PROTOCOLS[newTestCategory] as any[]).map(t => <MenuItem key={t.name} value={t.name}>{t.name}</MenuItem> )}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                </Grid>
-                        
-                                {selectedType ? (
-                                    <Stack spacing={3}>
-                                        <Alert severity="info" icon={<ShieldCheck size={20}/>} sx={{ borderRadius: 2 }}>
-                                            Verification limit for <strong>{selectedType.name}</strong> is <strong>{selectedType.inverse ? 'Maximum' : 'Minimum'} {selectedType.limit}{selectedType.unit}</strong>.
-                                        </Alert>
-                                        <Grid container spacing={3}>
-                                            {selectedType.parameters.map((param: string) => (
-                                                <Grid item xs={6} key={param}>
-                                                    <TextField 
-                                                        fullWidth label={param} type="number" size="small" 
-                                                        value={testForm.testData[param] || ''} 
-                                                        onChange={e => setTestForm({...testForm, testData: {...testForm.testData, [param]: Number(e.target.value)}})} 
-                                                        InputProps={{ 
-                                                            endAdornment: <InputAdornment position="end"><Typography variant="caption" fontWeight="bold">{selectedType.unit}</Typography></InputAdornment>,
-                                                            sx: { bgcolor: 'white' }
-                                                        }} 
-                                                    />
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                        <Box mt={2} sx={{ p: 2, bgcolor: 'white', borderRadius: 2, border: '1px dashed #cbd5e1', textAlign: 'right' }}>
-                                            <Button 
-                                                variant="contained" 
-                                                size="large" 
-                                                onClick={handleSaveTest} 
-                                                startIcon={<CheckCircle2/>}
-                                                disabled={!testForm.sampleId || Object.keys(testForm.testData).length === 0}
-                                                sx={{ px: 4, borderRadius: 2 }}
-                                            >
-                                                Certify & Record Result
-                                            </Button>
-                                        </Box>
-                                    </Stack>
-                                ) : (
-                                    <Box py={8} textAlign="center" color="text.disabled">
-                                        <Microscope size={64} strokeWidth={1} className="mx-auto opacity-20 mb-3" />
-                                        <Typography variant="body2" fontWeight="500">Select a material and test standard to input field observations.</Typography>
-                                    </Box>
-                                )}
-                            </AccordionDetails>
-                        </Accordion>
-                    </Grid>
-                  </Grid>
-              )}
+          <TabsContent value="test-entry" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Accordion type="single" collapsible defaultValue="item-1" className="col-span-1">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="bg-muted/50 px-4 py-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Sample Context</AccordionTrigger>
+                  <AccordionContent className="p-4 grid gap-4">
+                    <Input label="Batch / Sample ID" placeholder="e.g. CONC/322/2024" value={testForm.sampleId} onChange={e => setTestForm({...testForm, sampleId: e.target.value})} />
+                    <Input label="Chainage / GPS Location" value={testForm.location} onChange={e => setTestForm({...testForm, location: e.target.value})} />
+                    <Select value={testForm.assetId} onValueChange={value => setTestForm({...testForm, assetId: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Target Asset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">General / Alignment</SelectItem>
+                        {(project.structures || []).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem> )}
+                      </SelectContent>
+                    </Select>
+                    <Select value={testForm.technicianId} onValueChange={value => setTestForm({...testForm, technicianId: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Assigned Technician" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(() => {
+                            const savedUsers = localStorage.getItem('roadmaster-users');
+                            const users: User[] = savedUsers ? JSON.parse(savedUsers) : [];
+                            return users.map(u => <SelectItem key={u.id} value={u.id}>{u.name} ({u.role})</SelectItem> );
+                        })()}
+                      </SelectContent>
+                    </Select>
+                    <Input label="Testing Date" type="date" value={testForm.date} onChange={e => setTestForm({...testForm, date: e.target.value})} />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            
+              <Accordion type="single" collapsible defaultValue="item-1" className="col-span-2">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="bg-muted/50 px-4 py-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Engineering Protocol</AccordionTrigger>
+                  <AccordionContent className="p-4 grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Select value={newTestCategory} onValueChange={value => { setNewTestCategory(value as keyof typeof TEST_PROTOCOLS); setSelectedType(null); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Material Class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(TEST_PROTOCOLS).map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem> )}
+                        </SelectContent>
+                      </Select>
+                      <Select value={selectedType?.name || ''} onValueChange={value => setSelectedType(TEST_PROTOCOLS[newTestCategory].find((t:any) => t.name === value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Test Standard" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(TEST_PROTOCOLS[newTestCategory] as any[]).map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem> )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                
+                    {selectedType ? (
+                      <div className="grid gap-4">
+                        <Alert>
+                          <ShieldCheck className="h-4 w-4" />
+                          <AlertTitle>Verification Limit</AlertTitle>
+                          <AlertDescription>
+                            For <strong>{selectedType.name}</strong>, the limit is <strong>{selectedType.inverse ? 'Maximum' : 'Minimum'} {selectedType.limit}{selectedType.unit}</strong>.
+                          </AlertDescription>
+                        </Alert>
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedType.parameters.map((param: string) => (
+                            <Input 
+                              key={param}
+                              label={param}
+                              type="number"
+                              value={testForm.testData[param] || ''}
+                              onChange={e => setTestForm({...testForm, testData: {...testForm.testData, [param]: Number(e.target.value)}})}
+                              suffix={selectedType.unit}
+                            />
+                          ))}
+                        </div>
+                        <Button 
+                          size="lg" 
+                          onClick={handleSaveTest} 
+                          disabled={!testForm.sampleId || Object.keys(testForm.testData).length === 0}
+                          className="w-full"
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4" /> Certify & Record Result
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Microscope className="mx-auto h-16 w-16 opacity-20 mb-3" />
+                        <p className="font-medium">Select a material and test standard to input field observations.</p>
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </TabsContent>
 
-              {activeTab === 1 && (
-                  <Box>
-                      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                          <TextField 
-                            size="small" placeholder="Search by ID, location or test type..." 
-                            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                            sx={{ width: 400, bgcolor: 'white', borderRadius: 2 }}
-                            InputProps={{ startAdornment: <Search size={16} className="text-slate-400 mr-2"/> }}
-                          />
-                          <Button variant="outlined" startIcon={<Filter size={16}/>}>Filter Results</Button>
-                      </Box>
-                      <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: '#f8fafc' }} >
-                        <Table size="small">
-                            <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                                <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Sample / Technical Ref</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Test Classification</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Value</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredTests.map(test => (
-                                    <TableRow key={test.id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
-                                        <TableCell>
-                                            <Typography variant="body2" fontWeight="900" sx={{ fontFamily: 'monospace', color: '#4f46e5' }}>{test.sampleId}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{test.date}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2" fontWeight="bold">{test.testName}</Typography>
-                                            <Chip label={test.category} size="small" variant="outlined" sx={{ height: 16, fontSize: 8, fontWeight: 'black', textTransform: 'uppercase', mt: 0.5 }} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                <MapPin size={10} /> {test.location}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2" fontWeight="900" className="text-mono">{test.calculatedValue}</Typography>
-                                            <Typography variant="caption" color="text.disabled">Req: {test.standardLimit}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip 
-                                                label={test.result.toUpperCase()} 
-                                                size="small" 
-                                                color={test.result === 'Pass' ? 'success' : 'error'} 
-                                                sx={{ fontWeight: '900', fontSize: 10, width: 70 }} 
-                                            />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                {test.result === 'Fail' && (
-                                                    <IconButton size="small" color="error" onClick={() => handleInitiateNcr(test)} sx={{ bgcolor: '#fef2f2' }}>
-                                                        <AlertTriangle size={16}/>
-                                                    </IconButton>
-                                                )}
-                                                <IconButton size="small"><Eye size={16}/></IconButton>
-                                                <IconButton size="small"><Printer size={16}/></IconButton>
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {filteredTests.length === 0 && (
-                                    <TableRow>
-                                        <td colSpan={6} align="center" style={{ padding: '40px', textAlign: 'center' }}>
-                                            <Beaker size={48} strokeWidth={1} className="text-slate-200 mb-2 mx-auto"/>
-                                            <Typography color="text.disabled">No test records matching your query.</Typography>
-                                        </td>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                      </Paper>
-                  </Box>
-              )}
+          <TabsContent value="historical-logs" className="p-4">
+            <div className="flex justify-between mb-4 items-center">
+              <div className="relative w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search by ID, location or test type..." 
+                  value={searchTerm} 
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline">
+                <Filter className="mr-2 h-4 w-4" /> Filter Results
+              </Button>
+            </div>
+            
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Sample / Technical Ref</TableHead>
+                    <TableHead>Test Classification</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTests.length > 0 ? filteredTests.map(test => (
+                    <TableRow key={test.id}>
+                      <TableCell>
+                        <p className="font-extrabold text-indigo-600 font-mono">{test.sampleId}</p>
+                        <p className="text-xs text-muted-foreground">{test.date}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-bold">{test.testName}</p>
+                        <Badge variant="outline" className="h-4 text-xs font-black uppercase mt-1">{test.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm">
+                          <MapPin className="h-3 w-3" /> {test.location}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-extrabold font-mono">{test.calculatedValue}</p>
+                        <p className="text-xs text-muted-foreground">Req: {test.standardLimit}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={test.result === 'Pass' ? 'default' : 'destructive'} 
+                          className="font-extrabold text-xs w-20 justify-center"
+                        >
+                          {test.result.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {test.result === 'Fail' && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon" onClick={() => handleInitiateNcr(test)}>
+                                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Initiate NCR</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                        <Beaker className="mx-auto h-12 w-12 text-slate-200 mb-2" />
+                        No test records matching your query.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
 
-              {activeTab === 2 && (
-                  <Box>
-                      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                          <TextField 
-                              size="small" 
-                              placeholder="Search trends..." 
-                              value={searchTerm} 
-                              onChange={e => setSearchTerm(e.target.value)}
-                              sx={{ width: 400, bgcolor: 'white', borderRadius: 2 }}
-                              InputProps={{ startAdornment: <Search size={16} className="text-slate-400 mr-2"/> }}
-                          />
-                          <Button variant="outlined" startIcon={<Filter size={16}/>}>Filter Trends</Button>
-                      </Box>
-                      <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: '#f8fafc' }}>
-                          <Box py={10} textAlign="center">
-                              <TrendingUp size={64} strokeWidth={1} className="text-slate-200 mx-auto mb-4" />
-                              <Typography variant="h6" color="text.secondary" fontWeight="bold">Material Performance Analytics</Typography>
-                              <Typography variant="body2" color="text.disabled" sx={{ maxWidth: 450, mx: 'auto', mt: 1 }}>
-                                  Aggregated trends for concrete strength and soil compaction will appear here as more data points are logged.
-                              </Typography>
-                          </Box>
-                      </Paper>
-                  </Box>
-              )}
-          </Box>
-      </Paper>
+          <TabsContent value="material-trends" className="p-4">
+            <div className="flex justify-between mb-4 items-center">
+              <div className="relative w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search trends..." 
+                  value={searchTerm} 
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline">
+                <Filter className="mr-2 h-4 w-4" /> Filter Trends
+              </Button>
+            </div>
+            
+            <Card className="min-h-[400px] flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <TrendingUp className="mx-auto h-16 w-16 text-slate-200 mb-4" />
+                <h3 className="text-lg font-bold">Material Performance Analytics</h3>
+                <p className="text-sm max-w-sm mx-auto mt-2">
+                  Aggregated trends for concrete strength and soil compaction will appear here as more data points are logged.
+                </p>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </Card>
 
       {/* NCR Dialog */}
-      <Dialog open={isNcrModalOpen} onClose={() => setIsNcrModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-          <DialogTitle sx={{ bgcolor: 'error.main', color: 'white', display: 'flex', alignItems: 'center', gap: 1.5, p: 2 }}>
-              <AlertOctagon size={24} />
-              <Typography variant="h6" fontWeight="bold">Initiate Non-Conformance Report</Typography>
-          </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-              <Stack spacing={3} mt={1}>
-                  <Alert severity="error" sx={{ borderRadius: 2 }}>
-                      This NCR is linked to failed sample <b>{filteredTests.find(t => t.id === ncrForm.linkedTestId)?.sampleId}</b>.
-                  </Alert>
-                  <TextField label="Deviation Description" fullWidth multiline rows={3} value={ncrForm.description} onChange={e => setNcrForm({...ncrForm, description: e.target.value})} />
-                  <FormControl fullWidth size="small">
-                      <InputLabel>Risk Severity</InputLabel>
-                      <Select value={ncrForm.severity} label="Risk Severity" onChange={e => setNcrForm({...ncrForm, severity: e.target.value as any})}>
-                          <MenuItem value="Low">Low - Rectifiable</MenuItem>
-                          <MenuItem value="Medium">Medium - Correction Required</MenuItem>
-                          <MenuItem value="High">High - Structural Concern</MenuItem>
-                          <MenuItem value="Critical">Critical - Immediate Rejection</MenuItem>
-                      </Select>
-                  </FormControl>
-              </Stack>
-          </DialogContent>
-          <DialogActions sx={{ p: 2, bgcolor: '#f8fafc' }}>
-              <Button onClick={() => setIsNcrModalOpen(false)}>Discard</Button>
-              <Button variant="contained" color="error" startIcon={<CheckCircle2/>} onClick={() => { setIsNcrModalOpen(false); setSnackbarOpen(true); }}>Issue NCR Draft</Button>
-          </DialogActions>
+      <Dialog open={isNcrModalOpen} onOpenChange={setIsNcrModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="bg-red-600 text-white p-4 rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <AlertOctagon className="h-6 w-6" />
+              <DialogTitle className="text-xl font-bold">Initiate Non-Conformance Report</DialogTitle>
+            </div>
+          </DialogHeader>
+          <div className="p-4 grid gap-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Linked to Failed Sample</AlertTitle>
+              <AlertDescription>
+                This NCR is linked to failed sample <b>{filteredTests.find(t => t.id === ncrForm.linkedTestId)?.sampleId}</b>.
+              </AlertDescription>
+            </Alert>
+            <Input label="Deviation Description" multiline rows={3} value={ncrForm.description} onChange={e => setNcrForm({...ncrForm, description: e.target.value})} />
+            <Select value={ncrForm.severity} onValueChange={value => setNcrForm({...ncrForm, severity: value as any})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Risk Severity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low - Rectifiable</SelectItem>
+                <SelectItem value="Medium">Medium - Correction Required</SelectItem>
+                <SelectItem value="High">High - Structural Concern</SelectItem>
+                <SelectItem value="Critical">Critical - Immediate Rejection</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNcrModalOpen(false)}>Discard</Button>
+            <Button variant="destructive" onClick={() => { setIsNcrModalOpen(false); setSnackbarOpen(true); }}>
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Issue NCR Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
-
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
-          <Alert severity="success" sx={{ borderRadius: 2, bgcolor: '#0f172a', color: 'white' }}>Test result archived and quality ledger updated.</Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 };
 

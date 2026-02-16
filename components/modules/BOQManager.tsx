@@ -1,13 +1,28 @@
-import React, { useState, useMemo } from 'react'; // Added useMemo
-import { 
-  Box, Typography,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Tooltip, TextField, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions, Grid, InputAdornment // Added InputAdornment
-} from '@mui/material';
-import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react'; // Added Search icon
+import React, { useState, useMemo } from 'react';
+import { Edit, Trash2, Plus, Save, X, Search } from 'lucide-react';
 import { Project, AppSettings, UserRole, BOQItem } from '../../types';
 import { getCurrencySymbol } from '../../utils/formatting/currencyUtils';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { cn } from '~/lib/utils';
+
+// NOTE: This is a refactored version of the BOQManager component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 interface BOQManagerProps {
   project: Project;
@@ -146,129 +161,178 @@ const BOQManager: React.FC<BOQManagerProps> = ({
     );
   }, [project.boq, searchTerm]);
 
+
   return (
-    <Box sx={{ p: compactView ? 1 : 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight="bold">BOQ Registry</Typography>
-        <Box display="flex" alignItems="center" gap={1}>
-          <TextField
-            label="Search BOQ"
-            variant="outlined"
-            size="small"
+    <div className={cn("p-4", compactView ? "p-1" : "p-3")}>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">BOQ Registry</h2>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search BOQ..."
             value={searchTerm}
             onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={20} />
-                </InputAdornment>
-              ),
-            }}
+            className="w-64"
+            icon={<Search className="h-4 w-4 text-muted-foreground" />}
           />
-          <Button 
-            variant="contained" 
-            startIcon={<Plus size={16}/>} 
-            sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}
-            onClick={handleAddNewItemClick}
-          >
-            Add New Item
+          <Button onClick={handleAddNewItemClick}>
+            <Plus className="mr-2 h-4 w-4" /> Add New Item
           </Button>
-        </Box>
-      </Box>
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
-        <Table size={compactView ? "small" : "medium"}>
-          <TableHead sx={{ bgcolor: 'action.hover' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Item No</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate ({currencySymbol})</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount ({currencySymbol})</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Completed</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Variation</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredBoq && filteredBoq.length > 0 ? ( 
-              filteredBoq.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.itemNo}</TableCell>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell align="right">{item.quantity.toLocaleString()}</TableCell>
-                  <TableCell align="right">{item.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell align="right">{(item.quantity * item.rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell align="right">{item.completedQuantity?.toLocaleString() || '0'}</TableCell>
-                  <TableCell align="right">{item.variationQuantity?.toLocaleString() || '0'}</TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Edit Item">
-                      <IconButton size="small" color="primary" onClick={() => handleEditClick(item)}>
-                        <Edit size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Item">
-                      <IconButton size="small" color="error" onClick={() => handleDeleteClick(item.id)}>
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </Tooltip>
+        </div>
+      </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="font-bold">Item No</TableHead>
+                <TableHead className="font-bold">Description</TableHead>
+                <TableHead className="font-bold">Unit</TableHead>
+                <TableHead className="text-right font-bold">Quantity</TableHead>
+                <TableHead className="text-right font-bold">Rate ({currencySymbol})</TableHead>
+                <TableHead className="text-right font-bold">Amount ({currencySymbol})</TableHead>
+                <TableHead className="text-right font-bold">Completed</TableHead>
+                <TableHead className="text-right font-bold">Variation</TableHead>
+                <TableHead className="text-center font-bold">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBoq.length > 0 ? (
+                filteredBoq.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.itemNo}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell>{item.unit}</TableCell>
+                    <TableCell className="text-right">{item.quantity.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{item.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right">{(item.quantity * item.rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right">{item.completedQuantity?.toLocaleString() || '0'}</TableCell>
+                    <TableCell className="text-right">{item.variationQuantity?.toLocaleString() || '0'}</TableCell>
+                    <TableCell className="text-center">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit Item</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(item.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete Item</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <p className="text-muted-foreground">No matching BOQ items found.</p>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={9} sx={{ textAlign: 'center', py: 5 }}>
-                  <Typography variant="body2" color="text.secondary">No matching BOQ items found.</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Edit BOQ Item Dialog */}
-      <Dialog open={isEditModalOpen} onClose={handleCloseEditModal} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider' }}>Edit BOQ Item</DialogTitle>
-        <DialogContent>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit BOQ Item</DialogTitle>
+            <DialogDescription>Make changes to the BOQ item here.</DialogDescription>
+          </DialogHeader>
           {editingItem && (
-            <Grid container spacing={2} mt={2}>
-              <Grid item xs={12}><TextField fullWidth label="Item No" name="itemNo" value={editingItem.itemNo} onChange={handleEditChange} size="small" /></Grid>
-              <Grid item xs={12}><TextField fullWidth label="Description" name="description" value={editingItem.description} onChange={handleEditChange} size="small" multiline rows={2} /></Grid>
-              <Grid item xs={4}><TextField fullWidth label="Unit" name="unit" value={editingItem.unit} onChange={handleEditChange} size="small" /></Grid>
-              <Grid item xs={4}><TextField fullWidth label="Quantity" name="quantity" type="number" value={editingItem.quantity} onChange={handleEditChange} size="small" /></Grid>
-              <Grid item xs={4}><TextField fullWidth label="Rate" name="rate" type="number" value={editingItem.rate} onChange={handleEditChange} size="small" /></Grid>
-              <Grid item xs={6}><TextField fullWidth label="Completed Quantity" name="completedQuantity" type="number" value={editingItem.completedQuantity || 0} onChange={handleEditChange} size="small" /></Grid>
-              <Grid item xs={6}><TextField fullWidth label="Variation Quantity" name="variationQuantity" type="number" value={editingItem.variationQuantity || 0} onChange={handleEditChange} size="small" /></Grid>
-            </Grid>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="itemNo" className="text-right">Item No</Label>
+                <Input id="itemNo" name="itemNo" value={editingItem.itemNo} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">Description</Label>
+                <Input id="description" name="description" value={editingItem.description} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="unit" className="text-right">Unit</Label>
+                <Input id="unit" name="unit" value={editingItem.unit} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="quantity" className="text-right">Quantity</Label>
+                <Input id="quantity" name="quantity" type="number" value={editingItem.quantity} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="rate" className="text-right">Rate</Label>
+                <Input id="rate" name="rate" type="number" value={editingItem.rate} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="completedQuantity" className="text-right">Completed Quantity</Label>
+                <Input id="completedQuantity" name="completedQuantity" type="number" value={editingItem.completedQuantity || 0} onChange={handleEditChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="variationQuantity" className="text-right">Variation Quantity</Label>
+                <Input id="variationQuantity" name="variationQuantity" type="number" value={editingItem.variationQuantity || 0} onChange={handleEditChange} className="col-span-3" />
+              </div>
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseEditModal}>Cancel</Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
-          <Button onClick={handleCloseEditModal}>Cancel</Button>
-          <Button variant="contained" startIcon={<Save size={18}/>} onClick={handleSaveEdit}>Save Changes</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Add New BOQ Item Dialog */}
-      <Dialog open={isNewItemModalOpen} onClose={handleCloseNewItemModal} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider' }}>Add New BOQ Item</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} mt={2}>
-            <Grid item xs={12}><TextField fullWidth label="Item No" name="itemNo" value={newItem.itemNo} onChange={handleNewItemChange} size="small" /></Grid>
-            <Grid item xs={12}><TextField fullWidth label="Description" name="description" value={newItem.description} onChange={handleNewItemChange} size="small" multiline rows={2} required /></Grid>
-            <Grid item xs={4}><TextField fullWidth label="Unit" name="unit" value={newItem.unit} onChange={handleNewItemChange} size="small" /></Grid>
-            <Grid item xs={4}><TextField fullWidth label="Quantity" name="quantity" type="number" value={newItem.quantity} onChange={handleNewItemChange} size="small" required /></Grid>
-            <Grid item xs={4}><TextField fullWidth label="Rate" name="rate" type="number" value={newItem.rate} onChange={handleNewItemChange} size="small" required /></Grid>
-            <Grid item xs={6}><TextField fullWidth label="Location" name="location" value={newItem.location} onChange={handleNewItemChange} size="small" /></Grid>
-            <Grid item xs={6}><TextField fullWidth label="Category" name="category" value={newItem.category} onChange={handleNewItemChange} size="small" /></Grid>
-          </Grid>
+      <Dialog open={isNewItemModalOpen} onOpenChange={setIsNewItemModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New BOQ Item</DialogTitle>
+            <DialogDescription>Enter details for the new BOQ item.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newItemNo" className="text-right">Item No</Label>
+              <Input id="newItemNo" name="itemNo" value={newItem.itemNo} onChange={handleNewItemChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newDescription" className="text-right">Description</Label>
+              <Input id="newDescription" name="description" value={newItem.description} onChange={handleNewItemChange} className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newUnit" className="text-right">Unit</Label>
+              <Input id="newUnit" name="unit" value={newItem.unit} onChange={handleNewItemChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newQuantity" className="text-right">Quantity</Label>
+              <Input id="newQuantity" name="quantity" type="number" value={newItem.quantity} onChange={handleNewItemChange} className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newRate" className="text-right">Rate</Label>
+              <Input id="newRate" name="rate" type="number" value={newItem.rate} onChange={handleNewItemChange} className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newLocation" className="text-right">Location</Label>
+              <Input id="newLocation" name="location" value={newItem.location} onChange={handleNewItemChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="newCategory" className="text-right">Category</Label>
+              <Input id="newCategory" name="category" value={newItem.category} onChange={handleNewItemChange} className="col-span-3" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseNewItemModal}>Cancel</Button>
+            <Button onClick={handleSaveNewItem} disabled={!newItem.description || newItem.quantity === undefined || newItem.rate === undefined}>
+              Add Item
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
-          <Button onClick={handleCloseNewItemModal}>Cancel</Button>
-          <Button variant="contained" startIcon={<Plus size={18}/>} onClick={handleSaveNewItem} disabled={!newItem.description || newItem.quantity === undefined || newItem.rate === undefined}>Add Item</Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

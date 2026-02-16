@@ -1,20 +1,27 @@
+
 import React, { useState, useMemo } from 'react';
 import { Project, UserRole, InventoryItem, PurchaseOrder, POItem } from '../../types';
 import { getAutofillSuggestions, checkForDuplicates } from '../../utils/data/autofillUtils';
-import { 
-    Box, Typography, Button, Grid, Table, TableHead, TableRow, TableCell, 
-    TableBody, Paper, Chip, Stack, Card, CardContent, LinearProgress,
-    Tooltip, IconButton, Divider, Avatar, Tabs, Tab, Dialog,
-    DialogTitle, DialogContent, DialogActions, TextField, InputAdornment,
-    List, ListItem, ListItemText, ListItemSecondaryAction, Alert, Checkbox,
-    Autocomplete
-} from '@mui/material';
 import { 
     Package, AlertTriangle, CheckCircle2, TrendingDown, Plus, 
     ArrowUpRight, ShoppingCart, History, PackageSearch, Filter,
     FileText, Truck, CreditCard, ChevronRight, Calculator,
     PlusCircle, Trash2, Save, X, Printer, Edit
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Checkbox } from '~/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 
 interface Props {
   project: Project;
@@ -23,7 +30,7 @@ interface Props {
 }
 
 const ResourceManager: React.FC<Props> = ({ project, onProjectUpdate, userRole }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('inventory');
   const [isPoModalOpen, setIsPoModalOpen] = useState(false);
   const [isPoDetailOpen, setIsPoDetailOpen] = useState(false);
   const [selectedPoId, setSelectedPoId] = useState<string | null>(null);
@@ -106,17 +113,17 @@ const ResourceManager: React.FC<Props> = ({ project, onProjectUpdate, userRole }
   const handleSaveInventoryItem = () => {
     // Validation
     if (!inventoryForm.itemName?.trim()) {
-      alert('Item name is required');
+      toast.error('Item name is required');
       return;
     }
     
     if (typeof inventoryForm.quantity !== 'number' || inventoryForm.quantity < 0) {
-      alert('Quantity must be a non-negative number');
+      toast.error('Quantity must be a non-negative number');
       return;
     }
     
     if (typeof inventoryForm.reorderLevel !== 'number' || inventoryForm.reorderLevel < 0) {
-      alert('Reorder level must be a non-negative number');
+      toast.error('Reorder level must be a non-negative number');
       return;
     }
     
@@ -244,377 +251,309 @@ const ResourceManager: React.FC<Props> = ({ project, onProjectUpdate, userRole }
   const viewingPo = pos.find(p => p.id === selectedPoId);
 
   return (
-    <Box className="animate-in fade-in duration-500">
-      <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-          <Box>
-              <Typography variant="h5" fontWeight="900">Resource & Material Matrix</Typography>
-              <Typography variant="body2" color="text.secondary">Site inventory management and automated reorder alerts</Typography>
-          </Box>
-          <Stack direction="row" spacing={1.5}>
-              <Button variant="outlined" startIcon={<History size={16}/>} sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}>Stock Ledger</Button>
-              <Button 
-                variant="contained" 
-                startIcon={<Package size={16}/>} 
-                sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}
-                onClick={handleAddInventoryItem}
-              >
-                Add Inventory Item
-              </Button>
-              <Button 
-                variant="contained" 
-                startIcon={<ShoppingCart size={16}/>} 
-                sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}
-                onClick={handleInitPO}
-              >
-                Draft Purchase Order
-              </Button>
-          </Stack>
-      </Box>
+    <div className="animate-in fade-in duration-500">
+      <div className="flex justify-between mb-2 items-center">
+          <div>
+              <h1 className="text-2xl font-bold">Resource & Material Matrix</h1>
+              <p className="text-muted-foreground">Site inventory management and automated reorder alerts</p>
+          </div>
+          <div className="flex space-x-2">
+              <Button variant="outline"><History className="mr-2 h-4 w-4" />Stock Ledger</Button>
+              <Button onClick={handleAddInventoryItem}><Package className="mr-2 h-4 w-4" />Add Inventory Item</Button>
+              <Button onClick={handleInitPO}><ShoppingCart className="mr-2 h-4 w-4" />Draft Purchase Order</Button>
+          </div>
+      </div>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 2 }}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ bgcolor: 'slate.50', borderBottom: 1, borderColor: 'divider' }}>
-              <Tab label="Stock Inventory" icon={<Package size={18}/>} iconPosition="start" />
-              <Tab label="Purchase Orders" icon={<FileText size={18}/>} iconPosition="start" />
-              <Tab label="Consumption Trends" icon={<TrendingDown size={18}/>} iconPosition="start" />
-          </Tabs>
+      <Card>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                  <TabsTrigger value="inventory"><Package className="mr-2 h-4 w-4" />Stock Inventory</TabsTrigger>
+                  <TabsTrigger value="po"><FileText className="mr-2 h-4 w-4" />Purchase Orders</TabsTrigger>
+                  <TabsTrigger value="trends"><TrendingDown className="mr-2 h-4 w-4" />Consumption Trends</TabsTrigger>
+              </TabsList>
 
-          <Box p={2}>
-              {activeTab === 0 && (
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
-                        <Stack spacing={1.5}>
-                            <Card variant="outlined" sx={{ borderRadius: 3, borderLeft: '6px solid #ef4444', bgcolor: stats.critical.length > 0 ? 'rose.50/10' : 'white' }}>
-                                <CardContent sx={{ p: 2 }}>
-                                    <Box display="flex" justifyContent="space-between" mb={1}>
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary">CRITICAL</Typography>
-                                        <AlertTriangle size={16} className="text-rose-600"/>
-                                    </Box>
-                                    <Typography variant="h5" fontWeight="900" color="error.main">{stats.critical.length}</Typography>
-                                </CardContent>
-                            </Card>
-                            <Card variant="outlined" sx={{ borderRadius: 3, borderLeft: '6px solid #f59e0b' }}>
-                                <CardContent sx={{ p: 2 }}>
-                                    <Box display="flex" justifyContent="space-between" mb={1}>
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary">WARNING</Typography>
-                                        <TrendingDown size={16} className="text-amber-600"/>
-                                    </Box>
-                                    <Typography variant="h5" fontWeight="900" color="warning.main">{stats.warning.length}</Typography>
-                                </CardContent>
-                            </Card>
-                            <Card variant="outlined" sx={{ borderRadius: 3, borderLeft: '6px solid #10b981' }}>
-                                <CardContent sx={{ p: 2 }}>
-                                    <Box display="flex" justifyContent="space-between" mb={1}>
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary">HEALTHY</Typography>
-                                        <CheckCircle2 size={16} className="text-emerald-600"/>
-                                    </Box>
-                                    <Typography variant="h5" fontWeight="900" color="success.main">{stats.healthy}</Typography>
-                                </CardContent>
-                            </Card>
-                        </Stack>
-                    </Grid>
+              <TabsContent value="inventory" className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-1 space-y-4">
+                        <Card className={stats.critical.length > 0 ? 'border-red-500' : ''}>
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>CRITICAL</CardTitle>
+                                    <AlertTriangle className="h-5 w-5 text-red-500"/>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold">{stats.critical.length}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>WARNING</CardTitle>
+                                    <TrendingDown className="h-5 w-5 text-yellow-500"/>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold">{stats.warning.length}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>HEALTHY</CardTitle>
+                                    <CheckCircle2 className="h-5 w-5 text-green-500"/>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold">{stats.healthy}</p>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                    <Grid item xs={12} md={8}>
-                        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                            <Table size="small">
-                                <TableHead sx={{ bgcolor: 'slate.50' }}>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Item Name</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Stock Level</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Threshold</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {inventory.map(item => (
-                                        <TableRow key={item.id} hover>
-                                            <TableCell>
-                                                <Typography variant="body2" fontWeight="bold">{item.itemName}</Typography>
-                                                <Typography variant="caption" color="text.secondary">{item.location}</Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Typography variant="body2" fontWeight="900" color={item.quantity <= item.reorderLevel ? 'error.main' : 'inherit'}>
-                                                    {item.quantity} {item.unit}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Chip label={item.reorderLevel} size="small" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Typography variant="body2">{item.location}</Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <IconButton 
-                                                  size="small" 
-                                                  onClick={() => handleEditInventoryItem(item)}
-                                                >
-                                                  <Edit size={16}/>
-                                                </IconButton>
-                                                <IconButton 
-                                                  size="small" 
-                                                  color="error"
-                                                  onClick={() => handleDeleteInventoryItem(item.id)}
-                                                >
-                                                  <Trash2 size={16}/>
-                                                </IconButton>
-                                            </TableCell>
+                    <div className="md:col-span-2">
+                        <Card>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Item Name</TableHead>
+                                            <TableHead className="text-right">Stock Level</TableHead>
+                                            <TableHead className="text-right">Threshold</TableHead>
+                                            <TableHead className="text-right">Location</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Paper>
-                    </Grid>
-                </Grid>
-              )}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {inventory.map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell>
+                                                    <p className="font-bold">{item.itemName}</p>
+                                                    <p className="text-muted-foreground">{item.location}</p>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <p className={`font-bold ${item.quantity <= item.reorderLevel ? 'text-red-500' : ''}`}>
+                                                        {item.quantity} {item.unit}
+                                                    </p>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant="outline">{item.reorderLevel}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">{item.location}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEditInventoryItem(item)}>
+                                                      <Edit className="h-4 w-4"/>
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteInventoryItem(item.id)}>
+                                                      <Trash2 className="h-4 w-4"/>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+              </TabsContent>
 
-              {activeTab === 1 && (
-                  <Box>
-                      <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                          <Typography variant="subtitle1" fontWeight="bold">Procurement Ledger</Typography>
-                          <Button variant="outlined" size="small" startIcon={<Filter size={14}/>}>Filter Status</Button>
-                      </Box>
-                      <Grid container spacing={2}>
+              <TabsContent value="po" className="p-4">
+                  <div>
+                      <div className="flex justify-between mb-4 items-center">
+                          <h2 className="text-lg font-semibold">Procurement Ledger</h2>
+                          <Button variant="outline" size="sm"><Filter className="mr-2 h-4 w-4"/>Filter Status</Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {pos.map(po => (
-                              <Grid item xs={12} md={6} key={po.id}>
-                                  <Card variant="outlined" sx={{ borderRadius: 3, cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }} onClick={() => { setSelectedPoId(po.id); setIsPoDetailOpen(true); }}>
-                                      <CardContent sx={{ p: 2 }}>
-                                          <Box display="flex" justifyContent="space-between" mb={1.5}>
-                                              <Box>
-                                                  <Typography variant="caption" fontWeight="bold" color="primary">{po.poNumber}</Typography>
-                                                  <Typography variant="subtitle2" fontWeight="bold">{po.vendor}</Typography>
-                                              </Box>
-                                              <Chip 
-                                                label={po.status.toUpperCase()} 
-                                                size="small" 
-                                                color={po.status === 'Received' ? 'success' : po.status === 'Issued' ? 'primary' : 'default'} 
-                                                sx={{ fontWeight: 'bold', fontSize: 9 }} 
-                                              />
-                                          </Box>
-                                          <Divider sx={{ mb: 1.5 }} />
-                                          <Box display="flex" justifyContent="space-between" alignItems="center">
-                                              <Typography variant="caption" color="text.secondary">{po.date} • {po.items.length} items</Typography>
-                                              <Typography variant="body2" fontWeight="bold">${po.totalAmount.toLocaleString()}</Typography>
-                                          </Box>
-                                      </CardContent>
-                                  </Card>
-                              </Grid>
+                              <Card key={po.id} className="cursor-pointer hover:border-primary" onClick={() => { setSelectedPoId(po.id); setIsPoDetailOpen(true); }}>
+                                  <CardContent className="p-4">
+                                      <div className="flex justify-between mb-2">
+                                          <div>
+                                              <p className="text-sm font-bold text-primary">{po.poNumber}</p>
+                                              <p className="font-semibold">{po.vendor}</p>
+                                          </div>
+                                          <Badge variant={po.status === 'Received' ? 'default' : 'secondary'}>{po.status.toUpperCase()}</Badge>
+                                      </div>
+                                      <div className="border-t pt-2 flex justify-between items-center">
+                                          <p className="text-sm text-muted-foreground">{po.date} • {po.items.length} items</p>
+                                          <p className="font-bold">${po.totalAmount.toLocaleString()}</p>
+                                      </div>
+                                  </CardContent>
+                              </Card>
                           ))}
                           {pos.length === 0 && (
-                              <Grid item xs={12}>
-                                  <Box py={8} textAlign="center" border="1px dashed #e2e8f0" borderRadius={4}>
-                                      <FileText size={48} className="text-slate-200 mx-auto mb-2"/>
-                                      <Typography color="text.secondary">No purchase orders recorded.</Typography>
-                                  </Box>
-                              </Grid>
+                              <div className="col-span-2 py-16 text-center border-dashed border-2 rounded-lg">
+                                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                                  <h3 className="mt-2 text-sm font-medium text-gray-900">No purchase orders</h3>
+                                  <p className="mt-1 text-sm text-gray-500">Get started by creating a new purchase order.</p>
+                              </div>
                           )}
-                      </Grid>
-                  </Box>
-              )}
-          </Box>
-      </Paper>
+                      </div>
+                  </div>
+              </TabsContent>
+          </Tabs>
+      </Card>
 
       {/* Inventory Item Modal */}
-      <Dialog open={isInventoryModalOpen} onClose={() => setIsInventoryModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-          <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Package className="text-indigo-600" /> {editingItemId ? 'Edit Inventory Item' : 'Add New Inventory Item'}
-          </DialogTitle>
+      <Dialog open={isInventoryModalOpen} onOpenChange={setIsInventoryModalOpen}>
           <DialogContent>
-              <Stack spacing={3} mt={3}>
-                  <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Autocomplete
-                          freeSolo
-                          options={getAutofillSuggestions.inventoryItems(project, 'itemName', inventoryForm.itemName || '')}
-                          value={inventoryForm.itemName || ''}
-                          onInputChange={(event, newValue) => {
-                            setInventoryForm({...inventoryForm, itemName: newValue});
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              label="Item Name"
-                              size="small"
-                              required
-                              InputProps={{
-                                ...params.InputProps,
-                                type: 'search'
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid item xs={6}><TextField fullWidth label="Current Quantity" type="number" value={inventoryForm.quantity} onChange={e => setInventoryForm({...inventoryForm, quantity: Number(e.target.value)})} size="small" /></Grid>
-                      <Grid item xs={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={getAutofillSuggestions.inventoryItems(project, 'unit', inventoryForm.unit || '')}
-                          value={inventoryForm.unit || ''}
-                          onInputChange={(event, newValue) => setInventoryForm({...inventoryForm, unit: newValue})}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              label="Unit"
-                              size="small"
-                              InputProps={{
-                                ...params.InputProps,
-                                type: 'search'
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid item xs={6}><TextField fullWidth label="Reorder Level" type="number" value={inventoryForm.reorderLevel} onChange={e => setInventoryForm({...inventoryForm, reorderLevel: Number(e.target.value)})} size="small" /></Grid>
-                      <Grid item xs={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={getAutofillSuggestions.inventoryItems(project, 'location', inventoryForm.location || '')}
-                          value={inventoryForm.location || ''}
-                          onInputChange={(event, newValue) => setInventoryForm({...inventoryForm, location: newValue})}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              label="Location"
-                              size="small"
-                              InputProps={{
-                                ...params.InputProps,
-                                type: 'search'
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                  </Grid>
-              </Stack>
+              <DialogHeader>
+                  <DialogTitle className="flex items-center"><Package className="mr-2 h-5 w-5" /> {editingItemId ? 'Edit Inventory Item' : 'Add New Inventory Item'}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item-name" className="text-right">Item Name</Label>
+                    <Input id="item-name" value={inventoryForm.itemName || ''} onChange={e => setInventoryForm({...inventoryForm, itemName: e.target.value})} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="quantity" className="text-right">Quantity</Label>
+                    <Input id="quantity" type="number" value={inventoryForm.quantity} onChange={e => setInventoryForm({...inventoryForm, quantity: Number(e.target.value)})} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="unit" className="text-right">Unit</Label>
+                    <Input id="unit" value={inventoryForm.unit || ''} onChange={e => setInventoryForm({...inventoryForm, unit: e.target.value})} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="reorder-level" className="text-right">Reorder Level</Label>
+                    <Input id="reorder-level" type="number" value={inventoryForm.reorderLevel} onChange={e => setInventoryForm({...inventoryForm, reorderLevel: Number(e.target.value)})} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="location" className="text-right">Location</Label>
+                    <Input id="location" value={inventoryForm.location || ''} onChange={e => setInventoryForm({...inventoryForm, location: e.target.value})} className="col-span-3" />
+                  </div>
+              </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsInventoryModalOpen(false)}><X className="mr-2 h-4 w-4" />Cancel</Button>
+                  <Button onClick={handleSaveInventoryItem}><Save className="mr-2 h-4 w-4" />{editingItemId ? 'Update Item' : 'Add Item'}</Button>
+              </DialogFooter>
           </DialogContent>
-          <DialogActions sx={{ p: 3, bgcolor: '#f8fafc' }}>
-              <Button onClick={() => setIsInventoryModalOpen(false)} startIcon={<X />}>Cancel</Button>
-              <Button variant="contained" startIcon={<Save />} onClick={handleSaveInventoryItem}>
-                {editingItemId ? 'Update Item' : 'Add Item'}
-              </Button>
-          </DialogActions>
       </Dialog>
 
-      <Dialog open={isPoModalOpen} onClose={() => setIsPoModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-          <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <ShoppingCart className="text-indigo-600" /> New Purchase Order (PO)
-          </DialogTitle>
-          <DialogContent>
-              <Stack spacing={3} mt={3}>
-                  <Grid container spacing={2}>
-                      <Grid item xs={6}><TextField fullWidth label="Vendor / Supplier Name" value={poForm.vendor} onChange={e => setPoForm({...poForm, vendor: e.target.value})} size="small" /></Grid>
-                      <Grid item xs={3}><TextField fullWidth label="PO Reference" value={poForm.poNumber} disabled size="small" /></Grid>
-                      <Grid item xs={3}><TextField fullWidth label="Date" type="date" value={poForm.date} InputLabelProps={{shrink:true}} disabled size="small" /></Grid>
-                  </Grid>
+      <Dialog open={isPoModalOpen} onOpenChange={setIsPoModalOpen}>
+          <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                  <DialogTitle className="flex items-center"><ShoppingCart className="mr-2 h-5 w-5" /> New Purchase Order (PO)</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-3 gap-4">
+                      <Input placeholder="Vendor / Supplier Name" value={poForm.vendor} onChange={e => setPoForm({...poForm, vendor: e.target.value})} />
+                      <Input value={poForm.poNumber} disabled />
+                      <Input type="date" value={poForm.date} disabled />
+                  </div>
 
-                  <Typography variant="caption" fontWeight="bold" color="text.secondary">ORDER ITEMS</Typography>
-                  <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                      <Table size="small">
-                          <TableHead sx={{ bgcolor: 'slate.50' }}>
-                              <TableRow>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Item Name</TableCell>
-                                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-                                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Est. Rate</TableCell>
-                                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                                  <TableCell align="right"></TableCell>
-                              </TableRow>
-                          </TableHead>
-                          <TableBody>
-                              {poForm.items?.map((item, idx) => (
-                                  <TableRow key={idx}>
-                                      <TableCell>{item.itemName}</TableCell>
-                                      <TableCell align="right">
-                                          <TextField 
-                                            size="small" variant="standard" type="number" value={item.quantity} 
-                                            onChange={e => {
-                                                const next = [...(poForm.items || [])];
-                                                next[idx].quantity = Number(e.target.value);
-                                                setPoForm({...poForm, items: next});
-                                            }}
-                                            InputProps={{ disableUnderline: true, endAdornment: <Typography variant="caption" sx={{ ml: 1 }}>units</Typography> }}
-                                            sx={{ width: 60 }}
-                                          />
-                                      </TableCell>
-                                      <TableCell align="right">
-                                          <TextField 
-                                            size="small" variant="standard" type="number" value={item.unitPrice} 
-                                            onChange={e => {
-                                                const next = [...(poForm.items || [])];
-                                                next[idx].unitPrice = Number(e.target.value);
-                                                setPoForm({...poForm, items: next});
-                                            }}
-                                            InputProps={{ disableUnderline: true, startAdornment: <Typography variant="caption" sx={{ mr: 0.5 }}>$</Typography> }}
-                                            sx={{ width: 80 }}
-                                          />
-                                      </TableCell>
-                                      <TableCell align="right"><strong>${(item.quantity * item.unitPrice).toLocaleString()}</strong></TableCell>
-                                      <TableCell align="right">
-                                          <IconButton size="small" color="error"><Trash2 size={14}/></IconButton>
-                                      </TableCell>
+                  <h3 className="text-sm font-semibold mt-4">ORDER ITEMS</h3>
+                  <Card>
+                      <CardContent>
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead>Item Name</TableHead>
+                                      <TableHead className="text-right">Quantity</TableHead>
+                                      <TableHead className="text-right">Est. Rate</TableHead>
+                                      <TableHead className="text-right">Total</TableHead>
+                                      <TableHead className="text-right"></TableHead>
                                   </TableRow>
-                              ))}
-                          </TableBody>
-                      </Table>
-                  </Paper>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" bgcolor="slate.900" p={2} borderRadius={2} color="white">
-                      <Typography variant="subtitle2" fontWeight="bold">TOTAL PO VALUE</Typography>
-                      <Typography variant="h6" fontWeight="bold">
+                              </TableHeader>
+                              <TableBody>
+                                  {poForm.items?.map((item, idx) => (
+                                      <TableRow key={idx}>
+                                          <TableCell>{item.itemName}</TableCell>
+                                          <TableCell className="text-right">
+                                              <Input 
+                                                type="number" value={item.quantity} 
+                                                onChange={e => {
+                                                    const next = [...(poForm.items || [])];
+                                                    next[idx].quantity = Number(e.target.value);
+                                                    setPoForm({...poForm, items: next});
+                                                }}
+                                                className="w-20"
+                                              />
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                              <Input 
+                                                type="number" value={item.unitPrice} 
+                                                onChange={e => {
+                                                    const next = [...(poForm.items || [])];
+                                                    next[idx].unitPrice = Number(e.target.value);
+                                                    setPoForm({...poForm, items: next});
+                                                }}
+                                                className="w-24"
+                                              />
+                                          </TableCell>
+                                          <TableCell className="text-right font-bold">${(item.quantity * item.unitPrice).toLocaleString()}</TableCell>
+                                          <TableCell className="text-right">
+                                              <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
+                                          </TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      </CardContent>
+                  </Card>
+                  <div className="flex justify-between items-center bg-gray-900 text-white p-4 rounded-lg">
+                      <h3 className="font-semibold">TOTAL PO VALUE</h3>
+                      <p className="text-2xl font-bold">
                         ${(poForm.items?.reduce((acc, i) => acc + (i.quantity * i.unitPrice), 0) || 0).toLocaleString()}
-                      </Typography>
-                  </Box>
-              </Stack>
+                      </p>
+                  </div>
+              </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsPoModalOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSavePO} disabled={!poForm.vendor}><Save className="mr-2 h-4 w-4"/>Issue Purchase Order</Button>
+              </DialogFooter>
           </DialogContent>
-          <DialogActions sx={{ p: 3, bgcolor: '#f8fafc' }}>
-              <Button onClick={() => setIsPoModalOpen(false)}>Cancel</Button>
-              <Button variant="contained" startIcon={<Save/>} onClick={handleSavePO} disabled={!poForm.vendor}>Issue Purchase Order</Button>
-          </DialogActions>
       </Dialog>
 
-      <Dialog open={isPoDetailOpen} onClose={() => setIsPoDetailOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+      <Dialog open={isPoDetailOpen} onOpenChange={setIsPoDetailOpen}>
           {viewingPo && (
-              <>
-                  <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
-                      <Box>
-                          <Typography variant="h6" fontWeight="bold">{viewingPo.poNumber}</Typography>
-                          <Typography variant="caption" color="text.secondary">{viewingPo.vendor}</Typography>
-                      </Box>
-                      <Chip label={viewingPo.status} color={viewingPo.status === 'Received' ? 'success' : 'primary'} size="small" sx={{ fontWeight: 'bold' }} />
-                  </DialogTitle>
-                  <DialogContent sx={{ pt: 3 }}>
-                      <Stack spacing={3}>
-                          <List dense disablePadding>
-                              {viewingPo.items.map((item, idx) => (
-                                  <ListItem key={idx} divider>
-                                      <ListItemText primary={item.itemName} secondary={`${item.quantity} units @ $${item.unitPrice}`} />
-                                      <Typography variant="body2" fontWeight="bold">${(item.quantity * item.unitPrice).toLocaleString()}</Typography>
-                                  </ListItem>
-                              ))}
-                          </List>
-                          <Box display="flex" justifyContent="space-between">
-                              <Typography fontWeight="bold">Order Total:</Typography>
-                              <Typography fontWeight="bold" color="primary.main">${viewingPo.totalAmount.toLocaleString()}</Typography>
-                          </Box>
-                          {viewingPo.status === 'Issued' && (
-                              <Alert severity="info" icon={<Truck/>}>
-                                  This order is currently in transit. Verify delivery on site before receiving.
-                              </Alert>
-                          )}
-                      </Stack>
-                  </DialogContent>
-                  <DialogActions sx={{ p: 2 }}>
-                      <Button variant="outlined" startIcon={<Printer/>}>Print PO</Button>
-                      <Box sx={{ flex: 1 }} />
-                      <Button onClick={() => setIsPoDetailOpen(false)}>Close</Button>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle className="flex justify-between items-center">
+                          <div>
+                              <h2 className="text-lg font-bold">{viewingPo.poNumber}</h2>
+                              <p className="text-muted-foreground">{viewingPo.vendor}</p>
+                          </div>
+                          <Badge variant={viewingPo.status === 'Received' ? 'default' : 'secondary'}>{viewingPo.status}</Badge>
+                      </DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                      <div className="space-y-2">
+                          {viewingPo.items.map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-center border-b pb-2">
+                                  <div>
+                                      <p className="font-semibold">{item.itemName}</p>
+                                      <p className="text-sm text-muted-foreground">{`${item.quantity} units @ $${item.unitPrice}`}</p>
+                                  </div>
+                                  <p className="font-bold">${(item.quantity * item.unitPrice).toLocaleString()}</p>
+                              </div>
+                          ))}
+                      </div>
+                      <div className="flex justify-between font-bold text-lg">
+                          <p>Order Total:</p>
+                          <p className="text-primary">${viewingPo.totalAmount.toLocaleString()}</p>
+                      </div>
                       {viewingPo.status === 'Issued' && (
-                          <Button variant="contained" color="success" onClick={() => handleReceivePO(viewingPo.id)} startIcon={<CheckCircle2/>}>Confirm Receipt</Button>
+                          <Alert>
+                              <Truck className="h-4 w-4" />
+                              <AlertTitle>In Transit</AlertTitle>
+                              <AlertDescription>
+                                  This order is currently in transit. Verify delivery on site before receiving.
+                              </AlertDescription>
+                          </Alert>
                       )}
-                  </DialogActions>
-              </>
+                  </div>
+                  <DialogFooter>
+                      <Button variant="outline"><Printer className="mr-2 h-4 w-4" />Print PO</Button>
+                      <div className="flex-grow" />
+                      <Button variant="outline" onClick={() => setIsPoDetailOpen(false)}>Close</Button>
+                      {viewingPo.status === 'Issued' && (
+                          <Button onClick={() => handleReceivePO(viewingPo.id)}><CheckCircle2 className="mr-2 h-4 w-4"/>Confirm Receipt</Button>
+                      )}
+                  </DialogFooter>
+              </DialogContent>
           )}
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

@@ -1,15 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { Project, UserRole, Vehicle, VehicleLog, ScheduleTask } from '../../types';
 import { getAutofillSuggestions, checkForDuplicates } from '../../utils/data/autofillUtils';
-import { 
-    Box, Typography, Button, Card, Grid, 
-    Avatar, Chip, Stack, Paper, 
-    Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, FormControl, InputLabel, Select, MenuItem, Divider,
-    // Fix: Added missing 'Alert' import from @mui/material
-    LinearProgress, Snackbar, Table, TableHead, TableRow, TableCell, TableBody,
-    InputAdornment, Tabs, Tab, Alert, IconButton, Autocomplete, Tooltip
-} from '@mui/material';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Badge } from '~/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '~/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Separator } from '~/components/ui/separator';
+import { ScrollArea } from '~/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+
 import { 
     Truck, Gauge, Droplets, Clock, Signal, Plus, 
     // Fix: Added missing 'CheckCircle2' import from lucide-react
@@ -28,7 +34,7 @@ const FleetModule: React.FC<Props> = ({ project, onProjectUpdate, userRole }) =>
   const vehicles = project.vehicles || [];
   const vehicleLogs = project.vehicleLogs || [];
   const [selectedId, setSelectedId] = useState<string | null>(vehicles[0]?.id || null);
-  const [activeDetailTab, setActiveDetailTab] = useState(0);
+  const [activeDetailTab, setActiveDetailTab] = useState<string>('0');
   
   const [isRegModalOpen, setIsRegModalOpen] = useState(false);
   const [isLogTripModalOpen, setIsLogTripModalOpen] = useState(false);
@@ -223,401 +229,449 @@ const FleetModule: React.FC<Props> = ({ project, onProjectUpdate, userRole }) =>
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-        <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-            <Box>
-                <Typography variant="h5" fontWeight="900">Fleet & Equipment</Typography>
-                <Typography variant="body2" color="text.secondary">Real-time telematics & utilization</Typography>
-            </Box>
-            <Button variant="contained" startIcon={<Plus size={16}/>} onClick={handleAddVehicle} sx={{ paddingX: 1.5, paddingY: 0.75 }}>Register Plant</Button>
-        </Box>
+    <div className="animate-in fade-in duration-500">
+        <div className="flex items-center justify-between mb-4">
+            <div>
+                <h5 className="text-xl font-extrabold">Fleet & Equipment</h5>
+                <p className="text-sm text-gray-500">Real-time telematics & utilization</p>
+            </div>
+            <Button onClick={handleAddVehicle} className="px-3 py-1.5">
+                <Plus size={16} className="mr-2"/> Register Plant
+            </Button>
+        </div>
 
-        <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-                <Stack spacing={1.5}>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="col-span-12 md:col-span-4">
+                <div className="flex flex-col space-y-3">
                     {vehicles.map(v => (
                         <Card 
                             key={v.id} 
-                            variant="outlined"
-                            onClick={() => { setSelectedId(v.id); setActiveDetailTab(0); }} 
-                            sx={{ 
-                                cursor: 'pointer', borderRadius: 3, transition: 'all 0.2s', borderLeft: '6px solid',
-                                borderLeftColor: v.status === 'Active' ? 'success.main' : 'warning.main',
-                                bgcolor: selectedId === v.id ? 'indigo.50/20' : 'white',
-                                borderColor: selectedId === v.id ? 'primary.main' : 'divider'
-                            }}
+                            onClick={() => { setSelectedId(v.id); setActiveDetailTab('0'); }}
+                            className={`cursor-pointer rounded-xl transition-all duration-200 border-l-[6px] 
+                                ${v.status === 'Active' ? 'border-green-500' : 'border-amber-500'}
+                                ${selectedId === v.id ? 'bg-indigo-50/20 border-primary' : 'bg-white border-border'}`}
                         >
-                            <Box p={1.5} display="flex" alignItems="center" gap={1.5}>
-                                <Avatar sx={{ bgcolor: 'slate.100', color: 'slate.600' }}><Truck size={20}/></Avatar>
-                                <Box flex={1}>
-                                    <Typography variant="subtitle2" fontWeight="bold">{v.plateNumber}</Typography>
-                                    <Typography variant="caption" color="text.secondary">{v.type}</Typography>
-                                    <Typography variant="caption" color="primary.main">
+                            <div className="p-3 flex items-center gap-3">
+                                <Avatar className="bg-slate-100 text-slate-600">
+                                    <AvatarFallback><Truck size={20}/></AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold">{v.plateNumber}</p>
+                                    <p className="text-xs text-gray-500">{v.type}</p>
+                                    <p className="text-xs text-primary">
                                       {v.agencyId ? (
                                         project.agencies?.find(a => a.id === v.agencyId)?.name || 'Unknown Agency'
                                       ) : 'Unassigned'}
-                                    </Typography>
-                                </Box>
-                                <Chip label={v.status} size="small" sx={{ fontSize: 8, height: 16 }} />
-                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditVehicle(v); }}>
+                                    </p>
+                                </div>
+                                <Badge variant="outline" className="text-[8px] h-4 px-1">{v.status}</Badge>
+                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEditVehicle(v); }}>
                                   <Edit size={14} />
-                                </IconButton>
-                                <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}>
+                                </Button>
+                                <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}>
                                   <Trash2 size={14} />
-                                </IconButton>
-                            </Box>
+                                </Button>
+                            </div>
                         </Card>
                     ))}
-                </Stack>
-            </Grid>
+                </div>
+            </div>
 
-            <Grid item xs={12} md={8}>
+            <div className="col-span-12 md:col-span-8">
                 {activeVehicle ? (
-                    <Stack spacing={3}>
-                        <Paper variant="outlined" sx={{ p: 3, borderRadius: 4 }}>
-                            <Box display="flex" justifyContent="space-between" mb={3}>
-                                <Box display="flex" gap={2}>
-                                    <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}><Truck size={28}/></Avatar>
-                                    <Box>
-                                        <Typography variant="h6" fontWeight="900">{activeVehicle.plateNumber}</Typography>
-                                        <Typography variant="body2" color="text.secondary">Operator: <b>{activeVehicle.driver}</b></Typography>
-                                        <Typography variant="body2" color="primary.main">Agency: <b>{activeVehicle.agencyId ? (
+                    <div className="flex flex-col space-y-6">
+                        <Card className="p-6 rounded-3xl">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="w-14 h-14 bg-primary">
+                                      <AvatarFallback><Truck size={28}/></AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <h6 className="text-lg font-extrabold">{activeVehicle.plateNumber}</h6>
+                                        <p className="text-sm text-gray-500">Operator: <b>{activeVehicle.driver}</b></p>
+                                        <p className="text-sm text-primary">Agency: <b>{activeVehicle.agencyId ? (
                                           project.agencies?.find(a => a.id === activeVehicle.agencyId)?.name || 'Unknown Agency'
-                                        ) : 'Unassigned'}</b></Typography>
-                                    </Box>
-                                </Box>
-                                <Button variant="contained" color="secondary" startIcon={<Navigation size={16}/>} size="small" onClick={handleOpenTripLog}>Log Trip / Work</Button>
-                            </Box>
+                                        ) : 'Unassigned'}</b></p>
+                                    </div>
+                                </div>
+                                <Button variant="secondary" onClick={handleOpenTripLog}>
+                                  <Navigation size={16} className="mr-2"/> Log Trip / Work
+                                </Button>
+                            </div>
                             
-                            <Tabs value={activeDetailTab} onChange={(_, v) => setActiveDetailTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-                                <Tab label="Summary" icon={<Gauge size={18}/>} iconPosition="start" />
-                                <Tab label="Trip History" icon={<History size={18}/>} iconPosition="start" />
+                            <Tabs value={activeDetailTab} onValueChange={setActiveDetailTab} className="mb-6 border-b">
+                                <TabsList>
+                                    <TabsTrigger value="0" className="flex items-center gap-2">
+                                      <Gauge size={18}/> Summary
+                                    </TabsTrigger>
+                                    <TabsTrigger value="1" className="flex items-center gap-2">
+                                      <History size={18}/> Trip History
+                                    </TabsTrigger>
+                                </TabsList>
                             </Tabs>
 
-                            {activeDetailTab === 0 && (
+                            {activeDetailTab === '0' && (
                                 <>
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={6} md={3}><Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}><Gauge size={16}/><Typography variant="subtitle1" fontWeight="bold">{(activeVehicleLogs.reduce((acc, l) => acc + l.totalKm, 0)).toLocaleString()}</Typography><Typography variant="caption">Total Km</Typography></Paper></Grid>
-                                        <Grid item xs={6} md={3}><Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}><Droplets size={16} className="text-emerald-500"/><Typography variant="subtitle1" fontWeight="bold">{activeVehicleLogs.length > 0 ? (activeVehicleLogs[0].fuelConsumed) : '0'}L</Typography><Typography variant="caption">Last Fuel</Typography></Paper></Grid>
-                                        <Grid item xs={6} md={3}><Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}><Clock size={16} className="text-amber-500"/><Typography variant="subtitle1" fontWeight="bold">{(activeVehicleLogs.reduce((acc, l) => acc + l.workingHours, 0)).toFixed(1)}h</Typography><Typography variant="caption">Total Use</Typography></Paper></Grid>
-                                        <Grid item xs={6} md={3}><Paper variant="outlined" sx={{ textAlign: 'center', py: 2 }}><MapPin size={16} className="text-rose-500"/><Typography variant="subtitle1" fontWeight="bold">{activeVehicle.geofenceStatus || 'Inside'}</Typography><Typography variant="caption">Geofence</Typography></Paper></Grid>
-                                    </Grid>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <Card className="text-center p-4">
+                                          <Gauge size={16} className="mx-auto mb-1"/><p className="text-base font-bold">{(activeVehicleLogs.reduce((acc, l) => acc + l.totalKm, 0)).toLocaleString()}</p><p className="text-xs text-gray-500">Total Km</p>
+                                        </Card>
+                                        <Card className="text-center p-4">
+                                          <Droplets size={16} className="text-emerald-500 mx-auto mb-1"/><p className="text-base font-bold">{activeVehicleLogs.length > 0 ? (activeVehicleLogs[0].fuelConsumed) : '0'}L</p><p className="text-xs text-gray-500">Last Fuel</p>
+                                        </Card>
+                                        <Card className="text-center p-4">
+                                          <Clock size={16} className="text-amber-500 mx-auto mb-1"/><p className="text-base font-bold">{(activeVehicleLogs.reduce((acc, l) => acc + l.workingHours, 0)).toFixed(1)}h</p><p className="text-xs text-gray-500">Total Use</p>
+                                        </Card>
+                                        <Card className="text-center p-4">
+                                          <MapPin size={16} className="text-rose-500 mx-auto mb-1"/><p className="text-base font-bold">{activeVehicle.geofenceStatus || 'Inside'}</p><p className="text-xs text-gray-500">Geofence</p>
+                                        </Card>
+                                    </div>
 
-                                    <Box mt={4}>
-                                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}><ShieldCheck size={18} className="text-indigo-600"/> HEALTH STATUS</Typography>
-                                        <Divider sx={{ my: 2 }} />
-                                        <Box mb={2}><Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight="bold">Engine Performance</Typography><Typography variant="caption" fontWeight="bold">95%</Typography></Box><LinearProgress variant="determinate" value={95} color="success" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                                        <Box><Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight="bold">Service Due</Typography><Typography variant="caption" fontWeight="bold">32 Days</Typography></Box><LinearProgress variant="determinate" value={30} color="warning" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                                    </Box>
+                                    <div className="mt-8">
+                                        <p className="text-sm font-bold mb-4 flex items-center gap-1"><ShieldCheck size={18} className="text-indigo-600"/> HEALTH STATUS</p>
+                                        <Separator className="my-4" />
+                                        <div className="mb-4">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <p className="text-xs font-bold">Engine Performance</p>
+                                            <p className="text-xs font-bold">95%</p>
+                                          </div>
+                                          <div className="relative w-full h-1.5 bg-gray-200 rounded-full">
+                                            <div className="absolute h-full bg-green-500 rounded-full" style={{ width: '95%' }}></div>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <div className="flex items-center justify-between mb-1">
+                                            <p className="text-xs font-bold">Service Due</p>
+                                            <p className="text-xs font-bold">32 Days</p>
+                                          </div>
+                                          <div className="relative w-full h-1.5 bg-gray-200 rounded-full">
+                                            <div className="absolute h-full bg-amber-500 rounded-full" style={{ width: '30%' }}></div>
+                                          </div>
+                                        </div>
+                                    </div>
                                 </>
                             )}
 
-                            {activeDetailTab === 1 && (
-                                <Box>
-                                    <Table size="small">
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                            {activeDetailTab === '1' && (
+                                <div>
+                                    <Table>
+                                        <TableHeader className="bg-slate-50">
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Activity / Task</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Range (Km)</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Fuel (L)</TableCell>
+                                                <TableHead className="font-bold">Date</TableHead>
+                                                <TableHead className="font-bold">Activity / Task</TableHead>
+                                                <TableHead className="font-bold">Range (Km)</TableHead>
+                                                <TableHead className="font-bold">Total</TableHead>
+                                                <TableHead className="text-right font-bold">Fuel (L)</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {activeVehicleLogs.map(log => (
-                                                <TableRow key={log.id} hover>
-                                                    <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>{log.date}</TableCell>
+                                                <TableRow key={log.id}>
+                                                    <TableCell className="whitespace-nowrap text-xs">{log.date}</TableCell>
                                                     <TableCell>
-                                                        <Typography variant="body2" fontWeight="medium">{log.activityDescription}</Typography>
+                                                        <p className="text-sm font-medium">{log.activityDescription}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{log.startKm} - {log.endKm}</Typography>
+                                                        <p className="font-mono text-xs">{log.startKm} - {log.endKm}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography variant="body2" fontWeight="bold" color="primary">{log.totalKm} Km</Typography>
+                                                        <p className="text-sm font-bold text-primary">{log.totalKm} Km</p>
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
-                                                            <Typography variant="body2">{log.fuelConsumed}</Typography>
+                                                        <div className="flex items-center justify-end space-x-1">
+                                                            <p className="text-sm">{log.fuelConsumed}</p>
                                                             <Fuel size={12} className="text-slate-400" />
-                                                            <IconButton size="small" color="error" onClick={() => handleDeleteTripLog(log.id)}>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteTripLog(log.id)}>
                                                                 <Trash2 size={14} />
-                                                            </IconButton>
-                                                        </Stack>
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
                                             {activeVehicleLogs.length === 0 && (
                                                 <TableRow>
-                                                    <TableCell align="center" {...{ colSpan: 5 }} sx={{ py: 6 }}>
-                                                        <Typography variant="body2" color="text.disabled">No logs found for this asset.</Typography>
+                                                    <TableCell colSpan={5} className="py-10 text-center">
+                                                        <p className="text-gray-400">No logs found for this asset.</p>
                                                     </TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
                                     </Table>
-                                </Box>
+                                </div>
                             )}
-                        </Paper>
-                    </Stack>
+                        </Card>
+                    </div>
                 ) : (
-                    <Box py={20} textAlign="center" color="text.disabled"><Signal size={60} className="opacity-10 mb-4"/><Typography variant="h6">Select an asset to view telemetry</Typography></Box>
+                    <div className="py-20 text-center text-gray-400">
+                      <Signal size={60} className="opacity-10 mb-4 mx-auto"/>
+                      <h6 className="text-lg">Select an asset to view telemetry</h6>
+                    </div>
                 )}
-            </Grid>
-        </Grid>
+            </div>
+        </div>
 
         {/* Register Asset Dialog */}
-        <Dialog open={isRegModalOpen} onClose={() => setIsRegModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-            <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-                <Truck size={20} className="text-white" /> Register Asset
-            </DialogTitle>
-            <DialogContent sx={{ pt: 3 }}>
-                <Stack spacing={3} mt={1}>
-                                    <Autocomplete
-                      freeSolo
-                      options={getAutofillSuggestions.generic(vehicles, 'plateNumber', newVehicle.plateNumber || '')}
-                      value={newVehicle.plateNumber || ''}
-                      onInputChange={(event, newValue) => {
-                        setNewVehicle({...newVehicle, plateNumber: newValue});
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Plate Number"
-                          fullWidth
-                          size="small"
-                          required
-                          InputProps={{
-                            ...params.InputProps,
-                            type: 'search'
-                          }}
-                        />
-                      )}
+        <Dialog open={isRegModalOpen} onOpenChange={setIsRegModalOpen}>
+            <DialogContent className="sm:max-w-[425px] p-0 rounded-xl">
+                <DialogHeader className="bg-primary text-white p-4 rounded-t-xl">
+                    <DialogTitle className="text-white flex items-center gap-2">
+                        <Truck size={20} /> Register Asset
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="p-4 space-y-4">
+                                    <Label htmlFor="new-plate-number">Plate Number</Label>
+                    <Input
+                        id="new-plate-number"
+                        value={newVehicle.plateNumber || ''}
+                        onChange={(e) => setNewVehicle({...newVehicle, plateNumber: e.target.value})}
+                        placeholder="e.g. Ba 2 Kha 1234"
                     />
-                    <Autocomplete
-                      freeSolo
-                      options={getAutofillSuggestions.generic(vehicles, 'driver', newVehicle.driver || '')}
-                      value={newVehicle.driver || ''}
-                      onInputChange={(event, newValue) => setNewVehicle({...newVehicle, driver: newValue})}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Driver Name"
-                          fullWidth
-                          size="small"
-                          required
-                          InputProps={{
-                            ...params.InputProps,
-                            type: 'search'
-                          }}
-                        />
-                      )}
+                    <Label htmlFor="new-driver">Driver Name</Label>
+                    <Input
+                        id="new-driver"
+                        value={newVehicle.driver || ''}
+                        onChange={(e) => setNewVehicle({...newVehicle, driver: e.target.value})}
+                        placeholder="e.g. Ram Bahadur"
                     />
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Type</InputLabel>
-                        <Select value={newVehicle.type} label="Type" onChange={e => setNewVehicle({...newVehicle, type: e.target.value as any})}>
-                            <MenuItem value="Tipper Truck">Tipper Truck</MenuItem>
-                            <MenuItem value="Excavator">Excavator</MenuItem>
-                            <MenuItem value="Motor Grader">Motor Grader</MenuItem>
-                            <MenuItem value="Water Tanker">Water Tanker</MenuItem>
-                            <MenuItem value="Roller">Static Roller</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Status</InputLabel>
-                        <Select value={newVehicle.status} label="Status" onChange={e => setNewVehicle({...newVehicle, status: e.target.value as any})}>
-                            <MenuItem value="Active">Active</MenuItem>
-                            <MenuItem value="Maintenance">Maintenance</MenuItem>
-                            <MenuItem value="Inactive">Inactive</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Assigned Agency/Contractor</InputLabel>
-                        <Select 
-                          value={newVehicle.agencyId || ''}
-                          label="Assigned Agency/Contractor"
-                          onChange={e => setNewVehicle({...newVehicle, agencyId: e.target.value as string})}
-                          size="small"
-                          displayEmpty
-                        >
-                          <MenuItem value="">None</MenuItem>
-                          {project.agencies?.filter(a => a.type === 'agency' || a.type === 'subcontractor').map(agency => (
-                            <MenuItem key={agency.id} value={agency.id}>{agency.name}</MenuItem>
-                          ))}
-                        </Select>
-                    </FormControl>
-                </Stack>
+                    <Label htmlFor="new-type">Type</Label>
+                    <Select value={newVehicle.type} onValueChange={(value) => setNewVehicle({...newVehicle, type: value as any})}>
+                        <SelectTrigger id="new-type">
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Tipper Truck">Tipper Truck</SelectItem>
+                            <SelectItem value="Excavator">Excavator</SelectItem>
+                            <SelectItem value="Motor Grader">Motor Grader</SelectItem>
+                            <SelectItem value="Water Tanker">Water Tanker</SelectItem>
+                            <SelectItem value="Roller">Static Roller</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Label htmlFor="new-status">Status</Label>
+                    <Select value={newVehicle.status} onValueChange={(value) => setNewVehicle({...newVehicle, status: value as any})}>
+                        <SelectTrigger id="new-status">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Maintenance">Maintenance</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Label htmlFor="new-agency">Assigned Agency/Contractor</Label>
+                    <Select
+                      value={newVehicle.agencyId || ''}
+                      onValueChange={(value) => setNewVehicle({...newVehicle, agencyId: value === "" ? undefined : value})}
+                    >
+                      <SelectTrigger id="new-agency">
+                        <SelectValue placeholder="Select an agency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {project.agencies?.filter(a => a.type === 'agency' || a.type === 'subcontractor').map(agency => (
+                          <SelectItem key={agency.id} value={agency.id}>{agency.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter className="bg-gray-50 px-4 py-3 sm:px-6 rounded-b-xl flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsRegModalOpen(false)}>
+                        <X size={16} className="mr-2" /> Cancel
+                    </Button>
+                    <Button onClick={handleSaveVehicle}>
+                        <Save size={16} className="mr-2" /> Save Asset
+                    </Button>
+                </DialogFooter>
             </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-                <Button onClick={() => setIsRegModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-                <Button variant="contained" startIcon={<Save size={16} />} onClick={handleSaveVehicle} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Save Asset</Button>
-            </DialogActions>
         </Dialog>
 
         {/* Edit Vehicle Dialog */}
-        <Dialog open={isEditVehicleModalOpen} onClose={() => setIsEditVehicleModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-            <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-                <Edit size={20} className="text-white" /> Edit Asset
-            </DialogTitle>
-            <DialogContent sx={{ pt: 3 }}>
-                <Stack spacing={3} mt={1}>
-                                    <Autocomplete
-                      freeSolo
-                      options={getAutofillSuggestions.generic(vehicles, 'plateNumber', editingVehicle?.plateNumber || '')}
-                      value={editingVehicle?.plateNumber || ''}
-                      onInputChange={(event, newValue) => setEditingVehicle({...editingVehicle, plateNumber: newValue})}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Plate Number"
-                          fullWidth
-                          size="small"
-                          required
-                          InputProps={{
-                            ...params.InputProps,
-                            type: 'search'
-                          }}
-                        />
-                      )}
+        <Dialog open={isEditVehicleModalOpen} onOpenChange={setIsEditVehicleModalOpen}>
+            <DialogContent className="sm:max-w-[425px] p-0 rounded-xl">
+                <DialogHeader className="bg-primary text-white p-4 rounded-t-xl">
+                    <DialogTitle className="text-white flex items-center gap-2">
+                        <Edit size={20} /> Edit Asset
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="p-4 space-y-4">
+                                    <Label htmlFor="edit-plate-number">Plate Number</Label>
+                    <Input
+                        id="edit-plate-number"
+                        value={editingVehicle?.plateNumber || ''}
+                        onChange={(e) => setEditingVehicle({...editingVehicle, plateNumber: e.target.value})}
+                        placeholder="e.g. Ba 2 Kha 1234"
                     />
-                    <Autocomplete
-                      freeSolo
-                      options={getAutofillSuggestions.generic(vehicles, 'driver', editingVehicle?.driver || '')}
-                      value={editingVehicle?.driver || ''}
-                      onInputChange={(event, newValue) => setEditingVehicle({...editingVehicle, driver: newValue})}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Driver Name"
-                          fullWidth
-                          size="small"
-                          required
-                          InputProps={{
-                            ...params.InputProps,
-                            type: 'search'
-                          }}
-                        />
-                      )}
+                    <Label htmlFor="edit-driver">Driver Name</Label>
+                    <Input
+                        id="edit-driver"
+                        value={editingVehicle?.driver || ''}
+                        onChange={(e) => setEditingVehicle({...editingVehicle, driver: e.target.value})}
+                        placeholder="e.g. Ram Bahadur"
                     />
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Type</InputLabel>
-                        <Select value={editingVehicle?.type || 'Tipper Truck'} label="Type" onChange={e => setEditingVehicle({...editingVehicle, type: e.target.value as any})}>
-                            <MenuItem value="Tipper Truck">Tipper Truck</MenuItem>
-                            <MenuItem value="Excavator">Excavator</MenuItem>
-                            <MenuItem value="Motor Grader">Motor Grader</MenuItem>
-                            <MenuItem value="Water Tanker">Water Tanker</MenuItem>
-                            <MenuItem value="Roller">Static Roller</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Status</InputLabel>
-                        <Select value={editingVehicle?.status || 'Active'} label="Status" onChange={e => setEditingVehicle({...editingVehicle, status: e.target.value as any})}>
-                            <MenuItem value="Active">Active</MenuItem>
-                            <MenuItem value="Maintenance">Maintenance</MenuItem>
-                            <MenuItem value="Inactive">Inactive</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Geofence Status</InputLabel>
-                        <Select value={editingVehicle?.geofenceStatus || 'Inside'} label="Geofence Status" onChange={e => setEditingVehicle({...editingVehicle, geofenceStatus: e.target.value as any})}>
-                            <MenuItem value="Inside">Inside</MenuItem>
-                            <MenuItem value="Outside">Outside</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Assigned Agency/Contractor</InputLabel>
-                        <Select 
-                          value={editingVehicle?.agencyId || ''}
-                          label="Assigned Agency/Contractor"
-                          onChange={e => setEditingVehicle({...editingVehicle, agencyId: e.target.value as string})}
-                          size="small"
-                          displayEmpty
-                        >
-                          <MenuItem value="">None</MenuItem>
-                          {project.agencies?.filter(a => a.type === 'agency' || a.type === 'subcontractor').map(agency => (
-                            <MenuItem key={agency.id} value={agency.id}>{agency.name}</MenuItem>
-                          ))}
-                        </Select>
-                    </FormControl>
-                </Stack>
+                    <Label htmlFor="edit-type">Type</Label>
+                    <Select value={editingVehicle?.type || 'Tipper Truck'} onValueChange={(value) => setEditingVehicle({...editingVehicle, type: value as any})}>
+                        <SelectTrigger id="edit-type">
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Tipper Truck">Tipper Truck</SelectItem>
+                            <SelectItem value="Excavator">Excavator</SelectItem>
+                            <SelectItem value="Motor Grader">Motor Grader</SelectItem>
+                            <SelectItem value="Water Tanker">Water Tanker</SelectItem>
+                            <SelectItem value="Roller">Static Roller</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select value={editingVehicle?.status || 'Active'} onValueChange={(value) => setEditingVehicle({...editingVehicle, status: value as any})}>
+                        <SelectTrigger id="edit-status">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Maintenance">Maintenance</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Label htmlFor="edit-geofence-status">Geofence Status</Label>
+                    <Select value={editingVehicle?.geofenceStatus || 'Inside'} onValueChange={(value) => setEditingVehicle({...editingVehicle, geofenceStatus: value as any})}>
+                        <SelectTrigger id="edit-geofence-status">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Inside">Inside</SelectItem>
+                            <SelectItem value="Outside">Outside</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Label htmlFor="edit-agency">Assigned Agency/Contractor</Label>
+                    <Select
+                      value={editingVehicle?.agencyId || ''}
+                      onValueChange={(value) => setEditingVehicle({...editingVehicle, agencyId: value === "" ? undefined : value})}
+                    >
+                      <SelectTrigger id="edit-agency">
+                        <SelectValue placeholder="Select an agency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {project.agencies?.filter(a => a.type === 'agency' || a.type === 'subcontractor').map(agency => (
+                          <SelectItem key={agency.id} value={agency.id}>{agency.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter className="bg-gray-50 px-4 py-3 sm:px-6 rounded-b-xl flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsEditVehicleModalOpen(false)}>
+                        <X size={16} className="mr-2" /> Cancel
+                    </Button>
+                    <Button onClick={handleUpdateVehicle}>
+                        <Save size={16} className="mr-2" /> Update Asset
+                    </Button>
+                </DialogFooter>
             </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-                <Button onClick={() => setIsEditVehicleModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-                <Button variant="contained" startIcon={<Save size={16} />} onClick={handleUpdateVehicle} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Update Asset</Button>
-            </DialogActions>
         </Dialog>
 
         {/* Log Trip Dialog */}
-        <Dialog open={isLogTripModalOpen} onClose={() => setIsLogTripModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-            <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-                <Navigation size={20} className="text-white" /> Log Trip: {activeVehicle?.plateNumber}
-            </DialogTitle>
-            <DialogContent sx={{ pt: 3 }}>
-                <Grid container spacing={3} sx={{ mt: 1 }}>
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={3}>
-                            <TextField 
-                                label="Date" type="date" fullWidth size="small" 
-                                InputLabelProps={{ shrink: true }} 
-                                value={tripForm.date} 
-                                onChange={e => setTripForm({...tripForm, date: e.target.value})} 
-                                InputProps={{ startAdornment: <Calendar size={16} className="text-slate-400 mr-2"/> }}
-                            />
-                            <TextField 
-                                label="Start Odometer" type="number" fullWidth size="small" 
-                                value={tripForm.startKm} 
-                                onChange={e => setTripForm({...tripForm, startKm: Number(e.target.value)})} 
-                                InputProps={{ endAdornment: <InputAdornment position="end">Km</InputAdornment> }}
-                            />
-                            <TextField 
-                                label="End Odometer" type="number" fullWidth size="small" 
-                                value={tripForm.endKm} 
-                                onChange={e => setTripForm({...tripForm, endKm: Number(e.target.value)})} 
-                                InputProps={{ endAdornment: <InputAdornment position="end">Km</InputAdornment> }}
-                                helperText={`Calculated: ${Number(tripForm.endKm || 0) - Number(tripForm.startKm || 0)} Km`}
-                            />
-                        </Stack>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={3}>
-                            <TextField 
-                                label="Fuel Consumed" type="number" fullWidth size="small" 
-                                value={tripForm.fuelConsumed} 
-                                onChange={e => setTripForm({...tripForm, fuelConsumed: Number(e.target.value)})} 
-                                InputProps={{ endAdornment: <InputAdornment position="end">Liters</InputAdornment> }}
-                            />
-                            <TextField 
-                                label="Working Hours" type="number" fullWidth size="small" 
-                                value={tripForm.workingHours} 
-                                onChange={e => setTripForm({...tripForm, workingHours: Number(e.target.value)})} 
-                                InputProps={{ endAdornment: <InputAdornment position="end">Hrs</InputAdornment> }}
-                            />
-                            <TextField 
-                                label="Activity / Task / Location" fullWidth size="small" multiline rows={1}
+        <Dialog open={isLogTripModalOpen} onOpenChange={setIsLogTripModalOpen}>
+            <DialogContent className="sm:max-w-xl p-0 rounded-xl">
+                <DialogHeader className="bg-primary text-white p-4 rounded-t-xl">
+                    <DialogTitle className="text-white flex items-center gap-2">
+                        <Navigation size={20} /> Log Trip: {activeVehicle?.plateNumber}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div className="space-y-4">
+                            <Label htmlFor="trip-date">Date</Label>
+                            <div className="relative">
+                                <Input 
+                                    id="trip-date"
+                                    type="date"
+                                    value={tripForm.date} 
+                                    onChange={e => setTripForm({...tripForm, date: e.target.value})} 
+                                    className="pl-8"
+                                />
+                                <Calendar size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                            </div>
+                            <Label htmlFor="start-odometer">Start Odometer</Label>
+                            <div className="relative">
+                                <Input 
+                                    id="start-odometer"
+                                    type="number"
+                                    value={tripForm.startKm} 
+                                    onChange={e => setTripForm({...tripForm, startKm: Number(e.target.value)})} 
+                                    className="pr-8"
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-slate-400">Km</span>
+                            </div>
+                            <Label htmlFor="end-odometer">End Odometer</Label>
+                            <div className="relative">
+                                <Input 
+                                    id="end-odometer"
+                                    type="number"
+                                    value={tripForm.endKm} 
+                                    onChange={e => setTripForm({...tripForm, endKm: Number(e.target.value)})} 
+                                    className="pr-8"
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-slate-400">Km</span>
+                                <p className="text-xs text-gray-500 mt-1">Calculated: {Number(tripForm.endKm || 0) - Number(tripForm.startKm || 0)} Km</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <Label htmlFor="fuel-consumed">Fuel Consumed</Label>
+                            <div className="relative">
+                                <Input 
+                                    id="fuel-consumed"
+                                    type="number"
+                                    value={tripForm.fuelConsumed} 
+                                    onChange={e => setTripForm({...tripForm, fuelConsumed: Number(e.target.value)})} 
+                                    className="pr-8"
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-slate-400">Liters</span>
+                            </div>
+                            <Label htmlFor="working-hours">Working Hours</Label>
+                            <div className="relative">
+                                <Input 
+                                    id="working-hours"
+                                    type="number"
+                                    value={tripForm.workingHours} 
+                                    onChange={e => setTripForm({...tripForm, workingHours: Number(e.target.value)})} 
+                                    className="pr-8"
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-slate-400">Hrs</span>
+                            </div>
+                            <Label htmlFor="activity-description">Activity / Task / Location</Label>
+                            <textarea 
+                                id="activity-description"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 value={tripForm.activityDescription} 
                                 onChange={e => setTripForm({...tripForm, activityDescription: e.target.value})} 
                                 placeholder="e.g. Shifting GSB KM 12-14"
-                            />
-                        </Stack>
-                    </Grid>
-                    <Grid item xs={12}>
-                        {/* Fix: Alert is now correctly imported from @mui/material */}
-                        <Alert icon={<HardHat size={18}/>} severity="info">
+                                rows={1}
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div className="col-span-12 mt-6">
+                        <Alert className="flex items-center gap-2 text-blue-800 bg-blue-50 border-blue-200">
+                            <HardHat size={18}/>
                             This log will be appended to the asset's utilization history for operational reporting.
                         </Alert>
-                    </Grid>
-                </Grid>
+                    </div>
+                </div>
+                <DialogFooter className="bg-gray-50 px-4 py-3 sm:px-6 rounded-b-xl flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => {setIsLogTripModalOpen(false); setTripForm({ date: new Date().toISOString().split('T')[0], startKm: 0, endKm: 0, fuelConsumed: 0, workingHours: 0, activityDescription: '' });}}>
+                        <X size={16} className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleSaveTrip}>
+                        <CheckCircle2 size={16} className="mr-2"/> Commit Trip Record
+                    </Button>
+                </DialogFooter>
             </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-                <Button onClick={() => {setIsLogTripModalOpen(false); setTripForm({ date: new Date().toISOString().split('T')[0], startKm: 0, endKm: 0, fuelConsumed: 0, workingHours: 0, activityDescription: '' });}} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Back</Button>
-                {/* Fix: CheckCircle2 is now correctly imported from lucide-react */}
-                <Button variant="contained" startIcon={<CheckCircle2 size={16}/>} onClick={handleSaveTrip} sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Commit Trip Record</Button>
-            </DialogActions>
         </Dialog>
 
-        <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} message="Opening full trip log history report..." />
-    </Box>
+        {snackbarOpen && (
+            <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg z-50">
+                Opening full trip log history report...
+            </div>
+        )}
+    </div>
   );
 };
 

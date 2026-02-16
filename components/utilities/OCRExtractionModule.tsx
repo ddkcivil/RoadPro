@@ -1,5 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Button, LinearProgress, Alert, Stack, Chip, Paper, Grid } from '@mui/material';
+import { cn } from "../../lib/utils";
+import { Card, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Progress } from "../../components/ui/progress";
+import { Alert, AlertTitle, AlertDescription } from "../../components/ui/alert";
+import { Badge } from "../../components/ui/badge";
+
 import { Upload, FileText, Eye, Download, CheckCircle } from 'lucide-react';
 import { ocrService } from '../../services/ai/ocrService';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
@@ -97,18 +102,18 @@ const OCRExtractionModule: React.FC = () => {
   };
 
   return (
-    <Box className="space-y-6">
-      <Box>
-        <Typography variant="h5" fontWeight="900" color="text.primary" mb={1}>
+    <div className="space-y-6">
+      <div>
+        <h5 className="text-xl font-extrabold text-gray-900 mb-4">
           Chandra OCR Extraction
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h5>
+        <p className="text-sm text-gray-500">
           Extract text and structured data from documents using advanced OCR technology
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Upload Area */}
-      <Card variant="outlined" sx={{ borderRadius: 4 }}>
+      <Card className="rounded-2xl">
         <CardContent>
           <input
             type="file"
@@ -119,94 +124,80 @@ const OCRExtractionModule: React.FC = () => {
           />
           
           {/* Extraction Mode Selector */}
-          <Box display="flex" gap={2} mb={3}>
+          <div className="flex gap-x-8 mb-12">
             <Button
-              variant={extractionMode === 'full' ? 'contained' : 'outlined'}
-              size="small"
+              variant={extractionMode === 'full' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setExtractionMode('full')}
-              sx={{ borderRadius: 25, textTransform: 'none', fontWeight: 'medium' }}
+              className="rounded-full normal-case font-medium"
             >
               Full Analysis
             </Button>
             <Button
-              variant={extractionMode === 'boq' ? 'contained' : 'outlined'}
-              size="small"
+              variant={extractionMode === 'boq' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setExtractionMode('boq')}
-              sx={{ borderRadius: 25, textTransform: 'none', fontWeight: 'medium' }}
+              className="rounded-full normal-case font-medium"
             >
               BOQ Extraction
             </Button>
             <Button
-              variant={extractionMode === 'finance' ? 'contained' : 'outlined'}
-              size="small"
+              variant={extractionMode === 'finance' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setExtractionMode('finance')}
-              sx={{ borderRadius: 25, textTransform: 'none', fontWeight: 'medium' }}
+              className="rounded-full normal-case font-medium"
             >
               Financial Data
             </Button>
-          </Box>
+          </div>
           
-          <Box
+          <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={triggerFileInput}
-            sx={{
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: 4,
-              p: 6,
-              textAlign: 'center',
-              cursor: 'pointer',
-              bgcolor: 'action.hover',
-              transition: 'all 0.2s',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'primary.lighter'
-              }
-            }}
+            className="border-2 border-dashed border-gray-300 rounded-2xl p-24 text-center cursor-pointer bg-gray-100 transition-all duration-200 hover:border-blue-500 hover:bg-blue-50"
           >
             <FileText size={48} className="mx-auto mb-4 text-slate-400" />
-            <Typography variant="h6" fontWeight="bold" color="text.primary" mb={1}>
+            <h6 className="text-lg font-bold text-gray-900 mb-4">
               Upload Document for Chandra OCR
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
+            </h6>
+            <p className="text-sm text-gray-500 mb-12">
               Drag & drop your image or PDF file here, or click to browse
-            </Typography>
-            <Typography variant="caption" color="text.disabled">
+            </p>
+            <span className="text-xs text-gray-400">
               Supports JPG, PNG, GIF, BMP, TIFF, PDF formats
-            </Typography>
-          </Box>
+            </span>
+          </div>
         </CardContent>
       </Card>
 
       {/* Progress Indicator */}
       {isProcessing && (
-        <Card variant="outlined" sx={{ borderRadius: 4 }}>
+        <Card className="rounded-2xl">
           <CardContent>
-            <Typography variant="h6" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
+            <h6 className="text-lg font-bold mb-8 flex items-center gap-x-4">
               <Eye size={20} />
               Processing Document
-            </Typography>
-            <LinearProgress 
-              variant="determinate" 
+            </h6>
+            <Progress 
               value={progress} 
-              sx={{ height: 8, borderRadius: 4, mb: 2 }} 
+              className="h-2 rounded-2xl mb-8" 
             />
-            <Typography variant="body2" color="text.secondary">
+            <p className="text-sm text-gray-500">
               {progress < 30 ? 'Initializing OCR engine...' : 
                progress < 60 ? 'Analyzing document structure...' : 
                progress < 90 ? 'Extracting text and data...' : 
                'Finalizing extraction...'}
-            </Typography>
+            </p>
           </CardContent>
         </Card>
       )}
 
       {/* Error Message */}
       {error && (
-        <Alert severity="error" sx={{ borderRadius: 4 }}>
-          <Typography variant="body1" fontWeight="bold">Processing Error</Typography>
-          <Typography variant="body2">{error}</Typography>
+        <Alert variant="destructive" className="rounded-2xl">
+          <AlertTitle>Processing Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
@@ -215,275 +206,260 @@ const OCRExtractionModule: React.FC = () => {
         <Grid container spacing={3}>
           {/* Document Preview Column */}
           <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
+            <Card className="rounded-2xl h-full">
               <CardContent>
-                <Typography variant="h6" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
+                <h6 className="text-lg font-bold mb-8 flex items-center gap-x-4">
                   <Eye size={20} />
                   Document Preview
-                </Typography>
-                <Box 
-                  sx={{ 
-                    border: '1px solid', 
-                    borderColor: 'divider', 
-                    borderRadius: 2, 
-                    p: 1, 
-                    bgcolor: 'background.paper',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 400
-                  }}
-                >
-                  {previewUrl && (
-                    <Box 
-                      component="img" 
-                      src={previewUrl} 
-                      alt="Document Preview" 
-                      sx={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '500px',
-                        objectFit: 'contain',
-                        borderRadius: 1
-                      }}
-                    />
-                  )}
-                </Box>
+                </h6>
+                                <div
+                                  className="border border-gray-300 rounded-lg p-4 bg-white h-full flex items-center justify-center min-h-[400px]"
+                                >                  {previewUrl && (
+                                      <img
+                                        src={previewUrl}
+                                        alt="Document Preview"
+                                        className="max-w-full max-h-[500px] object-contain rounded"
+                                      />                  )}
+                </div>
               </CardContent>
             </Card>
           </Grid>
           
           {/* OCR Results Column */}
           <Grid item xs={12} md={6}>
-            <Box className="space-y-4">
-              <Card variant="outlined" sx={{ borderRadius: 4 }}>
+            <div className="space-y-4">
+              <Card className="rounded-2xl">
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" fontWeight="bold" display="flex" alignItems="center" gap={1}>
+                  <div className="flex justify-between items-center mb-8">
+                    <h6 className="text-lg font-bold flex items-center gap-x-4">
                       <CheckCircle size={20} color="#10b981" />
                       Extraction Successful
-                    </Typography>
-                    <Chip 
-                      label={`Confidence: ${result.confidence}%`} 
-                      size="small" 
-                      sx={{ 
-                        bgcolor: result.confidence > 85 ? 'success.light' : result.confidence > 70 ? 'warning.light' : 'error.light',
-                        color: result.confidence > 85 ? 'success.dark' : result.confidence > 70 ? 'warning.dark' : 'error.dark',
-                        fontWeight: 'bold'
-                      }} 
-                    />
-                  </Box>
+                    </h6>
+                    <Badge
+                      className={cn(
+                        "text-xs px-2 py-1 rounded-full",
+                        result.confidence > 85 ? 'bg-green-100 text-green-800' :
+                        result.confidence > 70 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800',
+                        "font-bold"
+                      )}
+                    >
+                      Confidence: {result.confidence}%
+                    </Badge>
+                  </div>
                   
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <p className="text-sm text-gray-500 mb-4">
                     Extracted from: {fileName} • Type: {documentType}
-                  </Typography>
+                  </p>
                   
                   {/* Document Analysis Summary */}
-                  <Box mt={2} p={2} bgcolor="info.lighter" borderRadius={2}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="text.primary" mb={1}>
+                  <div className="mt-8 p-8 bg-blue-100 rounded-lg">
+                    <h6 className="text-sm font-bold text-gray-900 mb-4">
                       Document Analysis Summary
-                    </Typography>
-                    <Stack spacing={1}>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" color="text.secondary">BOQ Items:</Typography>
-                        <Typography variant="body2" fontWeight="medium">{result.structuredData.boqItems?.length || 0}</Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" color="text.secondary">Financial Amounts:</Typography>
-                        <Typography variant="body2" fontWeight="medium">{result.structuredData.amounts?.length || 0}</Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" color="text.secondary">Dates Found:</Typography>
-                        <Typography variant="body2" fontWeight="medium">{result.structuredData.dates?.length || 0}</Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" color="text.secondary">Project Codes:</Typography>
-                        <Typography variant="body2" fontWeight="medium">{result.structuredData.codes?.length || 0}</Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" color="text.secondary">Contractors:</Typography>
-                        <Typography variant="body2" fontWeight="medium">{result.structuredData.contractors?.length || 0}</Typography>
-                      </Box>
-                    </Stack>
-                  </Box>
+                    </h6>
+                    <div className="flex flex-col gap-y-4">
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500">BOQ Items:</p>
+                        <p className="text-sm font-medium">{result.structuredData.boqItems?.length || 0}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500">Financial Amounts:</p>
+                        <p className="text-sm font-medium">{result.structuredData.amounts?.length || 0}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500">Dates Found:</p>
+                        <p className="text-sm font-medium">{result.structuredData.dates?.length || 0}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500">Project Codes:</p>
+                        <p className="text-sm font-medium">{result.structuredData.codes?.length || 0}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500">Contractors:</p>
+                        <p className="text-sm font-medium">{result.structuredData.contractors?.length || 0}</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Raw Text Output */}
-              <Card variant="outlined" sx={{ borderRadius: 4 }}>
+              <Card className="rounded-2xl">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
+                  <h6 className="text-lg font-bold mb-8 flex items-center gap-x-4">
                     <FileText size={20} />
                     Extracted Text
-                  </Typography>
-                  <Paper 
-                    variant="outlined" 
-                    sx={{ 
-                      p: 2, 
-                      maxHeight: 300, 
-                      overflow: 'auto', 
-                      bgcolor: 'background.default',
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
-                      whiteSpace: 'pre-wrap',
-                      lineHeight: 1.6
-                    }}
+                  </h6>
+                  <div 
+                    className="border p-8 max-h-[300px] overflow-auto bg-background font-mono text-sm whitespace-pre-wrap leading-relaxed"
                   >
                     {result.rawText || 'No text extracted'}
-                  </Paper>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Structured Data */}
-              <Card variant="outlined" sx={{ borderRadius: 4 }}>
+              <Card className="rounded-2xl">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>
+                  <h6 className="text-lg font-bold mb-8">
                     Structured Data Extraction
-                  </Typography>
+                  </h6>
                   
-                  <Stack spacing={2}>
+                  <div className="flex flex-col gap-y-8">
                     {(extractionMode === 'full' || extractionMode === 'boq') && result.structuredData.boqItems && result.structuredData.boqItems.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Bill of Quantities (BOQ):
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack spacing={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-col gap-y-4">
                             {result.structuredData.boqItems.map((item: any, idx: number) => (
-                              <Box key={idx} display="flex" justifyContent="space-between" alignItems="center">
-                                <Box flex={1}>
-                                  <Typography variant="body2" fontWeight="medium">{item.description}</Typography>
-                                  <Typography variant="caption" color="text.secondary">{item.unit}</Typography>
-                                </Box>
-                                <Box textAlign="right">
-                                  <Typography variant="body2" fontWeight="bold">{item.quantity}</Typography>
-                                  <Typography variant="caption" color="text.secondary">Qty</Typography>
-                                </Box>
-                              </Box>
+                              <div key={idx} className="flex justify-between items-center">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">{item.description}</p>
+                                  <span className="text-xs text-gray-500">{item.unit}</span>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-bold">{item.quantity}</p>
+                                  <span className="text-xs text-gray-500">{item.unit}</span>
+                                </div>
+                              </div>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {(extractionMode === 'full' || extractionMode === 'finance') && result.structuredData.amounts && result.structuredData.amounts.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Financial Amounts:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.amounts.map((amount: number, idx: number) => (
-                              <Chip key={idx} label={`${formatCurrency(amount)}`} size="small" />
+                              <Badge key={idx} className="text-xs px-2 py-1">
+                                {`${formatCurrency(amount)}`}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.dates && result.structuredData.dates.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Dates Found:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.dates.map((date: string, idx: number) => (
-                              <Chip key={idx} label={date} size="small" />
+                              <Badge key={idx} className="text-xs px-2 py-1">
+                                {date}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.codes && result.structuredData.codes.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Project Codes:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.codes.map((code: string, idx: number) => (
-                              <Chip key={idx} label={code} size="small" />
+                              <Badge key={idx} className="text-xs px-2 py-1">
+                                {code}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.contractors && result.structuredData.contractors.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Contractors/Suppliers:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.contractors.map((contractor: string, idx: number) => (
-                              <Chip key={idx} label={contractor} size="small" variant="outlined" color="primary" />
+                              <Badge key={idx} variant="outline" className="text-xs px-2 py-1 border-blue-500 text-blue-800">
+                                {contractor}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.invoices && result.structuredData.invoices.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Invoice Numbers:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.invoices.map((invoice: string, idx: number) => (
-                              <Chip key={idx} label={invoice} size="small" variant="outlined" color="secondary" />
+                              <Badge key={idx} variant="outline" className="text-xs px-2 py-1 border-purple-500 text-purple-800">
+                                {invoice}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.emails && result.structuredData.emails.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Email Addresses:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
                             {result.structuredData.emails.map((email: string, idx: number) => (
-                              <Chip key={idx} label={email} size="small" />
+                              <Badge key={idx} className="text-xs px-2 py-1">
+                                {email}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     
                     {extractionMode === 'full' && result.structuredData.phones && result.structuredData.phones.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1}>
+                      <div>
+                        <h6 className="text-sm font-bold text-gray-500 mb-4">
                           Phone Numbers:
-                        </Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                            {result.structuredData.phones.map((phone: string, idx: number) => (
-                              <Chip key={idx} label={phone} size="small" />
+                        </h6>
+                        <div className="border p-8 bg-background">
+                          <div className="flex flex-row flex-wrap gap-4">
+                            {result.structuredData.phones.map((phone: string, idx: number) => (                              <Badge key={idx} className="text-xs px-2 py-1">
+                                {phone}
+                              </Badge>
                             ))}
-                          </Stack>
-                        </Paper>
-                      </Box>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                  </Stack>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Actions */}
-              <Card variant="outlined" sx={{ borderRadius: 4 }}>
+              <Card className="rounded-2xl">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>
+                  <h6 className="text-lg font-bold mb-8">
                     Export Options
-                  </Typography>
-                  <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
-                    <Button 
-                      variant="contained" 
-                      startIcon={<Download size={16} />}
+                  </h6>
+                  <div className="flex flex-row flex-wrap gap-x-8 gap-y-4">
+                    <Button
+                      variant="default"
                       onClick={() => {
                         // Export full extraction result as JSON
                         const dataStr = JSON.stringify(result, null, 2);
@@ -497,11 +473,11 @@ const OCRExtractionModule: React.FC = () => {
                         linkElement.click();
                       }}
                     >
+                      <Download size={16} className="mr-2" />
                       Export as JSON
                     </Button>
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<Download size={16} />}
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         // Export as CSV
                         let csvContent = 'data:text/csv;charset=utf-8,';
@@ -543,11 +519,11 @@ const OCRExtractionModule: React.FC = () => {
                         linkElement.click();
                       }}
                     >
+                      <Download size={16} className="mr-2" />
                       Export as CSV
                     </Button>
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<Download size={16} />}
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         // Export BOQ data specifically
                         if (result?.structuredData?.boqItems && result.structuredData.boqItems.length > 0) {
@@ -571,16 +547,17 @@ const OCRExtractionModule: React.FC = () => {
                         }
                       }}
                     >
+                      <Download size={16} className="mr-2" />
                       Export BOQ Only
                     </Button>
-                  </Stack>
+                  </div>
                 </CardContent>
               </Card>
-            </Box>
+            </div>
           </Grid>
         </Grid>
       )}
-    </Box>
+    </div>
   );
 };
 

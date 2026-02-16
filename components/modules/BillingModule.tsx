@@ -1,13 +1,4 @@
-
 import React, { useState, useMemo } from 'react';
-import {
-    Box, Typography, Button, Paper, Grid, Table, TableBody, TableCell,
-    TableHead, TableRow, Chip, IconButton, Stack, Divider, Card,
-    CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, InputAdornment, List, ListItemText, ListItemAvatar,
-    Avatar, ListItemButton, LinearProgress, Checkbox, Tooltip, Alert,
-    Tabs, Tab, FormControl, InputLabel, Select, MenuItem
-} from '@mui/material';
 import { Project, UserRole, AppSettings, ContractBill, BillItem, BOQItem, SubcontractorBill, StructureWorkLog, StructureComponent, StructureAsset } from '../../types';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 import {
@@ -16,6 +7,21 @@ import {
     Receipt as ReceiptIcon, FileCheck, TrendingUp, Edit3,
     AlertTriangle, CheckCircle2, FileSpreadsheet
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Progress } from '~/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Checkbox } from '~/components/ui/checkbox';
+import { Separator } from '~/components/ui/separator';
 
 interface Props {
   project: Project;
@@ -327,106 +333,99 @@ const BillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate }) 
     };
 
     const getRowLabel = (sn: string, label: string) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-            <Typography variant="caption" sx={{ minWidth: 30, fontWeight: 'bold', color: 'primary.main' }}>{sn}</Typography>
-            <Typography variant="body2">{label}</Typography>
-        </Stack>
+        <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold text-primary w-8">{sn}</span>
+            <span>{label}</span>
+        </div>
     );
 
     return (
-        <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', gap: 3 }}>
-            <Paper sx={{ width: 320, display: 'flex', flexDirection: 'column', borderRadius: 4, overflow: 'hidden' }} variant="outlined">
-                <Box p={2.5} borderBottom="1px solid #f1f5f9" bgcolor="slate.50">
-                    <Typography variant="h6" fontWeight="bold">Interim Payments</Typography>
-                    <Button fullWidth variant="contained" sx={{ mt: 2 }} startIcon={<Plus size={18}/>} onClick={handleInitNewIPC}>New IPC Request</Button>
-                    <Button fullWidth variant="outlined" sx={{ mt: 1 }} startIcon={<FileCheck size={18}/>} onClick={handleInitNewSubcontractorBill}>New Subcontractor Bill</Button>
-                </Box>
-                <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                    <Tabs value={0} sx={{ mb: 2 }}>
-                        <Tab label={`Main Contracts (${bills.length})`} />
-                        <Tab label={`Subcontractor Bills (${subcontractorBills.length})`} />
+        <div className="h-[calc(100vh-140px)] flex gap-3">
+            <Card className="w-80 flex flex-col">
+                <CardHeader className="border-b px-4 py-3">
+                    <CardTitle className="text-lg font-bold">Interim Payments</CardTitle>
+                    <Button className="mt-3 w-full" onClick={handleInitNewIPC}><Plus className="mr-2 h-4 w-4" />New IPC Request</Button>
+                    <Button variant="outline" className="mt-2 w-full" onClick={handleInitNewSubcontractorBill}><FileCheck className="mr-2 h-4 w-4" />New Subcontractor Bill</Button>
+                </CardHeader>
+                <div className="flex-1 overflow-y-auto">
+                    <Tabs defaultValue="main" className="mb-2">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="main">Main Contracts ({bills.length})</TabsTrigger>
+                            <TabsTrigger value="sub">Subcontractor Bills ({subcontractorBills.length})</TabsTrigger>
+                        </TabsList>
                     </Tabs>
-                    <List disablePadding>
+                    <div className="px-2">
                         {[...bills].reverse().map(b => (
-                            <ListItemButton 
-                                key={b.id} 
+                            <Button 
+                                variant="ghost" 
+                                className={`w-full justify-start py-6 mb-2 ${selectedIpcId === b.id ? 'bg-accent text-accent-foreground' : ''}`}
                                 onClick={() => setSelectedIpcId(b.id)} 
-                                selected={selectedIpcId === b.id} 
-                                sx={{ 
-                                    borderBottom: '1px solid #f1f5f9', 
-                                    py: 2,
-                                    '&.Mui-selected': { bgcolor: 'indigo.50/50', borderRight: '4px solid #6366f1' }
-                                }}
+                                key={b.id}
                             >
-                                <ListItemAvatar>
-                                    <Avatar sx={{ bgcolor: 'indigo.50', color: 'indigo.main' }}><Receipt size={20}/></Avatar>
-                                </ListItemAvatar>
-                                <ListItemText 
-                                    primary={<Typography variant="subtitle2" fontWeight="bold">{b.billNumber}</Typography>} 
-                                    secondary={<Typography variant="caption" fontWeight="bold" color="success.main">{currency}{b.totalAmountPayable.toLocaleString()}</Typography>} 
-                                />
-                            </ListItemButton>
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                        <Receipt className="h-5 w-5"/>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">{b.billNumber}</p>
+                                        <p className="text-sm text-green-600 font-bold">{currency}{b.totalAmountPayable.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </Button>
                         ))}
                         {bills.length === 0 && (
-                            <Box p={3} textAlign="center" color="text.disabled">
-                                <History size={32} className="mx-auto mb-2 opacity-20"/>
-                                <Typography variant="body2">No main contracts billed yet.</Typography>
-                            </Box>
+                            <div className="p-4 text-center text-muted-foreground">
+                                <History className="mx-auto h-8 w-8 opacity-40 mb-2"/>
+                                <p className="text-sm">No main contracts billed yet.</p>
+                            </div>
                         )}
-                    </List>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" sx={{ px: 2, pb: 1 }}>SUBCONTRACTOR BILLS</Typography>
-                    <List disablePadding>
+                        <Separator className="my-4" />
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase px-2 mb-2">Subcontractor Bills</h3>
                         {[...subcontractorBills].reverse().map(b => {
                             const subcontractor = project.agencies?.find(a => a.id === b.subcontractorId);
                             return (
-                                <ListItemButton 
-                                    key={b.id} 
+                                <Button 
+                                    variant="ghost" 
+                                    className={`w-full justify-start py-6 mb-2 ${selectedSubcontractorBillId === b.id ? 'bg-accent text-accent-foreground' : ''}`}
                                     onClick={() => setSelectedSubcontractorBillId(b.id)} 
-                                    selected={selectedSubcontractorBillId === b.id} 
-                                    sx={{ 
-                                        borderBottom: '1px solid #f1f5f9', 
-                                        py: 2,
-                                        '&.Mui-selected': { bgcolor: 'indigo.50/50', borderRight: '4px solid #6366f1' }
-                                    }}
+                                    key={b.id}
                                 >
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ bgcolor: 'amber.50', color: 'amber.main' }}><FileCheck size={20}/></Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText 
-                                        primary={<Typography variant="subtitle2" fontWeight="bold">{b.billNumber}</Typography>} 
-                                        secondary={
-                                            <>
-                                                <Typography variant="caption" fontWeight="bold" color="primary">{subcontractor?.name || 'Unknown'}</Typography>
-                                                <Typography variant="caption" display="block" color="success.main">{currency}{b.netAmount.toLocaleString()}</Typography>
-                                            </>
-                                        } 
-                                    />
-                                </ListItemButton>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                            <FileCheck className="h-5 w-5"/>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold">{b.billNumber}</p>
+                                            <p className="text-xs text-primary">{subcontractor?.name || 'Unknown'}</p>
+                                            <p className="text-sm text-green-600 font-bold">{currency}{b.netAmount.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </Button>
                             );
                         })}
                         {subcontractorBills.length === 0 && (
-                            <Box p={3} textAlign="center" color="text.disabled">
-                                <FileCheck size={32} className="mx-auto mb-2 opacity-20"/>
-                                <Typography variant="body2">No subcontractor bills created yet.</Typography>
-                            </Box>
+                            <div className="p-4 text-center text-muted-foreground">
+                                <FileCheck className="mx-auto h-8 w-8 opacity-40 mb-2"/>
+                                <p className="text-sm">No subcontractor bills created yet.</p>
+                            </div>
                         )}
-                    </List>
-                </Box>
-            </Paper>
+                    </div>
+                </div>
+            </Card>
 
-            <Box flex={1} sx={{ overflowY: 'auto' }}>
+            <div className="flex-1 overflow-y-auto">
                 {viewingIpc || viewingSubcontractorBill ? (
-                    <Stack spacing={3}>
-                        <Paper variant="outlined" sx={{ p: 3, borderRadius: 4 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <Box display="flex" alignItems="center" gap={2}>
-                                    <Avatar sx={{ bgcolor: viewingSubcontractorBill ? 'amber.50' : 'indigo.50', color: viewingSubcontractorBill ? 'amber.600' : 'indigo.600' }}>
-                                        {viewingSubcontractorBill ? <FileCheck /> : <ReceiptIcon />}
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h6" fontWeight="900">{viewingSubcontractorBill ? viewingSubcontractorBill.billNumber : viewingIpc?.billNumber}</Typography>
-                                        <Typography variant="caption" color="text.secondary">
+                    <div className="space-y-4">
+                        <Card>
+                            <CardContent className="flex justify-between items-center p-4">
+                                <div className="flex items-center space-x-4">
+                                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center 
+                                                    ${viewingSubcontractorBill ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                                        {viewingSubcontractorBill ? <FileCheck className="h-7 w-7" /> : <ReceiptIcon className="h-7 w-7" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">{viewingSubcontractorBill ? viewingSubcontractorBill.billNumber : viewingIpc?.billNumber}</h3>
+                                        <p className="text-sm text-muted-foreground">
                                             {viewingSubcontractorBill ? (
                                                 <>
                                                     Subcontractor Bill • Date: {viewingSubcontractorBill.date}<br />
@@ -435,118 +434,119 @@ const BillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate }) 
                                             ) : (
                                                 <>Order: {viewingIpc?.orderOfBill} • Date: {viewingIpc?.date}</>
                                             )}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                                <Button variant="outlined" startIcon={<Printer size={18}/>} onClick={() => setPrintPreviewOpen(true)}>Print DoR Format</Button>
-                            </Box>
-                        </Paper>
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button variant="outline" onClick={() => setPrintPreviewOpen(true)}><Printer className="mr-2 h-4 w-4" />Print DoR Format</Button>
+                            </CardContent>
+                        </Card>
 
-                        {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} md={8}>
-                                <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden' }}>
-                                    <Table size="small">
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <Card className="lg:col-span-2">
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>SN / Financial Description</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount ({currency})</TableCell>
+                                                <TableHead>SN / Financial Description</TableHead>
+                                                <TableHead className="text-right">Amount ({currency})</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {viewingSubcontractorBill ? (
                                                 <>
-                                                    <TableRow><TableCell>{getRowLabel('1', 'Gross Bill Amount')}</TableCell><TableCell align="right">{viewingSubcontractorBill.grossAmount.toLocaleString()}</TableCell></TableRow>
-                                                    <TableRow><TableCell>{getRowLabel('2', `Less: Retention (${viewingSubcontractorBill.retentionPercent || 0}%)`)}</TableCell><TableCell align="right">{(viewingSubcontractorBill.grossAmount * ((viewingSubcontractorBill.retentionPercent || 0)/100)).toLocaleString()}</TableCell></TableRow>
-                                                    <TableRow sx={{ bgcolor: 'amber.50/30' }}><TableCell>{getRowLabel('3', 'Net Payable Amount')}</TableCell><TableCell align="right"><strong>{viewingSubcontractorBill.netAmount.toLocaleString()}</strong></TableCell></TableRow>
+                                                    <TableRow><TableCell>{getRowLabel('1', 'Gross Bill Amount')}</TableCell><TableCell className="text-right">{formatCurrency(viewingSubcontractorBill.grossAmount, settings)}</TableCell></TableRow>
+                                                    <TableRow><TableCell>{getRowLabel('2', `Less: Retention (${viewingSubcontractorBill.retentionPercent || 0}%)`)}</TableCell><TableCell className="text-right">{formatCurrency(viewingSubcontractorBill.grossAmount * ((viewingSubcontractorBill.retentionPercent || 0)/100), settings)}</TableCell></TableRow>
+                                                    <TableRow className="bg-amber-50/20"><TableCell>{getRowLabel('3', 'Net Payable Amount')}</TableCell><TableCell className="text-right font-bold">{formatCurrency(viewingSubcontractorBill.netAmount, settings)}</TableCell></TableRow>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <TableRow><TableCell>{getRowLabel('1', 'Gross Bill Amount (Current)')}</TableCell><TableCell align="right">{viewingIpc?.billAmountGross.toLocaleString()}</TableCell></TableRow>
-                                                    <TableRow><TableCell>{getRowLabel('2', 'Add Price Adjustment (CPA)')}</TableCell><TableCell align="right">{viewingIpc?.cpaAmount.toLocaleString()}</TableCell></TableRow>
-                                                    <TableRow sx={{ bgcolor: 'indigo.50/30' }}><TableCell>{getRowLabel('3', 'Total Bill with CPA')}</TableCell><TableCell align="right"><strong>{viewingIpc?.billAmountWithCPA.toLocaleString()}</strong></TableCell></TableRow>
-                                                    <TableRow><TableCell>{getRowLabel('4', 'VAT @ 13%')}</TableCell><TableCell align="right">{viewingIpc?.vatAmount.toLocaleString()}</TableCell></TableRow>
-                                                    <Divider component="tr" />
-                                                    <TableRow sx={{ bgcolor: 'slate.900', color: 'white' }}>
-                                                        <TableCell sx={{ color: 'white' }}>{getRowLabel('A13', 'NET PAYABLE TO CONTRACTOR')}</TableCell>
-                                                        <TableCell align="right" sx={{ color: 'white' }}><Typography variant="h6" fontWeight="bold">{viewingIpc?.totalAmountPayable.toLocaleString()}</Typography></TableCell>
-                                                    </TableRow>
+                                                    <TableRow><TableCell>{getRowLabel('1', 'Gross Bill Amount (Current)')}</TableCell><TableCell className="text-right">{formatCurrency(viewingIpc?.billAmountGross || 0, settings)}</TableCell></TableRow>
+                                                    <TableRow><TableCell>{getRowLabel('2', 'Add Price Adjustment (CPA)')}</TableCell><TableCell className="text-right">{formatCurrency(viewingIpc?.cpaAmount || 0, settings)}</TableCell></TableRow>
+                                                    <TableRow className="bg-indigo-50/20"><TableCell>{getRowLabel('3', 'Total Bill with CPA')}</TableCell><TableCell className="text-right font-bold">{formatCurrency(viewingIpc?.billAmountWithCPA || 0, settings)}</TableCell></TableRow>
+                                                    <TableRow><TableCell>{getRowLabel('4', 'VAT @ 13%')}</TableCell><TableCell className="text-right">{formatCurrency(viewingIpc?.vatAmount || 0, settings)}</TableCell></TableRow>
+                                                    <TableRow className="bg-card text-card-foreground"><TableCell className="text-white bg-gray-900">{getRowLabel('A13', 'NET PAYABLE TO CONTRACTOR')}</TableCell><TableCell className="text-right text-white bg-gray-900 text-lg font-bold">{formatCurrency(viewingIpc?.totalAmountPayable || 0, settings)}</TableCell></TableRow>
                                                 </>
                                             )}
                                         </TableBody>
                                     </Table>
-                                </Paper>
-                            </Grid>
-                            {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                            <Grid item xs={12} md={4}>
-                                <Stack spacing={3}>
-                                    <Card variant="outlined" sx={{ borderRadius: 4, bgcolor: '#f8fafc' }}>
-                                        <CardContent>
-                                            <Typography variant="subtitle2" fontWeight="bold" display="flex" alignItems="center" gap={1} mb={2}><TrendingUp size={18}/> Financial Progress</Typography>
-                                            <Box display="flex" justifyContent="space-between" mb={1}>
-                                                <Typography variant="caption" color="text.secondary">Vs. Total Contract</Typography>
-                                                <Typography variant="caption" fontWeight="bold">42%</Typography>
-                                            </Box>
-                                            <LinearProgress variant="determinate" value={42} sx={{ height: 8, borderRadius: 4 }} />
-                                        </CardContent>
-                                    </Card>
-                                    <Alert severity={viewingSubcontractorBill ? "info" : "success"} icon={viewingSubcontractorBill ? <FileCheck /> : <CheckCircle2 />} sx={{ borderRadius: 3 }}>
+                                </CardContent>
+                            </Card>
+                            <div className="space-y-4">
+                                <Card>
+                                    <CardContent>
+                                        <CardTitle className="text-base font-semibold mb-2 flex items-center"><TrendingUp className="mr-2 h-4 w-4"/> Financial Progress</CardTitle>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <p className="text-muted-foreground">Vs. Total Contract</p>
+                                            <p className="font-bold">42%</p>
+                                        </div>
+                                        <Progress value={42} />
+                                    </CardContent>
+                                </Card>
+                                <Alert className="rounded-lg">
+                                    {viewingSubcontractorBill ? (
+                                        <FileCheck className="h-4 w-4" />
+                                    ) : (
+                                        <CheckCircle2 className="h-4 w-4" />
+                                    )}
+                                    <AlertTitle>
+                                        {viewingSubcontractorBill ? 'Subcontractor Bill' : 'IPC Verified'}
+                                    </AlertTitle>
+                                    <AlertDescription>
                                         {viewingSubcontractorBill ? (
                                             `Subcontractor bill for ${project.agencies?.find(a => a.id === viewingSubcontractorBill.subcontractorId)?.name || 'Unknown Subcontractor'}`
                                         ) : (
                                             `This IPC has been verified against measurement book MB-${viewingIpc?.id?.slice(-4)}.`
                                         )}
-                                    </Alert>
-                                </Stack>
-                            </Grid>
-                        </Grid>
-                    </Stack>
+                                    </AlertDescription>
+                                </Alert>
+                            </div>
+                        </div>
+                    </div>
                 ) : (
-                    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%" color="text.disabled" sx={{ py: 20 }}>
-                        <Calculator size={80} className="opacity-20 mb-4"/><Typography variant="h6">Select a Bill record</Typography>
-                    </Box>
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
+                        <Calculator className="h-20 w-20 opacity-20 mb-4"/>
+                        <p className="text-lg">Select a Bill record</p>
+                    </div>
                 )}
-            </Box>
+            </div>
 
             {/* Create IPC Dialog */}
-            <Dialog 
-                open={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                maxWidth="lg" 
-                fullWidth 
-                PaperProps={{ sx: { borderRadius: 4, height: '90vh' } }}
-            >
-                <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                        <FileSpreadsheet className="text-indigo-600" />
-                        <Typography variant="h6">Prepare New IPC (Certificate No. {ipcForm.orderOfBill})</Typography>
-                    </Box>
-                    <IconButton onClick={() => setIsCreateModalOpen(false)}><X/></IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ p: 0, bgcolor: '#f8fafc' }}>
-                    <Box sx={{ p: 4 }}>
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader className="border-b pb-4">
+                        <DialogTitle className="flex items-center text-xl font-bold">
+                            <FileSpreadsheet className="mr-2 h-6 w-6 text-indigo-600" />
+                            Prepare New IPC (Certificate No. {ipcForm.orderOfBill})
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6">
                         {createStep === 0 && (
-                            <Stack spacing={3}>
-                                <Alert severity="info" sx={{ borderRadius: 2 }}>
-                                    Select approved measurement sheets to auto-map work quantities to BOQ items.
+                            <div className="space-y-4">
+                                <Alert>
+                                    <AlertTitle>Information</AlertTitle>
+                                    <AlertDescription>
+                                        Select approved measurement sheets to auto-map work quantities to BOQ items.
+                                    </AlertDescription>
                                 </Alert>
-                                <Typography variant="subtitle1" fontWeight="bold">Available Measurement Sheets (Approved)</Typography>
-                                <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                                    <Table size="small">
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                                <h3 className="text-lg font-bold">Available Measurement Sheets (Approved)</h3>
+                                <Card>
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell padding="checkbox"></TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>MB Ref #</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Entries</TableCell>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead>MB Ref #</TableHead>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Entries</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {approvedSheets.map(sheet => (
-                                                <TableRow key={sheet.id} hover onClick={() => toggleSheetSelection(sheet.id)} sx={{ cursor: 'pointer' }}>
-                                                    <TableCell padding="checkbox"><Checkbox checked={selectedSheetIds.has(sheet.id)} size="small" /></TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold', color: 'indigo.700' }}>{sheet.sheetNumber}</TableCell>
+                                                <TableRow key={sheet.id} onClick={() => toggleSheetSelection(sheet.id)} className="cursor-pointer">
+                                                    <TableCell>
+                                                        <Checkbox checked={selectedSheetIds.has(sheet.id)} />
+                                                    </TableCell>
+                                                    <TableCell className="font-bold text-indigo-700">{sheet.sheetNumber}</TableCell>
                                                     <TableCell>{sheet.title || 'N/A'}</TableCell>
                                                     <TableCell>{sheet.date}</TableCell>
                                                     <TableCell>{(sheet.entries || []).length} items</TableCell>
@@ -554,228 +554,196 @@ const BillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate }) 
                                             ))}
                                             {approvedSheets.length === 0 && (
                                                 <TableRow>
-                                                    <TableCell align="center" {...{ colSpan: 5 }} sx={{ py: 6 }}>
+                                                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                                                         No approved measurement sheets found.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
                                     </Table>
-                                </Paper>
-                                <Box textAlign="right">
-                                    <Button variant="contained" disabled={selectedSheetIds.size === 0} onClick={generateBillItemsFromSheets} endIcon={<ArrowRight size={18}/>} sx={{ px: 4, py: 1.2, borderRadius: 2 }}>
-                                        Generate Quantity Matrix
+                                </Card>
+                                <div className="text-right">
+                                    <Button disabled={selectedSheetIds.size === 0} onClick={generateBillItemsFromSheets}>
+                                        Generate Quantity Matrix <ArrowRight className="ml-2 h-4 w-4"/>
                                     </Button>
-                                </Box>
-                            </Stack>
+                                </div>
+                            </div>
                         )}
                         {createStep === 1 && (
-                            <Stack spacing={3}>
-                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="subtitle1" fontWeight="900" color="primary">Review & Adjust Work Quantities</Typography>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                        <Typography variant="caption" fontWeight="bold">IPC TOTAL:</Typography>
-                                        <Typography variant="h6" fontWeight="900" color="indigo.700">{currency}{currentIpcSummary.billAmountGross.toLocaleString()}</Typography>
-                                    </Stack>
-                                </Box>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-bold text-primary">Review & Adjust Work Quantities</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <p className="text-sm font-bold">IPC TOTAL:</p>
+                                        <p className="text-xl font-bold text-indigo-700">{currency}{currentIpcSummary.billAmountGross.toLocaleString()}</p>
+                                    </div>
+                                </div>
 
-                                <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', maxHeight: '50vh', overflowY: 'auto' }}>
-                                    <Table size="small" stickyHeader>
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                                <Card>
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 'bold', width: 80 }}>Item</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'slate.100' }}>Previous</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'indigo.50' }}>Current Qty</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Upto-Date</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                                                <TableHead className="w-[80px]">Item</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Unit</TableHead>
+                                                <TableHead className="text-right">Rate</TableHead>
+                                                <TableHead className="text-right bg-slate-100">Previous</TableHead>
+                                                <TableHead className="text-right bg-indigo-50/20">Current Qty</TableHead>
+                                                <TableHead className="text-right">Upto-Date</TableHead>
+                                                <TableHead className="text-right">Amount</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {(ipcForm.items || []).filter(item => item.uptoDateQuantity > 0 || item.currentQuantity > 0).map((item) => (
-                                                <TableRow key={item.id} hover>
-                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>{item.itemNo}</TableCell>
-                                                    <TableCell><Typography variant="caption" sx={{ fontWeight: 500 }}>{item.description.slice(0, 60)}...</Typography></TableCell>
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-bold text-xs">{item.itemNo}</TableCell>
+                                                    <TableCell className="text-xs">{item.description.slice(0, 60)}...</TableCell>
                                                     <TableCell>{item.unit}</TableCell>
-                                                    <TableCell align="right">{item.rate.toLocaleString()}</TableCell>
-                                                    <TableCell align="right" sx={{ bgcolor: 'slate.50/30' }}>{item.previousQuantity.toLocaleString()}</TableCell>
-                                                    <TableCell align="right" sx={{ bgcolor: 'indigo.50/30' }}>
-                                                        <TextField 
-                                                            size="small" 
+                                                    <TableCell className="text-right">{item.rate.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right bg-slate-50/30">{item.previousQuantity.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right bg-indigo-50/30">
+                                                        <Input 
                                                             type="number"
                                                             value={item.currentQuantity}
                                                             onChange={(e) => handleItemQtyChange(item.boqItemId, Number(e.target.value))}
-                                                            sx={{ 
-                                                                width: 90, 
-                                                                '& .MuiInputBase-input': { 
-                                                                    fontSize: '0.85rem', 
-                                                                    py: 0.5, 
-                                                                    textAlign: 'right',
-                                                                    fontWeight: 'bold',
-                                                                    color: 'indigo.700'
-                                                                } 
-                                                            }}
-                                                            variant="standard"
-                                                            InputProps={{ disableUnderline: true }}
+                                                            className="w-[90px] text-right text-indigo-700 font-bold"
                                                         />
                                                     </TableCell>
-                                                    <TableCell align="right">
-                                                        <Typography variant="body2" fontWeight="bold" color={item.uptoDateQuantity > item.contractQuantity ? 'error.main' : 'text.primary'}>
+                                                    <TableCell className="text-right">
+                                                        <p className={`font-bold ${item.uptoDateQuantity > item.contractQuantity ? 'text-red-500' : ''}`}>
                                                             {item.uptoDateQuantity.toLocaleString()}
-                                                        </Typography>
+                                                        </p>
                                                     </TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>{item.currentAmount.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right font-bold">{item.currentAmount.toLocaleString()}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </Paper>
+                                </Card>
 
-                                <Box display="flex" gap={3}>
-                                    <Paper variant="outlined" sx={{ flex: 1, p: 3, borderRadius: 3 }}>
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary" gutterBottom display="block">IPC HEADER INFO</Typography>
-                                        {/* Fix: Replaced deprecated Grid props with v6 size prop */}
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={6}><TextField fullWidth label="IPC Reference #" value={ipcForm.billNumber} onChange={e => setIpcForm({...ipcForm, billNumber: e.target.value})} size="small" /></Grid>
-                                            <Grid item xs={6}><TextField fullWidth label="Billing Date" type="date" InputLabelProps={{shrink:true}} value={ipcForm.date} onChange={e => setIpcForm({...ipcForm, date: e.target.value})} size="small" /></Grid>
-                                        </Grid>
-                                    </Paper>
-                                    <Paper variant="outlined" sx={{ width: 400, p: 3, borderRadius: 3, bgcolor: 'indigo.900', color: 'white' }}>
-                                        <Stack spacing={1.5}>
-                                            <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>Current Gross Work:</Typography>
-                                                <Typography variant="body2" fontWeight="bold">{currency}{currentIpcSummary.billAmountGross.toLocaleString()}</Typography>
-                                            </Box>
-                                            <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>VAT (13%):</Typography>
-                                                <Typography variant="body2" fontWeight="bold">{currency}{currentIpcSummary.vatAmount.toLocaleString()}</Typography>
-                                            </Box>
-                                            <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>Retention (5%):</Typography>
-                                                <Typography variant="body2" fontWeight="bold">-{currency}{currentIpcSummary.retentionAmount.toLocaleString()}</Typography>
-                                            </Box>
-                                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-                                            <Box display="flex" justifyContent="space-between" pt={1}>
-                                                <Typography variant="subtitle1" fontWeight="900">NET PAYABLE:</Typography>
-                                                <Typography variant="subtitle1" fontWeight="900" color="success.light">{currency}{currentIpcSummary.totalAmountPayable.toLocaleString()}</Typography>
-                                            </Box>
-                                        </Stack>
-                                    </Paper>
-                                </Box>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-sm font-bold text-muted-foreground">IPC HEADER INFO</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-2">
+                                            <div>
+                                                <Label htmlFor="ipc-ref">IPC Reference #</Label>
+                                                <Input id="ipc-ref" value={ipcForm.billNumber} onChange={e => setIpcForm({...ipcForm, billNumber: e.target.value})} />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="billing-date">Billing Date</Label>
+                                                <Input id="billing-date" type="date" value={ipcForm.date} onChange={e => setIpcForm({...ipcForm, date: e.target.value})} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="bg-indigo-900 text-white">
+                                        <CardContent className="space-y-3 p-4">
+                                            <div className="flex justify-between">
+                                                <p className="opacity-80">Current Gross Work:</p>
+                                                <p className="font-bold">{currency}{currentIpcSummary.billAmountGross.toLocaleString()}</p>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <p className="opacity-80">VAT (13%):</p>
+                                                <p className="font-bold">{currency}{currentIpcSummary.vatAmount.toLocaleString()}</p>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <p className="opacity-80">Retention (5%):</p>
+                                                <p className="font-bold">-{currency}{currentIpcSummary.retentionAmount.toLocaleString()}</p>
+                                            </div>
+                                            <Separator className="bg-indigo-700" />
+                                            <div className="flex justify-between pt-1">
+                                                <p className="text-lg font-bold">NET PAYABLE:</p>
+                                                <p className="text-lg font-bold text-green-300">{currency}{currentIpcSummary.totalAmountPayable.toLocaleString()}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
-                                <Box textAlign="right" gap={2} display="flex" justifyContent="flex-end" pt={2}>
-                                    <Button variant="outlined" startIcon={<ArrowLeft size={18}/>} onClick={() => setCreateStep(0)} sx={{ borderRadius: 2 }}>Back to Selection</Button>
-                                    <Button variant="contained" onClick={handleSaveIPC} startIcon={<CheckCircle2 size={18}/>} sx={{ px: 4, borderRadius: 2 }}>Issue Certificate Draft</Button>
-                                </Box>
-                            </Stack>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setCreateStep(0)}><ArrowLeft className="mr-2 h-4 w-4"/>Back to Selection</Button>
+                                    <Button onClick={handleSaveIPC}><CheckCircle2 className="mr-2 h-4 w-4"/>Issue Certificate Draft</Button>
+                                </DialogFooter>
+                            </div>
                         )}
-                    </Box>
+                    </div>
                 </DialogContent>
             </Dialog>
 
             {/* Create Subcontractor Bill Dialog */}
-            <Dialog 
-                open={isSubcontractorBillModalOpen} 
-                onClose={() => setIsSubcontractorBillModalOpen(false)} 
-                maxWidth="lg" 
-                fullWidth 
-                PaperProps={{ sx: { borderRadius: 4, height: '90vh' } }}
-            >
-                <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box display="flex" alignItems="center" gap={1.5}>
-                        <FileCheck className="text-amber-600" />
-                        <Typography variant="h6">Prepare New Subcontractor Bill (Bill No. {subcontractorBillForm.billNumber})</Typography>
-                    </Box>
-                    <IconButton onClick={() => setIsSubcontractorBillModalOpen(false)}><X/></IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ p: 0, bgcolor: '#f8fafc' }}>
-                    <Box sx={{ p: 4 }}>
+            <Dialog open={isSubcontractorBillModalOpen} onOpenChange={setIsSubcontractorBillModalOpen}>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader className="border-b pb-4">
+                        <DialogTitle className="flex items-center text-xl font-bold">
+                            <FileCheck className="mr-2 h-6 w-6 text-amber-600" />
+                            Prepare New Subcontractor Bill (Bill No. {subcontractorBillForm.billNumber})
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6">
                         {subcontractorBillCreateStep === 0 && (
-                            <Stack spacing={3}>
-                                <Alert severity="info" sx={{ borderRadius: 2 }}>
-                                    Select subcontractor and time period, then choose work logs to include in the bill.
+                            <div className="space-y-4">
+                                <Alert>
+                                    <AlertTitle>Information</AlertTitle>
+                                    <AlertDescription>
+                                        Select subcontractor and time period, then choose work logs to include in the bill.
+                                    </AlertDescription>
                                 </Alert>
                                 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6}>
-                                        <TextField 
-                                            label="Bill Number" 
-                                            fullWidth 
-                                            value={subcontractorBillForm.billNumber} 
-                                            onChange={e => setSubcontractorBillForm({...subcontractorBillForm, billNumber: e.target.value})} 
-                                            size="small" 
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <TextField 
-                                            label="Bill Date" 
-                                            type="date" 
-                                            fullWidth 
-                                            InputLabelProps={{shrink: true}} 
-                                            value={subcontractorBillForm.date} 
-                                            onChange={e => setSubcontractorBillForm({...subcontractorBillForm, date: e.target.value})} 
-                                            size="small" 
-                                        />
-                                    </Grid>
-                                </Grid>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="bill-number">Bill Number</Label>
+                                        <Input id="bill-number" value={subcontractorBillForm.billNumber} onChange={e => setSubcontractorBillForm({...subcontractorBillForm, billNumber: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="bill-date">Bill Date</Label>
+                                        <Input id="bill-date" type="date" value={subcontractorBillForm.date} onChange={e => setSubcontractorBillForm({...subcontractorBillForm, date: e.target.value})} />
+                                    </div>
+                                </div>
                                 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6}>
-                                        <TextField 
-                                            label="Period From" 
-                                            type="date" 
-                                            fullWidth 
-                                            InputLabelProps={{shrink: true}} 
-                                            value={subcontractorBillForm.periodFrom} 
-                                            onChange={e => setSubcontractorBillForm({...subcontractorBillForm, periodFrom: e.target.value})} 
-                                            size="small" 
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <TextField 
-                                            label="Period To" 
-                                            type="date" 
-                                            fullWidth 
-                                            InputLabelProps={{shrink: true}} 
-                                            value={subcontractorBillForm.periodTo} 
-                                            onChange={e => setSubcontractorBillForm({...subcontractorBillForm, periodTo: e.target.value})} 
-                                            size="small" 
-                                        />
-                                    </Grid>
-                                </Grid>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="period-from">Period From</Label>
+                                        <Input id="period-from" type="date" value={subcontractorBillForm.periodFrom} onChange={e => setSubcontractorBillForm({...subcontractorBillForm, periodFrom: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="period-to">Period To</Label>
+                                        <Input id="period-to" type="date" value={subcontractorBillForm.periodTo} onChange={e => setSubcontractorBillForm({...subcontractorBillForm, periodTo: e.target.value})} />
+                                    </div>
+                                </div>
                                 
-                                <FormControl fullWidth>
-                                    <InputLabel>Subcontractor</InputLabel>
+                                <div>
+                                    <Label htmlFor="subcontractor">Subcontractor</Label>
                                     <Select
                                         value={subcontractorBillForm.subcontractorId || ''}
-                                        label="Subcontractor"
-                                        onChange={(e) => {
-                                            setSubcontractorBillForm({...subcontractorBillForm, subcontractorId: e.target.value});
-                                            // Also reset selected work logs when subcontractor changes
+                                        onValueChange={(value) => {
+                                            setSubcontractorBillForm({...subcontractorBillForm, subcontractorId: value});
                                             setSelectedSubcontractorWorkIds(new Set());
                                         }}
                                     >
-                                        {project.agencies?.filter(a => a.type === 'subcontractor').map(sub => (
-                                            <MenuItem key={sub.id} value={sub.id}>{sub.name} ({sub.trade})</MenuItem>
-                                        ))}
+                                        <SelectTrigger id="subcontractor">
+                                            <SelectValue placeholder="Select a subcontractor" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {project.agencies?.filter(a => a.type === 'subcontractor').map(sub => (
+                                                <SelectItem key={sub.id} value={sub.id}>{sub.name} ({sub.trade})</SelectItem>
+                                            ))}
+                                        </SelectContent>
                                     </Select>
-                                </FormControl>
+                                </div>
                                 
-                                <Typography variant="subtitle1" fontWeight="bold">Available Work Logs</Typography>
-                                <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                                    <Table size="small">
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                                <h3 className="text-lg font-bold">Available Work Logs</h3>
+                                <Card>
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell padding="checkbox"></TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>BOQ Item</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Component</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>BOQ Item</TableHead>
+                                                <TableHead>Component</TableHead>
+                                                <TableHead>Quantity</TableHead>
+                                                <TableHead>Unit</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {getSubcontractorWorkLogs(subcontractorBillForm.subcontractorId || '').map(log => {
                                                 // Find the structure and component for this log
@@ -796,13 +764,15 @@ const BillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate }) 
                                                 
                                                 const boqItem = project.boq.find(b => b.id === log.boqItemId);
                                                 return (
-                                                    <TableRow key={log.id} hover onClick={() => {
+                                                    <TableRow key={log.id} onClick={() => {
                                                         const next = new Set(selectedSubcontractorWorkIds);
                                                         if (next.has(log.id)) next.delete(log.id);
                                                         else next.add(log.id);
                                                         setSelectedSubcontractorWorkIds(next);
-                                                    }} sx={{ cursor: 'pointer' }}>
-                                                        <TableCell padding="checkbox"><Checkbox checked={selectedSubcontractorWorkIds.has(log.id)} size="small" /></TableCell>
+                                                    }} className="cursor-pointer">
+                                                        <TableCell>
+                                                            <Checkbox checked={selectedSubcontractorWorkIds.has(log.id)} />
+                                                        </TableCell>
                                                         <TableCell>{log.date}</TableCell>
                                                         <TableCell>{boqItem ? `[${boqItem.itemNo}] ${boqItem.description.substring(0, 30)}...` : 'N/A'}</TableCell>
                                                         <TableCell>{componentName}</TableCell>
@@ -813,148 +783,130 @@ const BillingModule: React.FC<Props> = ({ project, settings, onProjectUpdate }) 
                                             })}
                                             {getSubcontractorWorkLogs(subcontractorBillForm.subcontractorId || '').length === 0 && (
                                                 <TableRow>
-                                                    <TableCell align="center" {...{ colSpan: 6 }} sx={{ py: 6 }}>
+                                                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                                         No work logs found for this subcontractor in the project.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
                                     </Table>
-                                </Paper>
-                                <Box textAlign="right">
-                                    <Button 
-                                        variant="contained" 
-                                        disabled={selectedSubcontractorWorkIds.size === 0} 
-                                        onClick={generateSubcontractorBillItemsFromWorkLogs} 
-                                        endIcon={<ArrowRight size={18}/>} 
-                                        sx={{ px: 4, py: 1.2, borderRadius: 2 }}
-                                    >
-                                        Generate Bill Items
+                                </Card>
+                                <div className="text-right">
+                                    <Button disabled={selectedSubcontractorWorkIds.size === 0} onClick={generateSubcontractorBillItemsFromWorkLogs}>
+                                        Generate Bill Items <ArrowRight className="ml-2 h-4 w-4"/>
                                     </Button>
-                                </Box>
-                            </Stack>
+                                </div>
+                            </div>
                         )}
                         {subcontractorBillCreateStep === 1 && (
-                            <Stack spacing={3}>
-                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="subtitle1" fontWeight="900" color="primary">Review & Adjust Bill Quantities</Typography>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                        <Typography variant="caption" fontWeight="bold">BILL TOTAL:</Typography>
-                                        <Typography variant="h6" fontWeight="900" color="amber.700">{currency}{currentSubcontractorBillSummary.grossAmount.toLocaleString()}</Typography>
-                                    </Stack>
-                                </Box>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-bold text-primary">Review & Adjust Bill Quantities</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <p className="text-sm font-bold">BILL TOTAL:</p>
+                                        <p className="text-xl font-bold text-amber-700">{currency}{currentSubcontractorBillSummary.grossAmount.toLocaleString()}</p>
+                                    </div>
+                                </div>
 
-                                <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', maxHeight: '50vh', overflowY: 'auto' }}>
-                                    <Table size="small" stickyHeader>
-                                        <TableHead sx={{ bgcolor: 'slate.50' }}>
+                                <Card>
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 'bold', width: 80 }}>Item</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'amber.50' }}>Current Qty</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                                                <TableHead className="w-[80px]">Item</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Unit</TableHead>
+                                                <TableHead className="text-right">Rate</TableHead>
+                                                <TableHead className="text-right bg-amber-50/20">Current Qty</TableHead>
+                                                <TableHead className="text-right">Amount</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
                                             {(subcontractorBillForm.items || []).map((item) => (
-                                                <TableRow key={item.id} hover>
-                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>{item.itemNo}</TableCell>
-                                                    <TableCell><Typography variant="caption" sx={{ fontWeight: 500 }}>{item.description.slice(0, 60)}...</Typography></TableCell>
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-bold text-xs">{item.itemNo}</TableCell>
+                                                    <TableCell className="text-xs">{item.description.slice(0, 60)}...</TableCell>
                                                     <TableCell>{item.unit}</TableCell>
-                                                    <TableCell align="right">{item.rate.toLocaleString()}</TableCell>
-                                                    <TableCell align="right" sx={{ bgcolor: 'amber.50/30' }}>
-                                                        <TextField 
-                                                            size="small" 
+                                                    <TableCell className="text-right">{item.rate.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right bg-amber-50/20">
+                                                        <Input 
                                                             type="number" 
                                                             value={item.currentQuantity}
                                                             onChange={(e) => handleSubcontractorBillItemQtyChange(item.boqItemId, Number(e.target.value))}
-                                                            sx={{ 
-                                                                width: 90, 
-                                                                '& .MuiInputBase-input': { 
-                                                                    fontSize: '0.85rem', 
-                                                                    py: 0.5, 
-                                                                    textAlign: 'right',
-                                                                    fontWeight: 'bold',
-                                                                    color: 'amber.700'
-                                                                } 
-                                                            }}
-                                                            variant="standard"
-                                                            InputProps={{ disableUnderline: true }}
+                                                            className="w-[90px] text-right text-amber-700 font-bold"
                                                         />
                                                     </TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>{item.currentAmount.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right font-bold">{item.currentAmount.toLocaleString()}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </Paper>
+                                </Card>
 
-                                <Box display="flex" gap={3}>
-                                    <Paper variant="outlined" sx={{ flex: 1, p: 3, borderRadius: 3 }}>
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary" gutterBottom display="block">BILL SETTINGS</Typography>
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={6}>
-                                                <TextField 
-                                                    label="Retention %" 
-                                                    type="number" 
-                                                    fullWidth 
-                                                    value={subcontractorBillForm.retentionPercent} 
-                                                    onChange={e => setSubcontractorBillForm({...subcontractorBillForm, retentionPercent: Number(e.target.value)})} 
-                                                    size="small" 
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                    </Paper>
-                                    <Paper variant="outlined" sx={{ width: 400, p: 3, borderRadius: 3, bgcolor: 'amber.900', color: 'white' }}>
-                                        <Stack spacing={1.5}>
-                                            <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>Gross Amount:</Typography>
-                                                <Typography variant="body2" fontWeight="bold">{currency}{currentSubcontractorBillSummary.grossAmount.toLocaleString()}</Typography>
-                                            </Box>
-                                            <Box display="flex" justifyContent="space-between">
-                                                <Typography variant="body2" sx={{ opacity: 0.8 }}>Retention ({subcontractorBillForm.retentionPercent}%):</Typography>
-                                                <Typography variant="body2" fontWeight="bold">-{currency}{currentSubcontractorBillSummary.retentionAmount.toLocaleString()}</Typography>
-                                            </Box>
-                                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-                                            <Box display="flex" justifyContent="space-between" pt={1}>
-                                                <Typography variant="subtitle1" fontWeight="900">NET PAYABLE:</Typography>
-                                                <Typography variant="subtitle1" fontWeight="900" color="success.light">{currency}{currentSubcontractorBillSummary.netAmount.toLocaleString()}</Typography>
-                                            </Box>
-                                        </Stack>
-                                    </Paper>
-                                </Box>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-sm font-bold text-muted-foreground">BILL SETTINGS</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div>
+                                                <Label htmlFor="retention-percent">Retention %</Label>
+                                                <Input id="retention-percent" type="number" value={subcontractorBillForm.retentionPercent} onChange={e => setSubcontractorBillForm({...subcontractorBillForm, retentionPercent: Number(e.target.value)})} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="bg-amber-900 text-white">
+                                        <CardContent className="space-y-3 p-4">
+                                            <div className="flex justify-between">
+                                                <p className="opacity-80">Gross Amount:</p>
+                                                <p className="font-bold">{currency}{currentSubcontractorBillSummary.grossAmount.toLocaleString()}</p>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <p className="opacity-80">Retention ({subcontractorBillForm.retentionPercent}%):</p>
+                                                <p className="font-bold">-{currency}{currentSubcontractorBillSummary.retentionAmount.toLocaleString()}</p>
+                                            </div>
+                                            <Separator className="bg-amber-700" />
+                                            <div className="flex justify-between pt-1">
+                                                <p className="text-lg font-bold">NET PAYABLE:</p>
+                                                <p className="text-lg font-bold text-green-300">{currency}{currentSubcontractorBillSummary.netAmount.toLocaleString()}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
-                                <Box textAlign="right" gap={2} display="flex" justifyContent="flex-end" pt={2}>
-                                    <Button variant="outlined" startIcon={<ArrowLeft size={18}/>} onClick={() => setSubcontractorBillCreateStep(0)} sx={{ borderRadius: 2 }}>Back to Selection</Button>
-                                    <Button variant="contained" onClick={handleSaveSubcontractorBill} startIcon={<CheckCircle2 size={18}/>} sx={{ px: 4, borderRadius: 2 }}>Issue Bill Draft</Button>
-                                </Box>
-                            </Stack>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setSubcontractorBillCreateStep(0)}><ArrowLeft className="mr-2 h-4 w-4"/>Back to Selection</Button>
+                                    <Button onClick={handleSaveSubcontractorBill}><CheckCircle2 className="mr-2 h-4 w-4"/>Issue Bill Draft</Button>
+                                </DialogFooter>
+                            </div>
                         )}
-                    </Box>
+                    </div>
                 </DialogContent>
             </Dialog>
 
             {/* Print Preview Dialog */}
-            <Dialog open={printPreviewOpen} onClose={() => setPrintPreviewOpen(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-                <DialogTitle sx={{ bgcolor: 'white', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="h6" fontWeight="bold">Interim Payment Certificate - Print Layout</Typography>
-                    <IconButton onClick={() => setPrintPreviewOpen(false)}><X/></IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ p: 4, bgcolor: 'slate.100' }}>
-                    <Paper sx={{ p: 8, width: '210mm', mx: 'auto', minHeight: '297mm', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-                        <Typography align="center" variant="h5" fontWeight="bold" gutterBottom>DEPARTMENT OF ROADS</Typography>
-                        <Typography align="center" variant="subtitle1" sx={{ textTransform: 'uppercase', mb: 4 }}>Interim Payment Certificate (IPC)</Typography>
-                        <Divider sx={{ my: 3 }} />
-                        <Typography variant="body2">Simulation of DoR Format... Content derived from ID: {selectedIpcId}</Typography>
-                    </Paper>
+            <Dialog open={printPreviewOpen} onOpenChange={setPrintPreviewOpen}>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader className="border-b pb-4">
+                        <DialogTitle className="flex items-center text-xl font-bold">
+                            <Printer className="mr-2 h-6 w-6 text-muted-foreground" />
+                            Interim Payment Certificate - Print Layout
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
+                        <div className="bg-white p-8 mx-auto min-h-[297mm] shadow-lg">
+                            <p className="text-center text-2xl font-bold mb-4">DEPARTMENT OF ROADS</p>
+                            <p className="text-center text-lg uppercase mb-6">Interim Payment Certificate (IPC)</p>
+                            <Separator className="my-6" />
+                            <p className="text-sm text-muted-foreground">Simulation of DoR Format... Content derived from ID: {selectedIpcId}</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setPrintPreviewOpen(false)}>Close</Button>
+                        <Button><Printer className="mr-2 h-4 w-4"/>Print PDF</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setPrintPreviewOpen(false)}>Close</Button>
-                    <Button variant="contained" startIcon={<Printer/>}>Print PDF</Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

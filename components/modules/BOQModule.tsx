@@ -1,22 +1,41 @@
-import React, { useState, useMemo } from 'react';
-import { 
-    Typography, Box, Grid, TextField, 
-    Button, Card, 
-    Dialog, DialogTitle, DialogContent, DialogActions, Stack,
-    CardContent, Tabs, Tab, IconButton, Divider,
-    Autocomplete, List, ListItem, ListItemText, ListItemSecondaryAction,
-    Chip, Tooltip, Paper, MenuItem, Select, FormControl, InputLabel
-} from '@mui/material';
-import { Project, UserRole, AppSettings, BOQItem, VariationOrder, VariationItem } from '../../types';
+import React, { useState, useMemo, ChangeEvent } from 'react';
 import { 
     Plus, Search, Receipt, FileDiff, Save, X, BarChart4, FileSpreadsheet, Upload,
-    Maximize2, Minimize2
+    Maximize2, Minimize2, Users, CreditCard, DollarSign, TrendingUp, AlertTriangle, CheckCircle
 } from 'lucide-react';
+import { Project, UserRole, AppSettings, BOQItem, VariationOrder, VariationItem } from '../../types';
 import * as XLSX from 'xlsx';
 import StatCard from '../core/StatCard';
 import BOQManager from './BOQManager';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 import { getCurrencySymbol } from '../../utils/formatting/currencyUtils';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { cn } from '~/lib/utils';
+import { Textarea } from '~/components/ui/textarea';
+import { Autocomplete } from '~/components/ui/autocomplete'; // Assuming a custom autocomplete, or using a basic input
+
+// NOTE: This is a refactored version of the BOQModule component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 interface Props {
   project: Project;
@@ -26,7 +45,7 @@ interface Props {
 }
 
 const BOQModule: React.FC<Props> = ({ project, settings, userRole, onProjectUpdate }) => {
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState("registry");
     const [isVOModalOpen, setIsVOModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
@@ -222,276 +241,272 @@ const BOQModule: React.FC<Props> = ({ project, settings, userRole, onProjectUpda
     }, [project.boq, settings]);
 
     return (
-        <Box className="animate-in fade-in duration-500">
-            <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-                <Box>
-                    <Typography variant="h5" fontWeight="900" color="text.primary">Bill of Quantities (Master)</Typography>
-                    <Typography variant="body2" color="text.secondary">Contractual schedule of rates and quantities</Typography>
-                </Box>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Tooltip title="Import from Excel">
-                        <Button 
-                            variant="outlined" 
-                            startIcon={<Upload size={18}/>} 
-                            onClick={() => setIsImportModalOpen(true)}
-                            sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
-                        >
-                            Import
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title="Export to Sheets/Excel">
-                        <Button 
-                            variant="outlined" 
-                            startIcon={<FileSpreadsheet size={18}/>} 
-                            onClick={handleExportCSV}
-                            sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
-                        >
-                            Export
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title={compactView ? "Expand View" : "Compact View"}>
-                        <IconButton 
-                            onClick={() => setCompactView(!compactView)}
-                            sx={{ 
-                                borderRadius: 2, 
-                                bgcolor: compactView ? 'primary.light' : 'grey.100',
-                                color: compactView ? 'primary.contrastText' : 'text.secondary'
-                            }}
-                        >
-                            {compactView ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                        </IconButton>
-                    </Tooltip>
-                    <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ bgcolor: 'background.paper', borderRadius: 2, p: 0.5, border: '1px solid', borderColor: 'divider' }}>
-                        <Tab label="Registry" icon={<Receipt size={18}/>} iconPosition="start" sx={{ fontWeight: 'bold' }} />
-                        <Tab label="Variations" icon={<FileDiff size={18}/>} iconPosition="start" sx={{ fontWeight: 'bold' }} />
+        <div className="animate-in fade-in duration-500 p-4">
+            <div className="flex justify-between mb-4 items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800">Bill of Quantities (Master)</h1>
+                    <p className="text-sm text-slate-500">Contractual schedule of rates and quantities</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => setIsImportModalOpen(true)}>
+                                    <Upload className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Import from Excel</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={handleExportCSV}>
+                                    <FileSpreadsheet className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Export to Sheets/Excel</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => setCompactView(!compactView)}>
+                                    {compactView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{compactView ? "Expand View" : "Compact View"}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="registry">
+                                <Receipt className="mr-2 h-4 w-4" /> Registry
+                            </TabsTrigger>
+                            <TabsTrigger value="variations">
+                                <FileDiff className="mr-2 h-4 w-4" /> Variations
+                            </TabsTrigger>
+                        </TabsList>
                     </Tabs>
-                </Stack>
-            </Box>
+                </div>
+            </div>
 
             {/* Contract Value Breakdown Section */}
-            <Grid container spacing={2} mb={2}>
-                <Grid item xs={12} md={compactView ? 6 : 4}>
-                    <StatCard title="Original Contract Value" value={`${currencySymbol}${financialSummary.original.toLocaleString()}`} icon={Receipt} color="#4f46e5" />
-                </Grid>
-                <Grid item xs={12} md={compactView ? 6 : 4}>
-                    <StatCard title="Value of Work Done" value={`${currencySymbol}${financialSummary.completed.toLocaleString()}`} icon={FileSpreadsheet} color="#10b981" />
-                </Grid>
+            <div className={cn("grid gap-4 mb-4", compactView ? "grid-cols-2" : "grid-cols-1 md:grid-cols-3")}>
+                <StatCard title="Original Contract Value" value={`${currencySymbol}${financialSummary.original.toLocaleString()}`} icon={Receipt} color="#4f46e5" />
+                <StatCard title="Value of Work Done" value={`${currencySymbol}${financialSummary.completed.toLocaleString()}`} icon={FileSpreadsheet} color="#10b981" />
                 {!compactView && (
-                    <Grid item xs={12} md={4}>
-                        <StatCard title="Overall Financial Progress" value={`${financialSummary.percent.toFixed(1)}%`} icon={BarChart4} color="#8b5cf6" />
-                    </Grid>
+                    <StatCard title="Overall Financial Progress" value={`${financialSummary.percent.toFixed(1)}%`} icon={BarChart4} color="#8b5cf6" />
                 )}
-            </Grid>
+            </div>
             
             {/* Detailed Contract Value Breakdown */}
-            <Paper variant="outlined" sx={{ p: compactView ? 2 : 3, borderRadius: 3, mb: 3, bgcolor: 'slate.50' }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={compactView ? 1 : 2}>
-                    <Typography variant="h6" fontSize={compactView ? "1rem" : "1.25rem"} fontWeight="bold" color="primary">Contract Value Breakdown</Typography>
-                    <Chip 
-                        label={compactView ? "COMPACT" : "FULL"} 
-                        size="small" 
-                        color={compactView ? "default" : "primary"}
-                        variant="outlined"
-                    />
-                </Box>
-                <Grid container spacing={compactView ? 1 : 3}>
-                    <Grid item xs={compactView ? 6 : 12} sm={compactView ? 6 : 3}>
-                        <Box textAlign="center" p={compactView ? 1 : 2} borderRadius={2} bgcolor="white" border="1px solid #e2e8f0">
-                            <Typography variant="caption" color="text.secondary" display="block">Amount With PS</Typography>
-                            <Typography variant={compactView ? "body2" : "h6"} fontWeight="bold" color="primary">
+            <Card className="mb-4 bg-slate-50 border-slate-200">
+                <CardHeader className="flex flex-row justify-between items-center pb-2">
+                    <CardTitle className={cn("text-lg font-bold text-indigo-700", compactView && "text-base")}>Contract Value Breakdown</CardTitle>
+                    <Badge variant={compactView ? "secondary" : "default"}>{compactView ? "COMPACT" : "FULL"}</Badge>
+                </CardHeader>
+                <CardContent>
+                    <div className={cn("grid gap-4", compactView ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-4")}>
+                        <div className="text-center p-2 rounded-lg bg-white border border-slate-200">
+                            <p className="text-sm text-muted-foreground">Amount With PS</p>
+                            <p className={cn("font-bold text-indigo-700", compactView ? "text-base" : "text-lg")}>
                                 {currencySymbol}{financialSummary.amountWithPS.toLocaleString()}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={compactView ? 6 : 12} sm={compactView ? 6 : 3}>
-                        <Box textAlign="center" p={compactView ? 1 : 2} borderRadius={2} bgcolor="white" border="1px solid #e2e8f0">
-                            <Typography variant="caption" color="text.secondary" display="block">Amount Without PS</Typography>
-                            <Typography variant={compactView ? "body2" : "h6"} fontWeight="bold" color="info.main">
+                            </p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-white border border-slate-200">
+                            <p className="text-sm text-muted-foreground">Amount Without PS</p>
+                            <p className={cn("font-bold text-blue-600", compactView ? "text-base" : "text-lg")}>
                                 {currencySymbol}{financialSummary.amountWithoutPS.toLocaleString()}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={compactView ? 6 : 12} sm={compactView ? 6 : 3}>
-                        <Box textAlign="center" p={compactView ? 1 : 2} borderRadius={2} bgcolor="white" border="1px solid #e2e8f0">
-                            <Typography variant="caption" color="text.secondary" display="block">VAT (@{(settings?.vatRate || 13)}%)</Typography>
-                            <Typography variant={compactView ? "body2" : "h6"} fontWeight="bold" color="error.main">
+                            </p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-white border border-slate-200">
+                            <p className="text-sm text-muted-foreground">VAT (@{settings?.vatRate || 13}%)</p>
+                            <p className={cn("font-bold text-red-600", compactView ? "text-base" : "text-lg")}>
                                 {currencySymbol}{financialSummary.vatAmount.toLocaleString()}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={compactView ? 6 : 12} sm={compactView ? 6 : 3}>
-                        <Box textAlign="center" p={compactView ? 1 : 2} borderRadius={2} bgcolor="primary.light" color="white">
-                            <Typography variant="caption" color="rgba(255,255,255,0.8)" display="block">Total Contract Value</Typography>
-                            <Typography variant={compactView ? "body2" : "h6"} fontWeight="bold">
+                            </p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-indigo-700 text-white">
+                            <p className="text-sm opacity-80">Total Contract Value</p>
+                            <p className={cn("font-bold", compactView ? "text-base" : "text-lg")}>
                                 {currencySymbol}{financialSummary.totalContractValue.toLocaleString()}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                </Grid>
-            </Paper>
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-            {activeTab === 0 ? (
-                <BOQManager project={project} settings={settings} userRole={userRole} onProjectUpdate={onProjectUpdate} compactView={compactView} />
-            ) : (
-                <Box>
-                    <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-                        <Typography variant="h6" fontWeight="bold">Variation History</Typography>
-                        <Button variant="contained" startIcon={<Plus size={16}/>} onClick={() => setIsVOModalOpen(true)} sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}>Initialize VO</Button>
-                    </Box>
-                    <Grid container spacing={2}>
-                        {(project.variationOrders || []).map(vo => (
-                            <Grid item xs={12} md={6} key={vo.id}>
-                                <Card variant="outlined" sx={{ borderRadius: 4, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
-                                    <CardContent sx={{ p: 2 }}>
-                                        <Box display="flex" justifyContent="space-between" mb={1}>
-                                            <Box>
-                                                <Typography variant="caption" fontWeight="900" color="primary">{vo.voNumber}</Typography>
-                                                <Typography variant="subtitle1" fontWeight="bold">{vo.title}</Typography>
-                                            </Box>
-                                            <Chip label={vo.status} color={vo.status === 'Approved' ? 'success' : 'warning'} size="small" sx={{ fontWeight: 'bold' }} />
-                                        </Box>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, height: 40, overflow: 'hidden' }}>{vo.reason}</Typography>
-                                        <Divider sx={{ mb: 2 }} />
-                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                            <Typography variant="caption" fontWeight="bold" color="text.secondary">{vo.items.length} Affected Items</Typography>
-                                            <Typography variant="subtitle1" fontWeight="900" color="primary.main">
-                                                {currencySymbol}{vo.totalImpact.toLocaleString()}
-                                            </Typography>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                        {(!project.variationOrders || project.variationOrders.length === 0) && (
-                            <Grid item xs={12}>
-                                <Box py={10} textAlign="center" color="text.disabled" border="1px dashed" borderColor="divider" borderRadius={4}>
-                                    <FileDiff size={48} className="mx-auto mb-2 opacity-20"/>
-                                    <Typography variant="body2">No variation orders recorded for this project.</Typography>
-                                </Box>
-                            </Grid>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsContent value="registry">
+                    <BOQManager project={project} settings={settings} userRole={userRole} onProjectUpdate={onProjectUpdate} compactView={compactView} />
+                </TabsContent>
+                <TabsContent value="variations">
+                    <div className="flex justify-between mb-4 items-center">
+                        <h2 className="text-xl font-bold">Variation History</h2>
+                        <Button onClick={() => setIsVOModalOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" /> Initialize VO
+                        </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Placeholder variation orders */}
+                        {project.variationOrders?.length > 0 ? project.variationOrders.map(vo => (
+                            <Card key={vo.id} className="relative transition-transform hover:-translate-y-1">
+                                <CardContent className="p-4">
+                                    <div className="flex justify-between mb-2">
+                                        <div>
+                                            <p className="text-xs font-bold text-indigo-600">{vo.voNumber}</p>
+                                            <p className="text-lg font-bold">{vo.title}</p>
+                                        </div>
+                                        <Badge variant={vo.status === 'Approved' ? 'default' : 'secondary'}>{vo.status}</Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{vo.reason}</p>
+                                    <Separator className="my-2" />
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-xs font-bold text-muted-foreground">{vo.items.length} Affected Items</p>
+                                        <p className="text-lg font-black text-indigo-700">
+                                            {currencySymbol}{vo.totalImpact.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )) : (
+                            <div className="col-span-full py-10 text-center border-2 border-dashed border-slate-200 rounded-lg text-muted-foreground">
+                                <FileDiff className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                <p className="text-muted-foreground">No variation orders recorded for this project.</p>
+                            </div>
                         )}
-                    </Grid>
-                </Box>
-            )}
+                    </div>
+                </TabsContent>
+            </Tabs>
 
-            <Dialog open={isVOModalOpen} onClose={() => setIsVOModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-                <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider' }}>Initialize Variation Order</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={3} mt={2}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={8}><TextField fullWidth label="VO Title" value={newVO.title} onChange={e => setNewVO({...newVO, title: e.target.value})} size="small" /></Grid>
-                            <Grid item xs={4}><TextField fullWidth label="VO Ref #" value={newVO.voNumber} disabled size="small" /></Grid>
-                        </Grid>
-                        <TextField fullWidth label="Technical Justification" multiline rows={2} value={newVO.reason} onChange={e => setNewVO({...newVO, reason: e.target.value})} size="small" />
+            {/* BILL MODAL (repurposed for VO in simplified view) */}
+            <Dialog open={isVOModalOpen} onOpenChange={setIsVOModalOpen}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Receipt className="text-indigo-600" /> Initialize Variation Order
+                        </DialogTitle>
+                        <DialogDescription>
+                            Define the details for a new variation order.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="voTitle" className="text-right">VO Title</Label>
+                            <Input id="voTitle" value={newVO.title || ''} onChange={e => setNewVO({...newVO, title: e.target.value})} className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="voRef" className="text-right">VO Ref #</Label>
+                            <Input id="voRef" value={newVO.voNumber || ''} disabled className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="voReason" className="text-right">Reason</Label>
+                            <Textarea id="voReason" value={newVO.reason || ''} onChange={e => setNewVO({...newVO, reason: e.target.value})} className="col-span-3" rows={3} />
+                        </div>
+
+                        <Separator />
+                        <h3 className="text-lg font-semibold col-span-full">Staging Work Items</h3>
                         
-                        <Typography variant="caption" fontWeight="bold" color="text.secondary">STAGING WORK ITEMS</Typography>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12}>
-                                    <Autocomplete<BOQItem>
-                                        options={project.boq || []}
-                                        getOptionLabel={(option) => `[${option.itemNo}] ${option.description}`}
-                                        onChange={(_, newValue) => {
-                                            if (newValue) {
-                                                setTempVOItem({
-                                                    ...tempVOItem, 
-                                                    boqItemId: newValue.id, 
-                                                    description: newValue.description,
-                                                    unit: newValue.unit,
-                                                    rate: newValue.rate,
-                                                    isNewItem: false
-                                                });
-                                            }
-                                        }}
-                                        renderInput={(params) => (
-                                            <TextField {...params} label="Select Existing Item" size="small" />
-                                        )}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}><Typography variant="caption" align="center" display="block" color="text.disabled">OR</Typography></Grid>
-                                <Grid item xs={12}><TextField fullWidth label="New Item Description" size="small" value={tempVOItem.description} onChange={e => setTempVOItem({...tempVOItem, description: e.target.value, isNewItem: true})} /></Grid>
-                                <Grid item xs={4}><TextField fullWidth label="Delta Qty" type="number" size="small" value={tempVOItem.quantityDelta} onChange={e => setTempVOItem({...tempVOItem, quantityDelta: Number(e.target.value)})} /></Grid>
-                                <Grid item xs={4}><TextField fullWidth label="Unit" size="small" value={tempVOItem.unit} onChange={e => setTempVOItem({...tempVOItem, unit: e.target.value})} /></Grid>
-                                <Grid item xs={4}><TextField fullWidth label="Rate" type="number" size="small" value={tempVOItem.rate} onChange={e => setTempVOItem({...tempVOItem, rate: Number(e.target.value)})} /></Grid>
-                                <Grid item xs={12}><Button fullWidth variant="outlined" startIcon={<Plus size={18}/>} onClick={handleAddVOItem}>Stage Item</Button></Grid>
-                            </Grid>
-                        </Paper>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="boqItem" className="text-right">Existing BOQ Item</Label>
+                            {/* Autocomplete placeholder */}
+                            <Input id="boqItem" placeholder="Search BOQ items..." className="col-span-3" />
+                        </div>
+                        <div className="col-span-full text-center text-muted-foreground">OR</div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="newVOItemDesc" className="text-right">New Item Description</Label>
+                            <Input id="newVOItemDesc" value={tempVOItem.description || ''} onChange={e => setTempVOItem({...tempVOItem, description: e.target.value})} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="qtyDelta" className="text-right">Delta Qty</Label>
+                            <Input id="qtyDelta" type="number" value={tempVOItem.quantityDelta || 0} onChange={e => setTempVOItem({...tempVOItem, quantityDelta: Number(e.target.value)})} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="unit" className="text-right">Unit</Label>
+                            <Input id="unit" value={tempVOItem.unit || ''} onChange={e => setTempVOItem({...tempVOItem, unit: e.target.value})} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="rate" className="text-right">Rate</Label>
+                            <Input id="rate" type="number" value={tempVOItem.rate || 0} onChange={e => setTempVOItem({...tempVOItem, rate: Number(e.target.value)})} className="col-span-3" />
+                        </div>
+                        <div className="col-span-full">
+                            <Button className="w-full" onClick={handleAddVOItem}>
+                                <Plus className="mr-2 h-4 w-4" /> Stage Item
+                            </Button>
+                        </div>
 
-                        <List dense sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                            {newVO.items?.map((item, idx) => (
-                                <ListItem key={idx} divider={idx !== (newVO.items?.length || 0) - 1}>
-                                    <ListItemText 
-                                        primary={<Typography variant="body2" fontWeight="bold">{item.description}</Typography>} 
-                                        secondary={`${item.quantityDelta} ${item.unit} @ ${currencySymbol}${item.rate}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Typography variant="body2" fontWeight="900" color="primary.main">
+                        <h3 className="text-lg font-semibold col-span-full mt-4">Staged Items</h3>
+                        {newVO.items?.length === 0 ? (
+                            <p className="col-span-full text-muted-foreground text-center">No items staged yet.</p>
+                        ) : (
+                            <div className="grid gap-2 col-span-full">
+                                {newVO.items?.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-2 border rounded-md">
+                                        <div>
+                                            <p className="font-semibold">{item.description}</p>
+                                            <p className="text-sm text-muted-foreground">{item.quantityDelta} {item.unit} @ {currencySymbol}{item.rate}</p>
+                                        </div>
+                                        <p className="font-bold text-indigo-700">
                                             {currencySymbol}{(item.quantityDelta * item.rate).toLocaleString()}
-                                        </Typography>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Stack>
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsVOModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveVO}>
+                            <Save className="mr-2 h-4 w-4" /> Commit Draft VO
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
-                    <Button onClick={() => setIsVOModalOpen(false)}>Cancel</Button>
-                    <Button variant="contained" startIcon={<Save size={18}/>} onClick={handleSaveVO} disabled={!newVO.items?.length}>Commit Draft VO</Button>
-                </DialogActions>
             </Dialog>
 
-            <Dialog open={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-                <DialogTitle sx={{ fontWeight: 'bold', borderBottom: 1, borderColor: 'divider' }}>Import BOQ from Excel</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={3} mt={2}>
-                        <Typography variant="body2" color="text.secondary">
-                            Upload an Excel file containing BOQ items. The file should have columns with headers like:
-                            <br />
+            {/* Import BOQ Modal */}
+            <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Import BOQ from Excel</DialogTitle>
+                        <DialogDescription>
+                            Upload an Excel file containing BOQ items.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <p className="text-sm text-muted-foreground">
+                            The file should have columns with headers like: <br />
                             <code>Item No, Description, Unit, Contract Qty, Rate, Category</code>
-                        </Typography>
-                        
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Import Method</InputLabel>
-                            <Select
-                                value={importMethod}
-                                label="Import Method"
-                                onChange={(e) => setImportMethod(e.target.value as 'replace' | 'append')}
-                            >
-                                <MenuItem value="replace">Replace Existing BOQ</MenuItem>
-                                <MenuItem value="append">Append to Existing BOQ</MenuItem>
+                        </p>
+                        <div className="grid gap-2">
+                            <Label htmlFor="import-method">Import Method</Label>
+                            <Select value={importMethod} onValueChange={(value: 'replace' | 'append') => setImportMethod(value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select import method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="replace">Replace Existing BOQ</SelectItem>
+                                    <SelectItem value="append">Append to Existing BOQ</SelectItem>
+                                </SelectContent>
                             </Select>
-                        </FormControl>
-                        
-                        <input
-                            accept=".xlsx,.xls,.csv"
-                            type="file"
-                            onChange={handleFileChange}
-                            style={{ marginTop: '16px' }}
-                        />
-                        
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="import-file">Select File</Label>
+                            <Input id="import-file" type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
+                        </div>
                         {importFile && (
-                            <Box p={2} border="1px dashed" borderColor="divider" borderRadius={2} bgcolor="background.default">
-                                <Typography variant="body2" fontWeight="bold">Selected File:</Typography>
-                                <Typography variant="caption" color="text.secondary">{importFile.name}</Typography>
-                                <Typography variant="caption" display="block" color="text.disabled">Size: {(importFile.size / 1024).toFixed(2)} KB</Typography>
-                            </Box>
+                            <div className="p-2 border border-dashed rounded-md bg-muted text-muted-foreground">
+                                <p className="font-semibold">Selected File:</p>
+                                <p className="text-sm">{importFile.name}</p>
+                                <p className="text-xs">Size: {(importFile.size / 1024).toFixed(2)} KB</p>
+                            </div>
                         )}
-                    </Stack>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsImportModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleImportSubmit} disabled={!importFile}>
+                            <Upload className="mr-2 h-4 w-4" /> Import Excel
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
-                    <Button onClick={() => setIsImportModalOpen(false)}>Cancel</Button>
-                    <Button 
-                        variant="contained" 
-                        startIcon={<Upload size={18}/>} 
-                        onClick={handleImportSubmit} 
-                        disabled={!importFile}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Import Excel
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

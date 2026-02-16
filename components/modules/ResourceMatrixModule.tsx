@@ -1,34 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box, 
-  Paper, 
-  Typography, 
-  Button, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Chip,
-  Tabs,
-  Tab,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  Alert,
-  Stack,
-  IconButton,
-  alpha
-} from '@mui/material';
-import { BaseResource } from '../../types';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select as ShadcnSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table as ShadcnTable, TableBody as ShadcnTableBody, TableCell as ShadcnTableCell, TableHead as ShadcnTableHead, TableHeader as ShadcnTableHeader, TableRow as ShadcnTableRow } from '../ui/table';
+import { Tabs as ShadcnTabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Alert as ShadcnAlert, AlertDescription } from '../ui/alert';
+import { Badge } from '../ui/badge';
+import { Textarea } from '../ui/textarea';
 import { Plus, X, Calendar, Package, Users, Wrench, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
 interface ResourceMatrixModuleProps {
@@ -213,484 +194,414 @@ const ResourceMatrixModule: React.FC<ResourceMatrixModuleProps> = ({ project, on
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper sx={{ p: 2, mb: 2, borderRadius: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" fontWeight="bold">
+    <div className="h-full flex flex-col">
+      <Card className="p-4 mb-4 rounded-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">
             Resource & Material Matrix
-          </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<Plus size={16} />}
+          </h2>
+          <Button
             onClick={() => handleOpenModal()}
           >
+            <Plus size={16} className="mr-2" />
             Add Resource
           </Button>
-        </Box>
+        </div>
 
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
-          <Tab label="Resources" />
-          <Tab label="Allocations" />
-          <Tab label="Matrix View" />
-        </Tabs>
+        <ShadcnTabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(parseInt(v))} className="mb-4">
+          <TabsList>
+            <TabsTrigger value="0">Resources</TabsTrigger>
+            <TabsTrigger value="1">Allocations</TabsTrigger>
+            <TabsTrigger value="2">Matrix View</TabsTrigger>
+          </TabsList>
+        </ShadcnTabs>
 
         {activeTab === 0 && (
-          <TableContainer>
-            <Table size="small">
-              <TableHead sx={{ bgcolor: 'slate.50' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Unit</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">Total Qty</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">Available</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">Allocated</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Criticality</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {resources.map((resource) => (
-                  <TableRow key={resource.id} hover>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {getResourceIcon(resource.type)}
-                        <Typography variant="body2" fontWeight="bold">{resource.name}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={resource.type} 
-                        size="small" 
-                        variant="outlined" 
-                        sx={{ 
-                          fontSize: '0.7rem',
-                          height: 20
-                        }} 
-                      />
-                    </TableCell>
-                    <TableCell>{resource.category}</TableCell>
-                    <TableCell>{resource.unit}</TableCell>
-                    <TableCell align="right">{resource.totalQuantity}</TableCell>
-                    <TableCell align="right">{resource.availableQuantity}</TableCell>
-                    <TableCell align="right">{resource.allocatedQuantity}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={resource.status} 
-                        size="small" 
-                        color={getStatusColor(resource.status) as any}
-                        variant="outlined" 
-                        sx={{ 
-                          fontSize: '0.7rem',
-                          height: 20
-                        }} 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={resource.criticality} 
-                        size="small" 
-                        color={getCriticalityColor(resource.criticality) as any}
-                        variant="outlined" 
-                        sx={{ 
-                          fontSize: '0.7rem',
-                          height: 20
-                        }} 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        size="small" 
-                        onClick={() => handleOpenModal(resource)}
-                        variant="outlined"
-                      >
+          <ShadcnTable>
+            <ShadcnTableHeader>
+              <ShadcnTableRow>
+                <ShadcnTableCell className="font-bold">Name</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Type</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Category</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Unit</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold text-right">Total Qty</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold text-right">Available</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold text-right">Allocated</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Status</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Criticality</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Actions</ShadcnTableCell>
+              </ShadcnTableRow>
+            </ShadcnTableHeader>
+            <ShadcnTableBody>
+              {resources.map((resource) => (
+                <ShadcnTableRow key={resource.id}>
+                  <ShadcnTableCell>
+                    <div className="flex items-center gap-1">
+                      {getResourceIcon(resource.type)}
+                      <span className="font-bold text-sm">{resource.name}</span>
+                    </div>
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>
+                    <Badge>{resource.type}</Badge>
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>{resource.category}</ShadcnTableCell>
+                  <ShadcnTableCell>{resource.unit}</ShadcnTableCell>
+                  <ShadcnTableCell className="text-right">{resource.totalQuantity}</ShadcnTableCell>
+                  <ShadcnTableCell className="text-right">{resource.availableQuantity}</ShadcnTableCell>
+                  <ShadcnTableCell className="text-right">{resource.allocatedQuantity}</ShadcnTableCell>
+                  <ShadcnTableCell>
+                    <Badge>{resource.status}</Badge>
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>
+                    <Badge>{resource.criticality}</Badge>
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="outline" onClick={() => handleOpenModal(resource)}>
                         Edit
                       </Button>
-                      <Button 
-                        size="small" 
-                        onClick={() => handleDeleteResource(resource.id)}
-                        variant="outlined"
-                        color="error"
-                        sx={{ ml: 1 }}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleDeleteResource(resource.id)}>
                         Delete
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    </div>
+                  </ShadcnTableCell>
+                </ShadcnTableRow>
+              ))}
+            </ShadcnTableBody>
+          </ShadcnTable>
         )}
 
         {activeTab === 1 && (
-          <Box>
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 4 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Allocate Resources
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Resource</InputLabel>
-                    <Select 
-                      value={allocationForm.resourceId} 
-                      label="Resource"
-                      onChange={(e) => setAllocationForm({...allocationForm, resourceId: e.target.value})}
-                    >
-                      {resources.map(resource => (
-                        <MenuItem key={resource.id} value={resource.id}>
-                          {resource.name} ({resource.availableQuantity} available)
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Allocate To</InputLabel>
-                    <Select 
-                      value={allocationForm.allocatedTo} 
-                      label="Allocate To"
-                      onChange={(e) => setAllocationForm({...allocationForm, allocatedTo: e.target.value})}
-                    >
-                      <MenuItem value="">Select Task/Item</MenuItem>
-                      {project.schedule?.map((task: any) => (
-                        <MenuItem key={task.id} value={task.id}>
-                          {task.name} (Schedule)
-                        </MenuItem>
-                      ))}
-                      {project.boq?.map((item: any) => (
-                        <MenuItem key={item.id} value={item.id}>
-                          {item.description} (BOQ)
-                        </MenuItem>
-                      ))}
-                      {project.structures?.flatMap((s: any) => 
-                        s.components.map((comp: any) => (
-                          <MenuItem key={comp.id} value={comp.id}>
-                            {comp.name} - {s.name} (Structure)
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    label="Quantity"
-                    type="number"
-                    fullWidth
-                    size="small"
-                    value={allocationForm.allocatedQuantity}
-                    onChange={(e) => setAllocationForm({...allocationForm, allocatedQuantity: Number(e.target.value)})}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    label="Start Date"
-                    type="date"
-                    fullWidth
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                    value={allocationForm.startDate}
-                    onChange={(e) => setAllocationForm({...allocationForm, startDate: e.target.value})}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    label="End Date"
-                    type="date"
-                    fullWidth
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                    value={allocationForm.endDate}
-                    onChange={(e) => setAllocationForm({...allocationForm, endDate: e.target.value})}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                  <TextField
-                    label="Notes"
-                    fullWidth
-                    size="small"
-                    value={allocationForm.notes}
-                    onChange={(e) => setAllocationForm({...allocationForm, notes: e.target.value})}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button 
-                    variant="contained" 
-                    onClick={handleAllocateResource}
-                    startIcon={<Plus size={16} />}
-                  >
-                    Allocate Resource
-                  </Button>
-                </Grid>
-              </Grid>
-            </Paper>
+          <>
+            <Card className="p-4 mb-4 rounded-lg">
+            <h3 className="text-lg font-bold mb-4">
+              Allocate Resources
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="resource-select">Resource</Label>
+                <ShadcnSelect value={allocationForm.resourceId} onValueChange={(value) => setAllocationForm({...allocationForm, resourceId: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Resource" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resources.map(resource => (
+                      <SelectItem key={resource.id} value={resource.id}>
+                        {resource.name} ({resource.availableQuantity} available)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </ShadcnSelect>
+              </div>
+              <div>
+                <Label htmlFor="allocate-to-select">Allocate To</Label>
+                <ShadcnSelect value={allocationForm.allocatedTo} onValueChange={(value) => setAllocationForm({...allocationForm, allocatedTo: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Task/Item" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Select Task/Item</SelectItem>
+                    {project.schedule?.map((task: any) => (
+                      <SelectItem key={task.id} value={task.id}>
+                        {task.name} (Schedule)
+                      </SelectItem>
+                    ))}
+                    {project.boq?.map((item: any) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.description} (BOQ)
+                      </SelectItem>
+                    ))}
+                    {project.structures?.flatMap((s: any) =>
+                      s.components.map((comp: any) => (
+                        <SelectItem key={comp.id} value={comp.id}>
+                          {comp.name} - {s.name} (Structure)
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </ShadcnSelect>
+              </div>
+              <div>
+                <Label htmlFor="quantity-input">Quantity</Label>
+                <Input
+                  id="quantity-input"
+                  type="number"
+                  value={allocationForm.allocatedQuantity}
+                  onChange={(e) => setAllocationForm({...allocationForm, allocatedQuantity: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="start-date-input">Start Date</Label>
+                <Input
+                  id="start-date-input"
+                  type="date"
+                  value={allocationForm.startDate}
+                  onChange={(e) => setAllocationForm({...allocationForm, startDate: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end-date-input">End Date</Label>
+                <Input
+                  id="end-date-input"
+                  type="date"
+                  value={allocationForm.endDate}
+                  onChange={(e) => setAllocationForm({...allocationForm, endDate: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="notes-input">Notes</Label>
+                <Input
+                  id="notes-input"
+                  value={allocationForm.notes}
+                  onChange={(e) => setAllocationForm({...allocationForm, notes: e.target.value})}
+                />
+              </div>
+              <div className="col-span-full">
+                <Button onClick={handleAllocateResource}>
+                  <Plus size={16} className="mr-2" />
+                  Allocate Resource
+                </Button>
+              </div>
+            </div>
+          </Card>
 
-            <TableContainer>
-              <Table size="small">
-                <TableHead sx={{ bgcolor: 'slate.50' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Resource</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Allocated To</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Quantity</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Period</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Notes</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {allocations.map((allocation) => (
-                    <TableRow key={allocation.id} hover>
-                      <TableCell>
-                        {resources.find(r => r.id === allocation.resourceId)?.name || allocation.resourceId}
-                      </TableCell>
-                      <TableCell>{getRelatedTaskName(allocation.allocatedTo)}</TableCell>
-                      <TableCell align="right">{allocation.allocatedQuantity}</TableCell>
-                      <TableCell>
-                        {allocation.startDate} to {allocation.endDate}
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={allocation.status} 
-                          size="small" 
-                          variant="outlined" 
-                          sx={{ 
-                            fontSize: '0.7rem',
-                            height: 20
-                          }} 
-                        />
-                      </TableCell>
-                      <TableCell>{allocation.notes}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+          <ShadcnTable className="mt-4">
+            <ShadcnTableHeader>
+              <ShadcnTableRow>
+                <ShadcnTableCell className="font-bold">Resource</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Allocated To</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold text-right">Quantity</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Period</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Status</ShadcnTableCell>
+                <ShadcnTableCell className="font-bold">Notes</ShadcnTableCell>
+              </ShadcnTableRow>
+            </ShadcnTableHeader>
+            <ShadcnTableBody>
+              {allocations.map((allocation) => (
+                <ShadcnTableRow key={allocation.id}>
+                  <ShadcnTableCell>
+                    {resources.find(r => r.id === allocation.resourceId)?.name || allocation.resourceId}
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>{getRelatedTaskName(allocation.allocatedTo)}</ShadcnTableCell>
+                  <ShadcnTableCell className="text-right">{allocation.allocatedQuantity}</ShadcnTableCell>
+                  <ShadcnTableCell>
+                    {allocation.startDate} to {allocation.endDate}
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>
+                    <Badge>{allocation.status}</Badge>
+                  </ShadcnTableCell>
+                  <ShadcnTableCell>{allocation.notes}</ShadcnTableCell>
+                </ShadcnTableRow>
+              ))}
+            </ShadcnTableBody>
+          </ShadcnTable>
+          </>
         )}
 
         {activeTab === 2 && (
-          <Box>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Resource-Task Matrix showing allocation of resources to specific tasks and activities
-            </Alert>
-            
-            <TableContainer>
-              <Table size="small">
-                <TableHead sx={{ bgcolor: 'slate.50' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Resource</TableCell>
-                    {project.schedule?.slice(0, 5).map((task: any) => (
-                      <React.Fragment key={task.id}>
-                        <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                          {task.name.substring(0, 15)}...
-                        </TableCell>
-                      </React.Fragment>
-                    ))}
-                    <TableCell sx={{ fontWeight: 'bold' }}>Total Allocated</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {resources.map((resource) => (
-                    <TableRow key={resource.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getResourceIcon(resource.type)}
-                          <Typography variant="body2" fontWeight="bold">{resource.name}</Typography>
-                        </Box>
-                      </TableCell>
-                      {project.schedule?.slice(0, 5).map((task: any) => {
-                        const allocation = allocations.find(a => 
-                          a.resourceId === resource.id && a.allocatedTo === task.id
-                        );
-                        return (
-                          <React.Fragment key={task.id}>
-                            <TableCell align="center">
-                              {allocation ? allocation.allocatedQuantity : '-'}
-                            </TableCell>
-                          </React.Fragment>
-                        );
-                      })}
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        {resource.allocatedQuantity}
-                      </TableCell>
-                    </TableRow>
+          <div>
+            <ShadcnAlert className="mb-4">
+              <AlertDescription>
+                Resource-Task Matrix showing allocation of resources to specific tasks and activities
+              </AlertDescription>
+            </ShadcnAlert>
+
+            <ShadcnTable>
+              <ShadcnTableHeader>
+                <ShadcnTableRow>
+                  <ShadcnTableCell className="font-bold">Resource</ShadcnTableCell>
+                  {project.schedule?.slice(0, 5).map((task: any) => (
+                    <React.Fragment key={task.id}>
+                      <ShadcnTableCell className="font-bold text-center">
+                        {task.name.substring(0, 15)}...
+                      </ShadcnTableCell>
+                    </React.Fragment>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+                  <ShadcnTableCell className="font-bold">Total Allocated</ShadcnTableCell>
+                </ShadcnTableRow>
+              </ShadcnTableHeader>
+              <ShadcnTableBody>
+                {resources.map((resource) => (
+                  <ShadcnTableRow key={resource.id}>
+                    <ShadcnTableCell>
+                      <div className="flex items-center gap-1">
+                        {getResourceIcon(resource.type)}
+                        <span className="font-bold text-sm">{resource.name}</span>
+                      </div>
+                    </ShadcnTableCell>
+                    {project.schedule?.slice(0, 5).map((task: any) => {
+                      const allocation = allocations.find(a =>
+                        a.resourceId === resource.id && a.allocatedTo === task.id
+                      );
+                      return (
+                        <React.Fragment key={task.id}>
+                          <ShadcnTableCell className="text-center">
+                            {allocation ? allocation.allocatedQuantity : '-'}
+                          </ShadcnTableCell>
+                        </React.Fragment>
+                      );
+                    })}
+                    <ShadcnTableCell className="text-right font-bold">
+                      {resource.allocatedQuantity}
+                    </ShadcnTableCell>
+                  </ShadcnTableRow>
+                ))}
+              </ShadcnTableBody>
+            </ShadcnTable>
+          </div>
         )}
-      </Paper>
+      </Card>
 
       {/* Resource Edit Modal */}
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          {editingResource.id ? 'Edit Resource' : 'New Resource'}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Name"
-                fullWidth
-                size="small"
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogHeader>
+          <DialogTitle>
+            {editingResource.id ? 'Edit Resource' : 'New Resource'}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name-input">Name</Label>
+              <Input
+                id="name-input"
                 value={editingResource.name}
                 onChange={(e) => setEditingResource({...editingResource, name: e.target.value})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Type</InputLabel>
-                <Select 
-                  value={editingResource.type} 
-                  label="Type"
-                  onChange={(e) => setEditingResource({...editingResource, type: e.target.value})}
-                >
-                  <MenuItem value="Material">Material</MenuItem>
-                  <MenuItem value="Labor">Labor</MenuItem>
-                  <MenuItem value="Equipment">Equipment</MenuItem>
-                  <MenuItem value="Subcontractor">Subcontractor</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Category"
-                fullWidth
-                size="small"
+            </div>
+            <div>
+              <Label htmlFor="type-select">Type</Label>
+              <ShadcnSelect value={editingResource.type} onValueChange={(value) => setEditingResource({...editingResource, type: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Material">Material</SelectItem>
+                  <SelectItem value="Labor">Labor</SelectItem>
+                  <SelectItem value="Equipment">Equipment</SelectItem>
+                  <SelectItem value="Subcontractor">Subcontractor</SelectItem>
+                </SelectContent>
+              </ShadcnSelect>
+            </div>
+            <div>
+              <Label htmlFor="category-input">Category</Label>
+              <Input
+                id="category-input"
                 value={editingResource.category}
                 onChange={(e) => setEditingResource({...editingResource, category: e.target.value})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Unit"
-                fullWidth
-                size="small"
+            </div>
+            <div>
+              <Label htmlFor="unit-input">Unit</Label>
+              <Input
+                id="unit-input"
                 value={editingResource.unit}
                 onChange={(e) => setEditingResource({...editingResource, unit: e.target.value})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Unit Cost"
+            </div>
+            <div>
+              <Label htmlFor="unit-cost-input">Unit Cost</Label>
+              <Input
+                id="unit-cost-input"
                 type="number"
-                fullWidth
-                size="small"
                 value={editingResource.unitCost}
                 onChange={(e) => setEditingResource({...editingResource, unitCost: Number(e.target.value)})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Total Quantity"
+            </div>
+            <div>
+              <Label htmlFor="total-quantity-input">Total Quantity</Label>
+              <Input
+                id="total-quantity-input"
                 type="number"
-                fullWidth
-                size="small"
                 value={editingResource.totalQuantity}
                 onChange={(e) => setEditingResource({...editingResource, totalQuantity: Number(e.target.value)})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
-                <Select 
-                  value={editingResource.status} 
-                  label="Status"
-                  onChange={(e) => setEditingResource({...editingResource, status: e.target.value})}
-                >
-                  <MenuItem value="Available">Available</MenuItem>
-                  <MenuItem value="Allocated">Allocated</MenuItem>
-                  <MenuItem value="In Transit">In Transit</MenuItem>
-                  <MenuItem value="Reserved">Reserved</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Criticality</InputLabel>
-                <Select 
-                  value={editingResource.criticality} 
-                  label="Criticality"
-                  onChange={(e) => setEditingResource({...editingResource, criticality: e.target.value})}
-                >
-                  <MenuItem value="Low">Low</MenuItem>
-                  <MenuItem value="Medium">Medium</MenuItem>
-                  <MenuItem value="High">High</MenuItem>
-                  <MenuItem value="Critical">Critical</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Supplier</InputLabel>
-                <Select 
-                  value={editingResource.supplier || ''} 
-                  label="Supplier"
-                  onChange={(e) => setEditingResource({...editingResource, supplier: e.target.value})}
-                >
-                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                  <MenuItem value="Nepal Cement Ltd">Nepal Cement Ltd</MenuItem>
-                  <MenuItem value="Local Sand Suppliers">Local Sand Suppliers</MenuItem>
-                  <MenuItem value="Local Stone Crushers">Local Stone Crushers</MenuItem>
-                  <MenuItem value="Mukunda Steel">Mukunda Steel</MenuItem>
-                  <MenuItem value="Equipment Rental Co.">Equipment Rental Co.</MenuItem>
-                  <MenuItem value="Local Asphalt Plant">Local Asphalt Plant</MenuItem>
-                  <MenuItem value="Local Quarry">Local Quarry</MenuItem>
-                  <MenuItem value="ABC Excavation">ABC Excavation</MenuItem>
-                  <MenuItem value="XYZ Concrete Works">XYZ Concrete Works</MenuItem>
-                  <MenuItem value="PQR Paving Solutions">PQR Paving Solutions</MenuItem>
-                  <MenuItem value="Internal Team">Internal Team</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Lead Time (days)"
+            </div>
+            <div>
+              <Label htmlFor="status-select">Status</Label>
+              <ShadcnSelect value={editingResource.status} onValueChange={(value) => setEditingResource({...editingResource, status: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Available">Available</SelectItem>
+                  <SelectItem value="Allocated">Allocated</SelectItem>
+                  <SelectItem value="In Transit">In Transit</SelectItem>
+                  <SelectItem value="Reserved">Reserved</SelectItem>
+                </SelectContent>
+              </ShadcnSelect>
+            </div>
+            <div>
+              <Label htmlFor="criticality-select">Criticality</Label>
+              <ShadcnSelect value={editingResource.criticality} onValueChange={(value) => setEditingResource({...editingResource, criticality: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Criticality" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
+                </SelectContent>
+              </ShadcnSelect>
+            </div>
+            <div>
+              <Label htmlFor="supplier-select">Supplier</Label>
+              <ShadcnSelect value={editingResource.supplier || ''} onValueChange={(value) => setEditingResource({...editingResource, supplier: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=""><em>Select Supplier</em></SelectItem>
+                  <SelectItem value="Nepal Cement Ltd">Nepal Cement Ltd</SelectItem>
+                  <SelectItem value="Local Sand Suppliers">Local Sand Suppliers</SelectItem>
+                  <SelectItem value="Local Stone Crushers">Local Stone Crushers</SelectItem>
+                  <SelectItem value="Mukunda Steel">Mukunda Steel</SelectItem>
+                  <SelectItem value="Equipment Rental Co.">Equipment Rental Co.</SelectItem>
+                  <SelectItem value="Local Asphalt Plant">Local Asphalt Plant</SelectItem>
+                  <SelectItem value="Local Quarry">Local Quarry</SelectItem>
+                  <SelectItem value="ABC Excavation">ABC Excavation</SelectItem>
+                  <SelectItem value="XYZ Concrete Works">XYZ Concrete Works</SelectItem>
+                  <SelectItem value="PQR Paving Solutions">PQR Paving Solutions</SelectItem>
+                  <SelectItem value="Internal Team">Internal Team</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </ShadcnSelect>
+            </div>
+            <div>
+              <Label htmlFor="lead-time-input">Lead Time (days)</Label>
+              <Input
+                id="lead-time-input"
                 type="number"
-                fullWidth
-                size="small"
                 value={editingResource.leadTime}
                 onChange={(e) => setEditingResource({...editingResource, leadTime: Number(e.target.value)})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Reorder Level"
+            </div>
+            <div>
+              <Label htmlFor="reorder-level-input">Reorder Level</Label>
+              <Input
+                id="reorder-level-input"
                 type="number"
-                fullWidth
-                size="small"
                 value={editingResource.reorderLevel}
                 onChange={(e) => setEditingResource({...editingResource, reorderLevel: Number(e.target.value)})}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Notes"
-                fullWidth
-                multiline
-                rows={3}
-                size="small"
+            </div>
+            <div className="col-span-full">
+              <Label htmlFor="notes-textarea">Notes</Label>
+              <Textarea
+                id="notes-textarea"
                 value={editingResource.notes}
                 onChange={(e) => setEditingResource({...editingResource, notes: e.target.value})}
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveResource}>
-            Save
-          </Button>
-        </DialogActions>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveResource}>Save</Button>
+        </DialogFooter>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

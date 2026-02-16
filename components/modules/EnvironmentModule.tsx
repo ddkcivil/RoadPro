@@ -1,16 +1,42 @@
-
 import React, { useState } from 'react';
-import { 
-    Box, Typography, Paper, Grid, TextField, Button, Table, 
-    TableHead, TableBody, TableRow, TableCell, Chip, Stack,
-    LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions,
-    InputAdornment, Divider, Alert
-} from '@mui/material';
 import { 
     Trees, CloudRain, Droplets, MapPin, Plus, X, Save,
     ShieldCheck, Calendar, Wind, Thermometer, History
 } from 'lucide-react';
 import { Project, UserRole, TreeLog, SprinklingLog } from '../../types';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Progress } from '~/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 interface Props {
   project: Project;
@@ -74,158 +100,216 @@ const EnvironmentModule: React.FC<Props> = ({ project, onProjectUpdate }) => {
     };
     
     return (
-        <Box className="animate-in fade-in duration-500">
-            <Box display="flex" justifyContent="space-between" mb={4} alignItems="center">
-                <Box>
-                    <Typography variant="h5" fontWeight="900">Environmental Compliance</Typography>
-                    <Typography variant="body2" color="text.secondary">Safeguard monitoring per project EMP guidelines</Typography>
-                </Box>
-                <Stack direction="row" spacing={2}>
-                    <Button variant={activeTab === 'TREES' ? 'contained' : 'outlined'} startIcon={<Trees/>} onClick={() => setActiveTab('TREES')}>Tree Replacement</Button>
-                    <Button variant={activeTab === 'SPRINKLING' ? 'contained' : 'outlined'} startIcon={<Droplets/>} onClick={() => setActiveTab('SPRINKLING')}>Dust Suppression</Button>
-                </Stack>
-            </Box>
+        <div className="p-4 animate-in fade-in duration-500">
+            <div className="flex justify-between mb-6 items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Environmental Compliance</h1>
+                    <p className="text-sm text-gray-500">Safeguard monitoring per project EMP guidelines</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant={activeTab === 'TREES' ? 'default' : 'outline'}
+                        onClick={() => setActiveTab('TREES')}
+                    >
+                        <Trees className="mr-2 h-4 w-4" /> Tree Replacement
+                    </Button>
+                    <Button
+                        variant={activeTab === 'SPRINKLING' ? 'default' : 'outline'}
+                        onClick={() => setActiveTab('SPRINKLING')}
+                    >
+                        <Droplets className="mr-2 h-4 w-4" /> Dust Suppression
+                    </Button>
+                </div>
+            </div>
 
             {activeTab === 'TREES' && (
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
-                        <Paper variant="outlined" sx={{ p: 3, borderRadius: 4, bgcolor: '#f0fdf4' }}>
-                            <Typography variant="caption" fontWeight="900" color="success.main" sx={{ letterSpacing: 1 }}>COMPENSATORY PLANTATION (1:10)</Typography>
-                            <Box display="flex" justifyContent="space-between" alignItems="baseline" mt={2}>
-                                <Typography variant="h3" fontWeight="900">{treeStats.planted}</Typography>
-                                <Typography variant="h6" color="text.secondary">/ {treeStats.target}</Typography>
-                            </Box>
-                            <LinearProgress variant="determinate" value={treeStats.target > 0 ? (treeStats.planted / treeStats.target) * 100 : 0} color="success" sx={{ height: 10, borderRadius: 5, mt: 2 }} />
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Based on {treeStats.removed} trees cleared along the alignment.</Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={8}>
-                        <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden' }}>
-                            <Box p={2} borderBottom="1px solid #eee" display="flex" justifyContent="space-between" alignItems="center">
-                                <Typography variant="subtitle2" fontWeight="bold">Removal & Plantation Ledger</Typography>
-                                <Button size="small" variant="contained" color="success" startIcon={<Plus size={16}/>} onClick={() => setIsTreeModalOpen(true)}>Log Clearing</Button>
-                            </Box>
-                            <Table size="small">
-                                <TableHead sx={{ bgcolor: 'slate.50' }}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="col-span-1 bg-green-50">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-black text-green-700 uppercase tracking-wide">Compensatory Plantation (1:10)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex justify-between items-baseline mb-2">
+                                <span className="text-4xl font-bold text-green-800">{treeStats.planted}</span>
+                                <span className="text-lg text-gray-500">/ {treeStats.target}</span>
+                            </div>
+                            <Progress value={treeStats.target > 0 ? (treeStats.planted / treeStats.target) * 100 : 0} className="h-2" indicatorColor="bg-green-600" />
+                            <p className="text-xs text-gray-500 mt-2">Based on {treeStats.removed} trees cleared along the alignment.</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="col-span-2">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-lg font-semibold">Removal & Plantation Ledger</CardTitle>
+                            <Button size="sm" onClick={() => setIsTreeModalOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> Log Clearing
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Location (Ch)</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Species</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Cleared</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Target</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Planted</TableCell>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Location (Ch)</TableHead>
+                                        <TableHead>Species</TableHead>
+                                        <TableHead className="text-right">Cleared</TableHead>
+                                        <TableHead className="text-right">Target</TableHead>
+                                        <TableHead className="text-right">Planted</TableHead>
                                     </TableRow>
-                                </TableHead>
+                                </TableHeader>
                                 <TableBody>
-                                    {registry.treeLogs.map(log => (
+                                    {registry.treeLogs.length > 0 ? registry.treeLogs.map(log => (
                                         <TableRow key={log.id}>
                                             <TableCell>{log.date}</TableCell>
-                                            {/* Fixed: Used sx prop for fontWeight on TableCell */}
-                                            <TableCell sx={{ fontWeight: 'bold' }}>{log.chainage}</TableCell>
+                                            <TableCell className="font-bold">{log.chainage}</TableCell>
                                             <TableCell>{log.species}</TableCell>
-                                            <TableCell align="right" sx={{ color: 'error.main' }}>-{log.removedCount}</TableCell>
-                                            <TableCell align="right">{log.targetPlant}</TableCell>
-                                            <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{log.plantedCount}</TableCell>
+                                            <TableCell className="text-right text-red-600">-{log.removedCount}</TableCell>
+                                            <TableCell className="text-right">{log.targetPlant}</TableCell>
+                                            <TableCell className="text-right text-green-600 font-bold">{log.plantedCount}</TableCell>
                                         </TableRow>
-                                    ))}
-                                    {registry.treeLogs.length === 0 && (
+                                    )) : (
                                         <TableRow>
-                                            <TableCell align="center" {...{ colSpan: 6 }} sx={{ py: 6, color: 'text.disabled' }}>No tree clearing logs recorded.</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                                                No tree clearing logs recorded.
+                                            </TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
                             </Table>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                        </CardContent>
+                    </Card>
+                </div>
             )}
 
             {activeTab === 'SPRINKLING' && (
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
-                        <Paper variant="outlined" sx={{ p: 3, borderRadius: 4 }}>
-                            <Typography variant="caption" fontWeight="900" color="primary" sx={{ letterSpacing: 1 }}>DAILY TARGET MONITOR</Typography>
-                            <Stack spacing={2} mt={3}>
-                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="body2">Today's Logs</Typography>
-                                    <Chip label="2/3" color="warning" size="small" sx={{ fontWeight: 'bold' }} />
-                                </Box>
-                                <Alert severity="warning" icon={<Wind size={18}/>}>Dry conditions reported. Ensure 3rd sprinkling cycle is completed at high-traffic zones.</Alert>
-                            </Stack>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={8}>
-                         <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden' }}>
-                            <Box p={2} borderBottom="1px solid #eee" display="flex" justifyContent="space-between" alignItems="center">
-                                <Typography variant="subtitle2" fontWeight="bold">Water Sprinkling History</Typography>
-                                <Button size="small" variant="contained" startIcon={<Plus size={16}/>} onClick={() => setIsSprinkleModalOpen(true)}>Record Cycle</Button>
-                            </Box>
-                            <Table size="small">
-                                <TableHead sx={{ bgcolor: 'slate.50' }}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="col-span-1">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-black text-primary uppercase tracking-wide">Daily Target Monitor</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex justify-between items-center mb-3">
+                                <p className="text-sm">Today's Logs</p>
+                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">2/3</Badge>
+                            </div>
+                            <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800">
+                                <Wind className="h-4 w-4" />
+                                <AlertTitle>Dry conditions reported</AlertTitle>
+                                <AlertDescription>Ensure 3rd sprinkling cycle is completed at high-traffic zones.</AlertDescription>
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                    <Card className="col-span-2">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-lg font-semibold">Water Sprinkling History</CardTitle>
+                            <Button size="sm" onClick={() => setIsSprinkleModalOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> Record Cycle
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Cycle</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Section Covered</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Bowser Ref</TableCell>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Cycle</TableHead>
+                                        <TableHead>Section Covered</TableHead>
+                                        <TableHead>Bowser Ref</TableHead>
                                     </TableRow>
-                                </TableHead>
+                                </TableHeader>
                                 <TableBody>
-                                    {registry.sprinklingLogs.map(log => (
+                                    {registry.sprinklingLogs.length > 0 ? registry.sprinklingLogs.map(log => (
                                         <TableRow key={log.id}>
                                             <TableCell>{log.date}</TableCell>
-                                            <TableCell><Chip label={log.time || 'N/A'} size="small" sx={{ height: 20, fontSize: 10 }} /></TableCell>
-                                            {/* Fixed: Used sx prop for fontWeight on TableCell */}
-                                            <TableCell sx={{ fontWeight: 'bold' }}>{log.location || 'N/A'}</TableCell>
+                                            <TableCell><Badge variant="outline">{log.time || 'N/A'}</Badge></TableCell>
+                                            <TableCell className="font-bold">{log.location || 'N/A'}</TableCell>
                                             <TableCell>{log.bowserId || 'N/A'}</TableCell>
                                         </TableRow>
-                                    ))}
-                                    {registry.sprinklingLogs.length === 0 && (
+                                    )) : (
                                         <TableRow>
-                                            <TableCell align="center" {...{ colSpan: 4 }} sx={{ py: 6, color: 'text.disabled' }}>No sprinkling cycles logged today.</TableCell>
+                                            <TableCell colSpan={4} className="text-center py-8 text-gray-400">
+                                                No sprinkling cycles logged today.
+                                            </TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
                             </Table>
-                         </Paper>
-                    </Grid>
-                </Grid>
+                        </CardContent>
+                    </Card>
+                </div>
             )}
 
-            <Dialog open={isTreeModalOpen} onClose={() => setIsTreeModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ component: 'form', onSubmit: handleSaveTree, sx: { borderRadius: 3 } }}>
-                <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-                    <Trees size={20} className="text-white" /> Log Tree Clearing
-                </DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Stack spacing={3} mt={1}>
-                        <TextField name="chainage" label="Location (Ch)" fullWidth size="small" required />
-                        <TextField name="species" label="Tree Species" fullWidth size="small" required />
-                        <TextField name="removed" label="Number of Trees" type="number" fullWidth size="small" required helperText="System will auto-calculate 1:10 target." />
-                    </Stack>
+            {/* Tree Modal */}
+            <Dialog open={isTreeModalOpen} onOpenChange={setIsTreeModalOpen}>
+                <DialogContent className="sm:max-w-md" asChild={false}>
+                    <DialogHeader>
+                        <DialogTitle>Log Tree Clearing</DialogTitle>
+                        <DialogDescription>
+                            Record details of tree removal for compensatory plantation tracking.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSaveTree} className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="chainage" className="text-right">Location (Ch)</Label>
+                            <Input id="chainage" name="chainage" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="species" className="text-right">Tree Species</Label>
+                            <Input id="species" name="species" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="removed" className="text-right">Trees Removed</Label>
+                            <Input id="removed" name="removed" type="number" min="0" className="col-span-3" required />
+                            <p className="col-span-4 text-sm text-muted-foreground text-right">System will auto-calculate 1:10 target.</p>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsTreeModalOpen(false)}>
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                            <Button type="submit">
+                                <Save className="mr-2 h-4 w-4" /> Commit Registry
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
-                <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-                    <Button onClick={() => setIsTreeModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-                    <Button type="submit" variant="contained" startIcon={<Save size={16} />} color="success" sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Commit Registry</Button>
-                </DialogActions>
             </Dialog>
             
-            <Dialog open={isSprinkleModalOpen} onClose={() => setIsSprinkleModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ component: 'form', onSubmit: handleSaveSprinkle, sx: { borderRadius: 3 } }}>
-                <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'primary.main', color: 'white', p: 2, borderTopLeftRadius: 3, borderTopRightRadius: 3 }}>
-                    <Droplets size={20} className="text-white" /> Record Sprinkling Cycle
-                </DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Stack spacing={3} mt={1}>
-                        <TextField name="date" label="Date" type="date" fullWidth size="small" required InputLabelProps={{ shrink: true }} defaultValue={new Date().toISOString().split('T')[0]} />
-                        <TextField name="location" label="Section Covered (Chainage/Location)" fullWidth size="small" required />
-                        <TextField name="volume" label="Volume (Ltrs)" type="number" fullWidth size="small" required />
-                        <TextField name="operator" label="Operator" fullWidth size="small" required />
-                    </Stack>
+            {/* Sprinkling Modal */}
+            <Dialog open={isSprinkleModalOpen} onOpenChange={setIsSprinkleModalOpen}>
+                <DialogContent className="sm:max-w-md" asChild={false}>
+                    <DialogHeader>
+                        <DialogTitle>Record Sprinkling Cycle</DialogTitle>
+                        <DialogDescription>
+                            Log water sprinkling activities for dust suppression.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSaveSprinkle} className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="date" className="text-right">Date</Label>
+                            <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="location" className="text-right">Section Covered</Label>
+                            <Input id="location" name="location" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="volume" className="text-right">Volume (Liters)</Label>
+                            <Input id="volume" name="volume" type="number" min="0" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="operator" className="text-right">Operator</Label>
+                            <Input id="operator" name="operator" className="col-span-3" required />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsSprinkleModalOpen(false)}>
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                            <Button type="submit">
+                                <Save className="mr-2 h-4 w-4" /> Save Cycle
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
-                <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }}>
-                    <Button onClick={() => setIsSprinkleModalOpen(false)} startIcon={<X size={16} />} sx={{ px: 3, py: 1, fontWeight: 600 }}>Cancel</Button>
-                    <Button type="submit" variant="contained" startIcon={<Save size={16} />} color="primary" sx={{ px: 3, py: 1, fontWeight: 600, boxShadow: 2, '&:hover': { boxShadow: 3 } }}>Save Cycle</Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

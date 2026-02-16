@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Typography, 
-  Grid, 
-  TextField, 
-  Button, 
-  IconButton,
-  Avatar,
-  Link
-} from '@mui/material';
-import { 
-  HardHat, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  HardHat,
+  Mail,
+  Phone,
+  MapPin,
   Globe,
   Twitter,
   Facebook,
   Linkedin,
   Instagram
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Textarea } from '~/components/ui/textarea';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -53,303 +45,205 @@ const ContactPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box mb={6}>
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
-          <Box sx={{ 
-            width: 56, 
-            height: 56, 
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
-            borderRadius: '16px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            color: 'white' 
-          }}>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="mb-12">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center text-white">
             <HardHat size={28} />
-          </Box>
-          <div>
-            <Typography variant="h3" fontWeight="800" sx={{ letterSpacing: '-0.04em' }}>
-              Contact Us
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ mt: 0.5 }}>
-              Get in touch with our team
-            </Typography>
           </div>
-        </Box>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
-          Have questions about RoadMaster.Pro? Interested in learning more about our platform? 
+          <div>
+            <h1 className="text-4xl font-black tracking-tight">Contact Us</h1>
+            <h2 className="text-xl text-muted-foreground mt-1">Get in touch with our team</h2>
+          </div>
+        </div>
+        <p className="text-muted-foreground max-w-3xl">
+          Have questions about RoadMaster.Pro? Interested in learning more about our platform?
           Reach out to us using any of the channels below, and our team will get back to you promptly.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="700" gutterBottom>
-                Send us a message
-              </Typography>
-              <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Your Name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Email Address"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Subject"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
-                      multiline
-                      rows={5}
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button 
-                      type="submit" 
-                      variant="contained" 
-                      size="large" 
-                      fullWidth
-                      sx={{ 
-                        py: 1.5, 
-                        borderRadius: 2, 
-                        fontWeight: 700,
-                        textTransform: 'none'
-                      }}
-                    >
-                      Send Message
-                    </Button>
-                  </Grid>
-                </Grid>
-              </form>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="700" gutterBottom>
-                Contact Information
-              </Typography>
-              
-              <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
-                <Box sx={{ 
-                  width: 40, 
-                  height: 40, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '12px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'white',
-                  mt: 0.5
-                }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle>Send us a message</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Your Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message">Message</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  rows={5}
+                />
+              </div>
+              <Button type="submit" className="w-full" size="lg">
+                Send Message
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground mt-1">
                   <MapPin size={18} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight="700">Address</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                </div>
+                <div>
+                  <h3 className="font-semibold">Address</h3>
+                  <p className="text-sm text-muted-foreground">
                     Global Platform<br />
                     Connecting Teams Worldwide
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
-                <Box sx={{ 
-                  width: 40, 
-                  height: 40, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '12px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'white',
-                  mt: 0.5
-                }}>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground mt-1">
                   <Phone size={18} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight="700">Phone</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                </div>
+                <div>
+                  <h3 className="font-semibold">Phone</h3>
+                  <p className="text-sm text-muted-foreground">
                     For support inquiries:<br />
-                    <Link href="tel:+1234567890" color="primary" underline="hover">+1 (234) 567-8900</Link>
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
-                <Box sx={{ 
-                  width: 40, 
-                  height: 40, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '12px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'white',
-                  mt: 0.5
-                }}>
+                    <a href="tel:+1234567890" className="text-primary hover:underline">+1 (234) 567-8900</a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground mt-1">
                   <Mail size={18} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight="700">Email</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                </div>
+                <div>
+                  <h3 className="font-semibold">Email</h3>
+                  <p className="text-sm text-muted-foreground">
                     General inquiries:<br />
-                    <Link href="mailto:info@roadmasterpro.com" color="primary" underline="hover">info@roadmasterpro.com</Link><br />
+                    <a href="mailto:info@roadmasterpro.com" className="text-primary hover:underline">info@roadmasterpro.com</a><br />
                     Support:<br />
-                    <Link href="mailto:support@roadmasterpro.com" color="primary" underline="hover">support@roadmasterpro.com</Link>
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
-                <Box sx={{ 
-                  width: 40, 
-                  height: 40, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '12px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'white',
-                  mt: 0.5
-                }}>
+                    <a href="mailto:support@roadmasterpro.com" className="text-primary hover:underline">support@roadmasterpro.com</a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground mt-1">
                   <Globe size={18} />
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight="700">Website</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <Link href="https://www.roadmasterpro.com" color="primary" underline="hover" target="_blank">
+                </div>
+                <div>
+                  <h3 className="font-semibold">Website</h3>
+                  <p className="text-sm text-muted-foreground">
+                    <a href="https://www.roadmasterpro.com" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
                       www.roadmasterpro.com
-                    </Link>
-                  </Typography>
-                </Box>
-              </Box>
+                    </a>
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          
-          <Card variant="outlined" sx={{ mt: 4, borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h6" fontWeight="700" gutterBottom>
-                Follow Us
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mb={2}>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Follow Us</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
                 Stay connected with us on social media for updates and news.
-              </Typography>
-              <Box display="flex" gap={2}>
-                <IconButton 
-                  href="#" 
-                  target="_blank" 
-                  sx={{ 
-                    bgcolor: '#1da1f2', 
-                    color: 'white',
-                    '&:hover': { bgcolor: '#0d8bd9' }
-                  }}
-                >
-                  <Twitter size={18} />
-                </IconButton>
-                <IconButton 
-                  href="#" 
-                  target="_blank" 
-                  sx={{ 
-                    bgcolor: '#1877f2', 
-                    color: 'white',
-                    '&:hover': { bgcolor: '#0d66d0' }
-                  }}
-                >
-                  <Facebook size={18} />
-                </IconButton>
-                <IconButton 
-                  href="#" 
-                  target="_blank" 
-                  sx={{ 
-                    bgcolor: '#0077b5', 
-                    color: 'white',
-                    '&:hover': { bgcolor: '#005885' }
-                  }}
-                >
-                  <Linkedin size={18} />
-                </IconButton>
-                <IconButton 
-                  href="#" 
-                  target="_blank" 
-                  sx={{ 
-                    bgcolor: '#e1306c', 
-                    color: 'white',
-                    '&:hover': { bgcolor: '#c1275c' }
-                  }}
-                >
-                  <Instagram size={18} />
-                </IconButton>
-              </Box>
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" size="icon" asChild>
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    <Twitter size={18} />
+                  </a>
+                </Button>
+                <Button variant="outline" size="icon" asChild>
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    <Facebook size={18} />
+                  </a>
+                </Button>
+                <Button variant="outline" size="icon" asChild>
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    <Linkedin size={18} />
+                  </a>
+                </Button>
+                <Button variant="outline" size="icon" asChild>
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    <Instagram size={18} />
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-      
-      <Card variant="outlined" sx={{ mt: 4, borderRadius: 3 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" fontWeight="700" gutterBottom>
-            Office Hours
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body1" fontWeight="600" color="primary">Business Hours</Typography>
-              <Typography variant="body2" color="text.secondary">Monday - Friday: 9:00 AM - 6:00 PM EST</Typography>
-              <Typography variant="body2" color="text.secondary">Saturday: 10:00 AM - 2:00 PM EST</Typography>
-              <Typography variant="body2" color="text.secondary">Sunday: Closed</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body1" fontWeight="600" color="primary">Support Availability</Typography>
-              <Typography variant="body2" color="text.secondary">24/7 Online Support</Typography>
-              <Typography variant="body2" color="text.secondary">Phone Support: Business Hours</Typography>
-              <Typography variant="body2" color="text.secondary">Email Response: Within 24 hours</Typography>
-            </Grid>
-          </Grid>
+        </div>
+      </div>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Office Hours</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-primary mb-2">Business Hours</h3>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Monday - Friday: 9:00 AM - 6:00 PM EST</p>
+                <p>Saturday: 10:00 AM - 2:00 PM EST</p>
+                <p>Sunday: Closed</p>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-primary mb-2">Support Availability</h3>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>24/7 Online Support</p>
+                <p>Phone Support: Business Hours</p>
+                <p>Email Response: Within 24 hours</p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </Container>
+    </div>
   );
 };
 

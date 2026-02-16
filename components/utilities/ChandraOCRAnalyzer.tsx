@@ -1,28 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Button, 
-  LinearProgress, 
-  Alert, 
-  Stack, 
-  Chip, 
-  Paper, 
-  Grid,
-  Tabs,
-  Tab,
-  Divider,
-  IconButton,
-  Tooltip
-} from '@mui/material';
-import { 
-  Upload, 
-  FileText, 
-  Eye, 
-  Download, 
-  CheckCircle, 
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Progress } from '../ui/progress';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Badge } from '../ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Separator } from '../ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import {
+  Upload,
+  FileText,
+  Eye,
+  Download,
+  CheckCircle,
   BarChart3,
   Search,
   Zap,
@@ -289,11 +279,13 @@ const ChandraOCRAnalyzer: React.FC = () => {
         <CardContent>
           <input
             type="file"
+            id="ocr-file-upload-input" // Added id for accessibility
             ref={fileInputRef}
             onChange={handleFileUpload}
             accept="image/*,.pdf"
-            style={{ display: 'none' }}
+            className="hidden"
           />
+          <label htmlFor="ocr-file-upload-input" className="sr-only">Upload Document for Chandra OCR</label>
           
           {/* Extraction Mode Selector */}
           <Box display="flex" gap={2} mb={3}>

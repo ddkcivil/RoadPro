@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Typography, Button, Paper, Grid, Card, CardContent,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Select, MenuItem, FormControl, InputLabel,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Tabs, Tab, Chip, Avatar, Divider, List, ListItem, ListItemText,
-  Accordion, AccordionSummary, AccordionDetails, Alert
-} from '@mui/material';
-import { 
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select as ShadcnSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table as ShadcnTable, TableBody as ShadcnTableBody, TableCell as ShadcnTableCell, TableHead as ShadcnTableHead, TableHeader as ShadcnTableHeader, TableRow as ShadcnTableRow } from '../ui/table';
+import { Tabs as ShadcnTabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Alert as ShadcnAlert, AlertDescription } from '../ui/alert';
+import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Separator } from '../ui/separator';
+
+import {
   FileText, Calendar, Users, HardHat, FileSpreadsheet, TrendingUp,
-  CheckCircle, AlertTriangle, MapPin, Image as ImageIcon, 
-  Receipt, Shield, Trees, FileSignature, 
+  CheckCircle, AlertTriangle, MapPin, Image as ImageIcon,
+  Receipt, Shield, Trees, FileSignature,
   MessageSquare, Camera, BookOpen, ChevronDown
 } from 'lucide-react';
 import { Project, UserRole, AppSettings, BOQItem, ScheduleTask, LabTest, NCR, RFI, RFIStatus, StructureAsset, Vehicle, InventoryItem, DailyReport, PreConstructionTask, LandParcel, MapOverlay, EnvironmentRegistry, WeatherInfo } from '../../types';
@@ -66,1065 +71,901 @@ const MPRReportModule: React.FC<Props> = ({ project, settings, onProjectUpdate, 
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', gap: 3 }}>
-      <Paper sx={{ width: 300, borderRadius: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden' }} variant="outlined">
-        <Box p={2.5} borderBottom="1px solid #f1f5f9" bgcolor="slate.50">
-          <Typography variant="h6" fontWeight="900">MPR Generator</Typography>
-          <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+    <div className="h-[calc(100vh-140px)] flex gap-3">
+      <Card className="w-[300px] rounded-3xl flex flex-col overflow-hidden border">
+        <div className="p-6 border-b bg-slate-50">
+          <h2 className="text-lg font-black">MPR Generator</h2>
+          <p className="text-xs text-slate-500 mb-4">
             Monthly Progress Report
-          </Typography>
-          
-          <TextField
-            label="Reporting Month"
-            type="month"
-            fullWidth
-            value={reportMonth}
-            onChange={(e) => setReportMonth(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          
-          <Button 
-            fullWidth 
-            variant="contained" 
-            startIcon={<FileText size={18}/>}
+          </p>
+
+          <div className="mb-4">
+            <Label htmlFor="report-month">Reporting Month</Label>
+            <Input
+              id="report-month"
+              type="month"
+              value={reportMonth}
+              onChange={(e) => setReportMonth(e.target.value)}
+            />
+          </div>
+
+          <Button
+            className="w-full"
             onClick={handleGenerateReport}
-            sx={{ borderRadius: 3 }}
           >
+            <FileText size={18} className="mr-2" />
             Generate MPR
           </Button>
-        </Box>
-        
-        <Box flex={1} p={2} overflow="auto">
-          <Typography variant="subtitle2" fontWeight="bold" mb={2}>PROJECT STATS</Typography>
-          
-          <Grid container spacing={1.5}>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Planned</Typography>
-                <Typography variant="h6" fontWeight="bold">{(physicalProgress.planned * 100).toFixed(1)}%</Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={6}>
-              <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'slate.50' }}>
-                <Typography variant="caption" color="text.secondary">Actual</Typography>
-                <Typography variant="h6" fontWeight="bold" color="success.main">{(physicalProgress.actual * 100).toFixed(1)}%</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <List disablePadding>
-            <ListItem disablePadding sx={{ py: 0.5 }}>
-              <ListItemText 
-                primary="BOQ Items" 
-                secondary={project.boq.length.toString()} 
-                primaryTypographyProps={{ variant: 'caption', fontWeight: 'bold' }}
-                secondaryTypographyProps={{ variant: 'body2' }}
-              />
-            </ListItem>
-            <ListItem disablePadding sx={{ py: 0.5 }}>
-              <ListItemText 
-                primary="Active Tasks" 
-                secondary={project.schedule.filter(t => t.status !== 'Completed').length.toString()} 
-                primaryTypographyProps={{ variant: 'caption', fontWeight: 'bold' }}
-                secondaryTypographyProps={{ variant: 'body2' }}
-              />
-            </ListItem>
-            <ListItem disablePadding sx={{ py: 0.5 }}>
-              <ListItemText 
-                primary="Structures" 
-                secondary={project.structures?.length.toString() || '0'} 
-                primaryTypographyProps={{ variant: 'caption', fontWeight: 'bold' }}
-                secondaryTypographyProps={{ variant: 'body2' }}
-              />
-            </ListItem>
-            <ListItem disablePadding sx={{ py: 0.5 }}>
-              <ListItemText 
-                primary="Active NCRs" 
-                secondary={project.ncrs.filter(n => n.status !== 'Closed').length.toString()} 
-                primaryTypographyProps={{ variant: 'caption', fontWeight: 'bold' }}
-                secondaryTypographyProps={{ variant: 'body2' }}
-              />
-            </ListItem>
-          </List>
-        </Box>
-      </Paper>
+        </div>
 
-      <Box flex={1} overflow="auto">
-        <Tabs 
-          value={activeTab} 
-          onChange={(e, newVal) => setActiveTab(newVal)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        <div className="flex-1 p-4 overflow-auto">
+          <h3 className="text-sm font-bold mb-4">PROJECT STATS</h3>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="p-3 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Planned</p>
+              <p className="text-lg font-bold">{(physicalProgress.planned * 100).toFixed(1)}%</p>
+            </Card>
+            <Card className="p-3 text-center bg-slate-50">
+              <p className="text-xs text-slate-500">Actual</p>
+              <p className="text-lg font-bold text-green-600">{(physicalProgress.actual * 100).toFixed(1)}%</p>
+            </Card>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold">BOQ Items</span>
+              <span className="text-sm">{project.boq.length}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold">Active Tasks</span>
+              <span className="text-sm">{project.schedule.filter(t => t.status !== 'Completed').length}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold">Structures</span>
+              <span className="text-sm">{project.structures?.length || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold">Active NCRs</span>
+              <span className="text-sm">{project.ncrs.filter(n => n.status !== 'Closed').length}</span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex-1 overflow-auto">
+        <ShadcnTabs
+          value={activeTab.toString()}
+          onValueChange={(value) => setActiveTab(parseInt(value))}
+          className="border-b"
         >
-          <Tab label="Executive Summary" />
-          <Tab label="Physical Progress" />
-          <Tab label="Financial Progress" />
-          <Tab label="Resources" />
-          <Tab label="Quality & Safety" />
-          <Tab label="Environmental" />
-          <Tab label="Endorsement" />
-          <Tab label="Issues" />
-          <Tab label="Photos" />
-        </Tabs>
+          <TabsList>
+            <TabsTrigger value="0">Executive Summary</TabsTrigger>
+            <TabsTrigger value="1">Physical Progress</TabsTrigger>
+            <TabsTrigger value="2">Financial Progress</TabsTrigger>
+            <TabsTrigger value="3">Resources</TabsTrigger>
+            <TabsTrigger value="4">Quality & Safety</TabsTrigger>
+            <TabsTrigger value="5">Environmental</TabsTrigger>
+            <TabsTrigger value="6">Endorsement</TabsTrigger>
+            <TabsTrigger value="7">Issues</TabsTrigger>
+            <TabsTrigger value="8">Photos</TabsTrigger>
+          </TabsList>
+        </ShadcnTabs>
 
-        <Box p={3}>
+        <div className="p-6">
           {activeTab === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <FileSpreadsheet size={20} className="text-indigo-600" /> Financial Overview
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={4}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Original</Typography>
-                          <Typography variant="h6" fontWeight="bold">{formatCurrency(financialSummary.original, settings)}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Variation</Typography>
-                          <Typography variant="h6" fontWeight="bold">{formatCurrency(financialSummary.variation, settings)}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Revised</Typography>
-                          <Typography variant="h6" fontWeight="bold">{formatCurrency(financialSummary.revised, settings)}</Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                    
-                    <Box mt={2}>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>Progress Value</Typography>
-                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                        <Typography variant="h5" fontWeight="900" color="success.main">
-                          {formatCurrency(financialSummary.progressValue, settings)}
-                        </Typography>
-                      </Paper>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <TrendingUp size={20} className="text-indigo-600" /> Physical Progress
-                    </Typography>
-                    
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <Box flex={1}>
-                        <Typography variant="caption" color="text.secondary">Planned vs Actual</Typography>
-                        <Box display="flex" alignItems="center" gap={1} mt={1}>
-                          <Box flex={1} display="flex" alignItems="center" gap={1}>
-                            <Box width="100%" height={8} bgcolor="slate.200" borderRadius={4} overflow="hidden">
-                              <Box width={`${physicalProgress.planned * 100}%`} height="100%" bgcolor="primary.main" />
-                            </Box>
-                            <Typography variant="caption">{(physicalProgress.planned * 100).toFixed(1)}%</Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
-                    
-                    <Box mt={2}>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>Key Metrics</Typography>
-                      <Grid container spacing={1}>
-                        <Grid item xs={6}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                            <Typography variant="h6" fontWeight="bold" color="success.main">+12%</Typography>
-                            <Typography variant="caption">MoM Growth</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                            <Typography variant="h6" fontWeight="bold" color="error.main">-3%</Typography>
-                            <Typography variant="caption">Delay</Typography>
-                          </Paper>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Calendar size={20} className="text-indigo-600" /> Contract & Timeline
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Contract Duration</Typography>
-                          <Typography variant="h6" fontWeight="900">{project.contractPeriod || 'TBD'}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Elapsed Time</Typography>
-                          <Typography variant="h6" fontWeight="900">{(project.schedule.length > 0 ? project.schedule.filter(s => s.status === 'Completed').length / project.schedule.length * 100 : 0).toFixed(1)}%</Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                    
-                    <Box mt={2}>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>Milestones</Typography>
-                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                        <Typography variant="body2">{project.milestones?.length || 0} Total, {project.milestones?.filter(m => m.status === 'Completed').length || 0} Completed</Typography>
-                      </Paper>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Users size={20} className="text-indigo-600" /> Key Personnel
-                    </Typography>
-                    
-                    <List dense>
-                      <ListItem disablePadding>
-                        <ListItemText 
-                          primary="Project Manager" 
-                          secondary={project.projectManager || 'TBD'} 
-                          primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                          secondaryTypographyProps={{ variant: 'caption' }}
-                        />
-                      </ListItem>
-                      <ListItem disablePadding>
-                        <ListItemText 
-                          primary="Engineer" 
-                          secondary={project.engineer || 'TBD'} 
-                          primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                          secondaryTypographyProps={{ variant: 'caption' }}
-                        />
-                      </ListItem>
-                      <ListItem disablePadding>
-                        <ListItemText 
-                          primary="Supervisor" 
-                          secondary={project.supervisor || 'TBD'} 
-                          primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                          secondaryTypographyProps={{ variant: 'caption' }}
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <BookOpen size={20} className="text-indigo-600" /> Project Summary
-                    </Typography>
-                    
-                    <Typography variant="body2" paragraph>
-                      The project is currently executing {project.boq.length} BOQ items across {project.structures?.length || 0} structural assets. 
-                      As of {new Date().toLocaleDateString()}, the physical progress stands at {(physicalProgress.actual * 100).toFixed(1)}% against 
-                      the planned {(physicalProgress.planned * 100).toFixed(1)}%. The project value stands at {formatCurrency(financialSummary.revised, settings)} 
-                      with a progress value of {formatCurrency(financialSummary.progressValue, settings)}.
-                    </Typography>
-                    
-                    <Box mt={2} display="flex" gap={1} flexWrap="wrap">
-                      <Chip icon={<CheckCircle size={14}/>} label="On Track" color="success" size="small" />
-                      <Chip icon={<AlertTriangle size={14}/>} label="Weather Delays" color="warning" size="small" />
-                      <Chip icon={<Shield size={14}/>} label="Safety Compliant" color="success" size="small" />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <FileSpreadsheet size={20} className="text-indigo-600" /> Financial Overview
+                  </h2>
+
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Original</p>
+                      <p className="text-lg font-bold">{formatCurrency(financialSummary.original, settings)}</p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Variation</p>
+                      <p className="text-lg font-bold">{formatCurrency(financialSummary.variation, settings)}</p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Revised</p>
+                      <p className="text-lg font-bold">{formatCurrency(financialSummary.revised, settings)}</p>
+                    </Card>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Progress Value</p>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-2xl font-black text-green-600">
+                        {formatCurrency(financialSummary.progressValue, settings)}
+                      </p>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <TrendingUp size={20} className="text-indigo-600" /> Physical Progress
+                  </h2>
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500">Planned vs Actual</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-indigo-600 w-[${physicalProgress.planned * 100}%]"
+                          />
+                        </div>
+                        <p className="text-xs">{(physicalProgress.planned * 100).toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Key Metrics</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Card className="p-3 text-center">
+                        <p className="text-lg font-bold text-green-600">+12%</p>
+                        <p className="text-xs">MoM Growth</p>
+                      </Card>
+                      <Card className="p-3 text-center">
+                        <p className="text-lg font-bold text-red-600">-3%</p>
+                        <p className="text-xs">Delay</p>
+                      </Card>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Calendar size={20} className="text-indigo-600" /> Contract & Timeline
+                  </h2>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Contract Duration</p>
+                      <p className="text-lg font-black">{project.contractPeriod || 'TBD'}</p>
+                    </Card>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Elapsed Time</p>
+                      <p className="text-lg font-black">{(project.schedule.length > 0 ? project.schedule.filter(s => s.status === 'Completed').length / project.schedule.length * 100 : 0).toFixed(1)}%</p>
+                    </Card>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Milestones</p>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-sm">{project.milestones?.length || 0} Total, {project.milestones?.filter(m => m.status === 'Completed').length || 0} Completed</p>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Users size={20} className="text-indigo-600" /> Key Personnel
+                  </h2>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold">Project Manager</span>
+                      <span className="text-xs text-slate-500">{project.projectManager || 'TBD'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold">Engineer</span>
+                      <span className="text-xs text-slate-500">{project.engineer || 'TBD'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold">Supervisor</span>
+                      <span className="text-xs text-slate-500">{project.supervisor || 'TBD'}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl col-span-full">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <BookOpen size={20} className="text-indigo-600" /> Project Summary
+                  </h2>
+
+                  <p className="text-sm mb-4">
+                    The project is currently executing {project.boq.length} BOQ items across {project.structures?.length || 0} structural assets.
+                    As of {new Date().toLocaleDateString()}, the physical progress stands at {(physicalProgress.actual * 100).toFixed(1)}% against
+                    the planned {(physicalProgress.planned * 100).toFixed(1)}%. The project value stands at {formatCurrency(financialSummary.revised, settings)}
+                    with a progress value of {formatCurrency(financialSummary.progressValue, settings)}.
+                  </p>
+
+                  <div className="mt-4 flex gap-2 flex-wrap">
+                    <Badge>On Track</Badge>
+                    <Badge>Weather Delays</Badge>
+                    <Badge>Safety Compliant</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 6 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <FileSignature size={20} className="text-indigo-600" /> Endorsement Sheet
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Project Manager</Typography>
-                          <Typography variant="body2" fontWeight="bold">{project.projectManager || 'TBD'}</Typography>
-                          <Typography variant="caption" color="text.secondary">Signature: ________________ Date: {new Date().toLocaleDateString()}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Supervision Consultant</Typography>
-                          <Typography variant="body2" fontWeight="bold">{project.consultantName || 'BDA-BN-UDAYA JV'}</Typography>
-                          <Typography variant="caption" color="text.secondary">Signature: ________________ Date: {new Date().toLocaleDateString()}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Project Implementation Unit</Typography>
-                          <Typography variant="body2" fontWeight="bold">{project.clientName || 'PIU'}</Typography>
-                          <Typography variant="caption" color="text.secondary">Signature: ________________ Date: {new Date().toLocaleDateString()}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary" display="block">Funding Agency Representative</Typography>
-                          <Typography variant="body2" fontWeight="bold">Asian Development Bank</Typography>
-                          <Typography variant="caption" color="text.secondary">Signature: ________________ Date: {new Date().toLocaleDateString()}</Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="space-y-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <FileSignature size={20} className="text-indigo-600" /> Endorsement Sheet
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Project Manager</p>
+                      <p className="text-sm font-bold">{project.projectManager || 'TBD'}</p>
+                      <p className="text-xs text-slate-500">Signature: ________________ Date: {new Date().toLocaleDateString()}</p>
+                    </Card>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Supervision Consultant</p>
+                      <p className="text-sm font-bold">{project.consultantName || 'BDA-BN-UDAYA JV'}</p>
+                      <p className="text-xs text-slate-500">Signature: ________________ Date: {new Date().toLocaleDateString()}</p>
+                    </Card>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Project Implementation Unit</p>
+                      <p className="text-sm font-bold">{project.clientName || 'PIU'}</p>
+                      <p className="text-xs text-slate-500">Signature: ________________ Date: {new Date().toLocaleDateString()}</p>
+                    </Card>
+                    <Card className="p-4 bg-slate-50">
+                      <p className="text-xs text-slate-500">Funding Agency Representative</p>
+                      <p className="text-sm font-bold">Asian Development Bank</p>
+                      <p className="text-xs text-slate-500">Signature: ________________ Date: {new Date().toLocaleDateString()}</p>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 7 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <MessageSquare size={20} className="text-indigo-600" /> Issue Register
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Issue ID</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell align="right">Priority</TableCell>
-                            <TableCell align="right">Status</TableCell>
-                            <TableCell align="right">Date Raised</TableCell>
-                            <TableCell align="right">Target Resolution</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {[
-                            ...project.ncrs.map((ncr, i) => ({
-                              id: `NCR-${i + 1}`,
-                              description: ncr.description.substring(0, 50),
-                              priority: 'High',
-                              status: ncr.status as any,
-                              dateRaised: ncr.date || 'TBD',
-                              targetResolution: 'TBD'
-                            })),
-                            ...project.rfis.map((rfi, i) => ({
-                              id: `RFI-${i + 1}`,
-                              description: rfi.question.substring(0, 50),
-                              priority: rfi.priority || 'Medium',
-                              status: rfi.status as any,
-                              dateRaised: rfi.date || 'TBD',
-                              targetResolution: rfi.responseDate || 'TBD'
-                            }))
-                          ].slice(0, 10).map((issue, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{issue.id}</TableCell>
-                              <TableCell>{issue.description}</TableCell>
-                              <TableCell align="right">
-                                <Chip 
-                                  label={issue.priority} 
-                                  size="small"
-                                  color={issue.priority === 'High' ? 'error' : issue.priority === 'Medium' ? 'warning' : 'info'}
-                                  sx={{ fontSize: '0.7rem', height: 20 }}
-                                />
-                              </TableCell>
-                              <TableCell align="right">
-                                <Chip 
-                                  label={issue.status} 
-                                  size="small"
-                                  color={String(issue.status) === String('Closed') || String(issue.status) === String(RFIStatus.CLOSED) ? 'success' : 'warning'}
-                                  sx={{ fontSize: '0.7rem', height: 20 }}
-                                />
-                              </TableCell>
-                              <TableCell align="right">{issue.dateRaised}</TableCell>
-                              <TableCell align="right">{issue.targetResolution}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="space-y-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <MessageSquare size={20} className="text-indigo-600" /> Issue Register
+                  </h2>
+
+                  <ShadcnTable>
+                    <ShadcnTableHeader>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Issue ID</ShadcnTableCell>
+                        <ShadcnTableCell>Description</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Priority</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Status</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Date Raised</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Target Resolution</ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableHeader>
+                    <ShadcnTableBody>
+                      {[
+                        ...project.ncrs.map((ncr, i) => ({
+                          id: `NCR-${i + 1}`,
+                          description: ncr.description.substring(0, 50),
+                          priority: 'High',
+                          status: ncr.status as any,
+                          dateRaised: ncr.date || 'TBD',
+                          targetResolution: 'TBD'
+                        })),
+                        ...project.rfis.map((rfi, i) => ({
+                          id: `RFI-${i + 1}`,
+                          description: rfi.question.substring(0, 50),
+                          priority: rfi.priority || 'Medium',
+                          status: rfi.status as any,
+                          dateRaised: rfi.date || 'TBD',
+                          targetResolution: rfi.responseDate || 'TBD'
+                        }))
+                      ].slice(0, 10).map((issue, index) => (
+                        <ShadcnTableRow key={index}>
+                          <ShadcnTableCell>{issue.id}</ShadcnTableCell>
+                          <ShadcnTableCell>{issue.description}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">
+                            <Badge variant={issue.priority === 'High' ? 'destructive' : issue.priority === 'Medium' ? 'secondary' : 'default'}>
+                              {issue.priority}
+                            </Badge>
+                          </ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">
+                            <Badge variant={String(issue.status) === String('Closed') || String(issue.status) === String(RFIStatus.CLOSED) ? 'default' : 'secondary'}>
+                              {issue.status}
+                            </Badge>
+                          </ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{issue.dateRaised}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{issue.targetResolution}</ShadcnTableCell>
+                        </ShadcnTableRow>
+                      ))}
+                    </ShadcnTableBody>
+                  </ShadcnTable>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 8 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Camera size={20} className="text-indigo-600" /> Site Photographs
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      {project.dailyReports?.slice(0, 8).flatMap(report => 
-                        report.photos?.map((photo, idx) => (
-                          <Grid key={`${report.id}-${idx}`} item xs={12} sm={6} md={4} lg={3}>
-                            <Paper 
-                              variant="outlined" 
-                              sx={{ 
-                                p: 1, 
-                                textAlign: 'center', 
-                                cursor: 'pointer',
-                                '&:hover': { boxShadow: 3 }
-                              }}
-                              onClick={() => alert(`Photo preview would open: ${photo.url}`)}
-                            >
-                              <Box 
-                                component="img" 
-                                src={photo.url || '/placeholder-image.jpg'} 
-                                alt={photo.caption || 'Site photo'}
-                                sx={{ 
-                                  width: '100%', 
-                                  height: 120, 
-                                  objectFit: 'cover',
-                                  borderRadius: 1 
-                                }}
-                              />
-                              <Typography variant="caption" display="block" mt={1} noWrap>
-                                {photo.caption || `Site photo ${idx + 1}`}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                {report.date || 'Unknown date'}
-                              </Typography>
-                            </Paper>
-                          </Grid>
-                        ))
-                      ) || []}
-                    </Grid>
-                    
-                    <Box mt={3} textAlign="center">
-                      <Button 
-                        variant="outlined" 
-                        startIcon={<ImageIcon size={16} />}
-                        onClick={() => alert('Photo gallery would open in full view')}
-                      >
-                        View All Photos ({project.dailyReports?.reduce((count, report) => 
-                          count + (report.photos?.length || 0), 0) || 0})
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="space-y-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Camera size={20} className="text-indigo-600" /> Site Photographs
+                  </h2>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {project.dailyReports?.slice(0, 8).flatMap(report =>
+                      report.photos?.map((photo, idx) => (
+                        <Card
+                          key={`${report.id}-${idx}`}
+                          className="p-2 text-center cursor-pointer hover:shadow-lg transition-shadow"
+                          onClick={() => alert(`Photo preview would open: ${photo.url}`)}
+                        >
+                          <img
+                            src={photo.url || '/placeholder-image.jpg'}
+                            alt={photo.caption || 'Site photo'}
+                            className="w-full h-32 object-cover rounded"
+                          />
+                          <p className="text-xs mt-2 truncate">
+                            {photo.caption || `Site photo ${idx + 1}`}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {report.date || 'Unknown date'}
+                          </p>
+                        </Card>
+                      ))
+                    ) || []}
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => alert('Photo gallery would open in full view')}
+                    >
+                      <ImageIcon size={16} className="mr-2" />
+                      View All Photos ({project.dailyReports?.reduce((count, report) =>
+                        count + (report.photos?.length || 0), 0) || 0})
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 1 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2}>BOQ Progress Analysis</Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Item No</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell align="right">Planned Qty</TableCell>
-                            <TableCell align="right">Completed Qty</TableCell>
-                            <TableCell align="right">Progress %</TableCell>
-                            <TableCell align="right">Value</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {project.boq.slice(0, 10).map((item, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{item.itemNo}</TableCell>
-                              <TableCell>{item.description.substring(0, 30)}...</TableCell>
-                              <TableCell align="right">{item.quantity}</TableCell>
-                              <TableCell align="right">{item.completedQuantity}</TableCell>
-                              <TableCell align="right">
-                                <Chip 
-                                  label={`${((item.completedQuantity / item.quantity) * 100).toFixed(1)}%`} 
-                                  size="small"
-                                  color={item.completedQuantity === item.quantity ? 'success' : 'primary'}
-                                  sx={{ fontSize: '0.7rem', height: 20 }}
-                                />
-                              </TableCell>
-                              <TableCell align="right">{formatCurrency(item.completedQuantity * item.rate, settings)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="rounded-3xl">
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-black mb-4">BOQ Progress Analysis</h2>
+
+                    <ShadcnTable>
+                      <ShadcnTableHeader>
+                        <ShadcnTableRow>
+                          <ShadcnTableCell>Item No</ShadcnTableCell>
+                          <ShadcnTableCell>Description</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Planned Qty</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Completed Qty</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Progress %</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Value</ShadcnTableCell>
+                        </ShadcnTableRow>
+                      </ShadcnTableHeader>
+                      <ShadcnTableBody>
+                        {project.boq.slice(0, 10).map((item, index) => (
+                          <ShadcnTableRow key={index}>
+                            <ShadcnTableCell>{item.itemNo}</ShadcnTableCell>
+                            <ShadcnTableCell>{item.description.substring(0, 30)}...</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{item.quantity}</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{item.completedQuantity}</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">
+                              <Badge variant={item.completedQuantity === item.quantity ? 'default' : 'secondary'}>
+                                {((item.completedQuantity / item.quantity) * 100).toFixed(1)}%
+                              </Badge>
+                            </ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{formatCurrency(item.completedQuantity * item.rate, settings)}</ShadcnTableCell>
+                          </ShadcnTableRow>
+                        ))}
+                      </ShadcnTableBody>
+                    </ShadcnTable>
                   </CardContent>
                 </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2}>Progress Visualization</Typography>
-                    
-                    <Box height={300} display="flex" alignItems="flex-end" gap={1}>
+              </div>
+
+              <div>
+                <Card className="rounded-3xl h-full">
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-black mb-4">Progress Visualization</h2>
+
+                    <div className="h-80 flex items-end gap-1">
                       {project.boq.slice(0, 12).map((item, index) => (
-                        <Box key={index} flex={1} display="flex" flexDirection="column" alignItems="center">
-                          <Box 
-                            height={`${(item.completedQuantity / item.quantity) * 100}%`} 
-                            width="100%" 
-                            bgcolor={item.completedQuantity === item.quantity ? 'success.main' : 'primary.main'}
-                            borderRadius={1}
+                        <div key={index} className="flex-1 flex flex-col items-center">
+                          <div
+                            className={`w-full rounded ${item.completedQuantity === item.quantity ? 'bg-green-500' : 'bg-indigo-500'}`}
+                            style={{ height: `${(item.completedQuantity / item.quantity) * 100}%` }}
                             title={`${item.description}: ${(item.completedQuantity / item.quantity) * 100}%`}
                           />
-                          <Typography variant="caption" mt={1} align="center">{item.itemNo}</Typography>
-                        </Box>
+                          <p className="text-xs mt-2 text-center">{item.itemNo}</p>
+                        </div>
                       ))}
-                    </Box>
+                    </div>
                   </CardContent>
                 </Card>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
+              </div>
+
+              <div className="lg:col-span-3">
+                <Card className="rounded-3xl">
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-black mb-4 flex items-center gap-2">
                       <Calendar size={20} className="text-indigo-600" /> Pre-Construction Activities
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Activity</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell align="right">Start Date</TableCell>
-                            <TableCell align="right">End Date</TableCell>
-                            <TableCell align="right">Progress</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {project.preConstruction?.slice(0, 5).map((task, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{task.description.substring(0, 30)}...</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={task.status} 
-                                  size="small"
-                                  color={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'primary' : 'warning'}
-                                  sx={{ fontSize: '0.7rem', height: 20 }}
-                                />
-                              </TableCell>
-                              <TableCell align="right">{task.startDate || 'TBD'}</TableCell>
-                              <TableCell align="right">{task.endDate || 'TBD'}</TableCell>
-                              <TableCell align="right">{task.progress || 0}%</TableCell>
-                            </TableRow>
-                          )) || []}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    </h2>
+
+                    <ShadcnTable>
+                      <ShadcnTableHeader>
+                        <ShadcnTableRow>
+                          <ShadcnTableCell>Activity</ShadcnTableCell>
+                          <ShadcnTableCell>Status</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Start Date</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">End Date</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">Progress</ShadcnTableCell>
+                        </ShadcnTableRow>
+                      </ShadcnTableHeader>
+                      <ShadcnTableBody>
+                        {project.preConstruction?.slice(0, 5).map((task, index) => (
+                          <ShadcnTableRow key={index}>
+                            <ShadcnTableCell>{task.description.substring(0, 30)}...</ShadcnTableCell>
+                            <ShadcnTableCell>
+                              <Badge variant={task.status === 'Completed' ? 'default' : task.status === 'In Progress' ? 'secondary' : 'destructive'}>
+                                {task.status}
+                              </Badge>
+                            </ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{task.startDate || 'TBD'}</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{task.endDate || 'TBD'}</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{task.progress || 0}%</ShadcnTableCell>
+                          </ShadcnTableRow>
+                        )) || []}
+                      </ShadcnTableBody>
+                    </ShadcnTable>
                   </CardContent>
                 </Card>
-              </Grid>
-            </Grid>
+              </div>
+            </div>
           )}
           
           {activeTab === 2 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2}>Financial Progress</Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Budget Allocated</Typography>
-                          <Typography variant="h5" fontWeight="900">{formatCurrency(financialSummary.revised, settings)}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Expended</Typography>
-                          <Typography variant="h5" fontWeight="900" color="success.main">{formatCurrency(financialSummary.progressValue, settings)}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Balance</Typography>
-                          <Typography variant="h5" fontWeight="900" color="warning.main">
-                            {formatCurrency(financialSummary.revised - financialSummary.progressValue, settings)}
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Utilization</Typography>
-                          <Typography variant="h5" fontWeight="900">
-                            {((financialSummary.progressValue / financialSummary.revised) * 100).toFixed(1)}%
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2}>Financial Trend</Typography>
-                    
-                    <Box height={200} display="flex" alignItems="flex-end" gap={1} mt={4}>
-                      {[60, 65, 70, 75, 80, 85, 90].map((val, index) => (
-                        <Box key={index} flex={1} display="flex" flexDirection="column" alignItems="center">
-                          <Box 
-                            height={`${val}%`} 
-                            width="100%" 
-                            bgcolor="success.main"
-                            borderRadius={1}
-                          />
-                          <Typography variant="caption" mt={1}>{index + 1}M</Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Receipt size={20} className="text-indigo-600" /> Cost Variance Analysis
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>BOQ Item</TableCell>
-                            <TableCell align="right">Budgeted</TableCell>
-                            <TableCell align="right">Actual</TableCell>
-                            <TableCell align="right">Variance</TableCell>
-                            <TableCell align="right">Variance %</TableCell>
-                            <TableCell align="right">Status</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {project.boq.slice(0, 5).map((item, index) => {
-                            const budgeted = item.quantity * item.rate;
-                            const actual = item.completedQuantity * item.rate;
-                            const variance = actual - budgeted;
-                            const variancePercent = budgeted !== 0 ? (variance / budgeted) * 100 : 0;
-                            
-                            return (
-                              <TableRow key={index}>
-                                <TableCell>{item.description.substring(0, 30)}...</TableCell>
-                                <TableCell align="right">{formatCurrency(budgeted, settings)}</TableCell>
-                                <TableCell align="right">{formatCurrency(actual, settings)}</TableCell>
-                                <TableCell align="right" sx={{ color: variance >= 0 ? 'success.main' : 'error.main' }}>
-                                  {formatCurrency(variance, settings)}
-                                </TableCell>
-                                <TableCell align="right" sx={{ color: variancePercent >= 0 ? 'success.main' : 'error.main' }}>
-                                  {variancePercent.toFixed(2)}%
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Chip 
-                                    label={variance >= 0 ? 'Under Budget' : 'Over Budget'} 
-                                    size="small"
-                                    color={variance >= 0 ? 'success' : 'error'}
-                                    sx={{ fontSize: '0.7rem', height: 20 }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4">Financial Progress</h2>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Budget Allocated</p>
+                      <p className="text-xl font-black">{formatCurrency(financialSummary.revised, settings)}</p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Expended</p>
+                      <p className="text-xl font-black text-green-600">{formatCurrency(financialSummary.progressValue, settings)}</p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Balance</p>
+                      <p className="text-xl font-black text-yellow-600">
+                        {formatCurrency(financialSummary.revised - financialSummary.progressValue, settings)}
+                      </p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Utilization</p>
+                      <p className="text-xl font-black">
+                        {((financialSummary.progressValue / financialSummary.revised) * 100).toFixed(1)}%
+                      </p>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4">Financial Trend</h2>
+
+                  <div className="h-48 flex items-end gap-1 mt-4">
+                    {[60, 65, 70, 75, 80, 85, 90].map((val, index) => (
+                      <div key={index} className="flex-1 flex flex-col items-center">
+                        <div
+                          className="w-full bg-green-500 rounded h-[${val}%]"
+                        />
+                        <p className="text-xs mt-2">{index + 1}M</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl lg:col-span-2">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Receipt size={20} className="text-indigo-600" /> Cost Variance Analysis
+                  </h2>
+
+                  <ShadcnTable>
+                    <ShadcnTableHeader>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>BOQ Item</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Budgeted</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Actual</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Variance</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Variance %</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Status</ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableHeader>
+                    <ShadcnTableBody>
+                      {project.boq.slice(0, 5).map((item, index) => {
+                        const budgeted = item.quantity * item.rate;
+                        const actual = item.completedQuantity * item.rate;
+                        const variance = actual - budgeted;
+                        const variancePercent = budgeted !== 0 ? (variance / budgeted) * 100 : 0;
+
+                        return (
+                          <ShadcnTableRow key={index}>
+                            <ShadcnTableCell>{item.description.substring(0, 30)}...</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{formatCurrency(budgeted, settings)}</ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">{formatCurrency(actual, settings)}</ShadcnTableCell>
+                            <ShadcnTableCell className={`text-right ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(variance, settings)}
+                            </ShadcnTableCell>
+                            <ShadcnTableCell className={`text-right ${variancePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {variancePercent.toFixed(2)}%
+                            </ShadcnTableCell>
+                            <ShadcnTableCell className="text-right">
+                              <Badge variant={variance >= 0 ? 'default' : 'destructive'}>
+                                {variance >= 0 ? 'Under Budget' : 'Over Budget'}
+                              </Badge>
+                            </ShadcnTableCell>
+                          </ShadcnTableRow>
+                        );
+                      })}
+                    </ShadcnTableBody>
+                  </ShadcnTable>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 3 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Users size={20} className="text-indigo-600" /> Personnel Deployment
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Category</TableCell>
-                            <TableCell align="right">Deployed</TableCell>
-                            <TableCell align="right">Available</TableCell>
-                            <TableCell align="right">Status</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>Engineers</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Engineer' && p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Engineer' && !p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">
-                              <Chip 
-                                label="Active" 
-                                size="small"
-                                color="success"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Skilled Workers</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Skilled Worker' && p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Skilled Worker' && !p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">
-                              <Chip 
-                                label="Active" 
-                                size="small"
-                                color="success"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Unskilled Workers</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Unskilled Worker' && p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">{project.personnel?.filter(p => p.role === 'Unskilled Worker' && !p.assigned).length || 0}</TableCell>
-                            <TableCell align="right">
-                              <Chip 
-                                label="Active" 
-                                size="small"
-                                color="success"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <HardHat size={20} className="text-indigo-600" /> Equipment Deployment
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Equipment</TableCell>
-                            <TableCell align="right">Active</TableCell>
-                            <TableCell align="right">Maintenance</TableCell>
-                            <TableCell align="right">Available</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {project.fleet?.slice(0, 5).map((vehicle, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{vehicle.name}</TableCell>
-                              <TableCell align="right">{vehicle.status === 'Active' ? 1 : 0}</TableCell>
-                              <TableCell align="right">{vehicle.status === 'Maintenance' ? 1 : 0}</TableCell>
-                              <TableCell align="right">{vehicle.status === 'Available' ? 1 : 0}</TableCell>
-                            </TableRow>
-                          )) || []}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <ImageIcon size={20} className="text-indigo-600" /> Material Status
-                    </Typography>
-                    
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Material</TableCell>
-                            <TableCell align="right">Required</TableCell>
-                            <TableCell align="right">Received</TableCell>
-                            <TableCell align="right">Stock</TableCell>
-                            <TableCell align="right">Status</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {project.inventory?.slice(0, 5).map((item, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{item.itemName || item.name}</TableCell>
-                              <TableCell align="right">{(item.requiredQuantity ?? item.quantity) || 0}</TableCell>
-                              <TableCell align="right">{item.receivedQuantity ?? 0}</TableCell>
-                              <TableCell align="right">{(item.currentQuantity ?? item.quantity) || 0}</TableCell>
-                              <TableCell align="right">
-                                <Chip 
-                                  label={item.currentQuantity && item.requiredQuantity ? 
-                                    (item.currentQuantity >= item.requiredQuantity ? 'Sufficient' : 'Low Stock') : 'TBD'} 
-                                  size="small"
-                                  color={item.currentQuantity && item.requiredQuantity ? 
-                                    (item.currentQuantity >= item.requiredQuantity ? 'success' : 'warning') : 'default'}
-                                  sx={{ fontSize: '0.7rem', height: 20 }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          )) || []}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Users size={20} className="text-indigo-600" /> Personnel Deployment
+                  </h2>
+
+                  <ShadcnTable>
+                    <ShadcnTableHeader>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Category</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Deployed</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Available</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Status</ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableHeader>
+                    <ShadcnTableBody>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Engineers</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Engineer' && p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Engineer' && !p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">
+                          <Badge variant="default">Active</Badge>
+                        </ShadcnTableCell>
+                      </ShadcnTableRow>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Skilled Workers</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Skilled Worker' && p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Skilled Worker' && !p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">
+                          <Badge variant="default">Active</Badge>
+                        </ShadcnTableCell>
+                      </ShadcnTableRow>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Unskilled Workers</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Unskilled Worker' && p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">{project.personnel?.filter(p => p.role === 'Unskilled Worker' && !p.assigned).length || 0}</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">
+                          <Badge variant="default">Active</Badge>
+                        </ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableBody>
+                  </ShadcnTable>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <HardHat size={20} className="text-indigo-600" /> Equipment Deployment
+                  </h2>
+
+                  <ShadcnTable>
+                    <ShadcnTableHeader>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Equipment</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Active</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Maintenance</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Available</ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableHeader>
+                    <ShadcnTableBody>
+                      {project.fleet?.slice(0, 5).map((vehicle, index) => (
+                        <ShadcnTableRow key={index}>
+                          <ShadcnTableCell>{vehicle.name}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{vehicle.status === 'Active' ? 1 : 0}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{vehicle.status === 'Maintenance' ? 1 : 0}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{vehicle.status === 'Available' ? 1 : 0}</ShadcnTableCell>
+                        </ShadcnTableRow>
+                      )) || []}
+                    </ShadcnTableBody>
+                  </ShadcnTable>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl lg:col-span-2">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <ImageIcon size={20} className="text-indigo-600" /> Material Status
+                  </h2>
+
+                  <ShadcnTable>
+                    <ShadcnTableHeader>
+                      <ShadcnTableRow>
+                        <ShadcnTableCell>Material</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Required</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Received</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Stock</ShadcnTableCell>
+                        <ShadcnTableCell className="text-right">Status</ShadcnTableCell>
+                      </ShadcnTableRow>
+                    </ShadcnTableHeader>
+                    <ShadcnTableBody>
+                      {project.inventory?.slice(0, 5).map((item, index) => (
+                        <ShadcnTableRow key={index}>
+                          <ShadcnTableCell>{item.itemName || item.name}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{(item.requiredQuantity ?? item.quantity) || 0}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{item.receivedQuantity ?? 0}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">{(item.currentQuantity ?? item.quantity) || 0}</ShadcnTableCell>
+                          <ShadcnTableCell className="text-right">
+                            <Badge variant={item.currentQuantity && item.requiredQuantity ?
+                              (item.currentQuantity >= item.requiredQuantity ? 'default' : 'destructive') : 'secondary'}>
+                              {item.currentQuantity && item.requiredQuantity ?
+                                (item.currentQuantity >= item.requiredQuantity ? 'Sufficient' : 'Low Stock') : 'TBD'}
+                            </Badge>
+                          </ShadcnTableCell>
+                        </ShadcnTableRow>
+                      )) || []}
+                    </ShadcnTableBody>
+                  </ShadcnTable>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 4 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Shield size={20} className="text-indigo-600" /> Safety Status
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Active NCRs</Typography>
-                          <Typography variant="h4" fontWeight="900" color="error.main">
-                            {project.ncrs.filter(n => n.status !== 'Closed').length}
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                          <Typography variant="caption" color="text.secondary">Open RFIs</Typography>
-                          <Typography variant="h4" fontWeight="900" color="warning.main">
-                            {project.rfis.filter(r => r.status !== RFIStatus.CLOSED).length}
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                    
-                    <Box mt={2}>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>Recent Safety Incidents</Typography>
-                      {project.ncrs.slice(0, 3).map((ncr, index) => (
-                        <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Shield size={20} className="text-indigo-600" /> Safety Status
+                  </h2>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Active NCRs</p>
+                      <p className="text-3xl font-black text-red-600">
+                        {project.ncrs.filter(n => n.status !== 'Closed').length}
+                      </p>
+                    </Card>
+                    <Card className="p-4 text-center bg-slate-50">
+                      <p className="text-xs text-slate-500">Open RFIs</p>
+                      <p className="text-3xl font-black text-yellow-600">
+                        {project.rfis.filter(r => r.status !== RFIStatus.CLOSED).length}
+                      </p>
+                    </Card>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Recent Safety Incidents</p>
+                    {project.ncrs.slice(0, 3).map((ncr, index) => (
+                      <ShadcnAlert key={index} className="mb-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
                           {ncr.description.substring(0, 50)}...
-                        </Alert>
-                      ))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <Trees size={20} className="text-indigo-600" /> Environmental Status
-                    </Typography>
-                    
-                    <Accordion>
-                      <AccordionSummary expandIcon={<ChevronDown />}>
-                        <Typography variant="body2" fontWeight="bold">Tree Management</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography variant="caption">Trees Removed: {getEnvironmentalData()?.treesRemoved || 0}</Typography><br />
-                        <Typography variant="caption">Trees Planted: {getEnvironmentalData()?.treesPlanted || 0}</Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion>
-                      <AccordionSummary expandIcon={<ChevronDown />}>
-                        <Typography variant="body2" fontWeight="bold">Water Sprinkling</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography variant="caption">Last 7 days operations: {getEnvironmentalData()?.sprinklingLogs?.length || 0}</Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+                        </AlertDescription>
+                      </ShadcnAlert>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Trees size={20} className="text-indigo-600" /> Environmental Status
+                  </h2>
+
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-3">
+                      <h3 className="text-sm font-medium mb-2">Tree Management</h3>
+                      <p className="text-xs">Trees Removed: {getEnvironmentalData()?.treesRemoved || 0}</p>
+                      <p className="text-xs">Trees Planted: {getEnvironmentalData()?.treesPlanted || 0}</p>
+                    </div>
+
+                    <div className="border rounded-lg p-3">
+                      <h3 className="text-sm font-medium mb-2">Water Sprinkling</h3>
+                      <p className="text-xs">Last 7 days operations: {getEnvironmentalData()?.sprinklingLogs?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
           
           {activeTab === 5 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="900" mb={2} display="flex" alignItems="center" gap={1}>
-                      <MapPin size={20} className="text-indigo-600" /> Weather & Location
-                    </Typography>
-                    
-                    {getWeatherData() ? (
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                            <Typography variant="caption" color="text.secondary">Temperature</Typography>
-                            <Typography variant="h4" fontWeight="900">{getWeatherData()?.temp}°C</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'slate.50' }}>
-                            <Typography variant="caption" color="text.secondary">Condition</Typography>
-                            <Typography variant="h4" fontWeight="900">{getWeatherData()?.condition}</Typography>
-                          </Paper>
-                        </Grid>
-                      </Grid>
-                    ) : (
-                      <Alert severity="info">Weather data not available for this project</Alert>
-                    )}
-                    
-                    <Box mt={2}>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>Impact on Schedule</Typography>
-                      <Typography variant="body2">
-                        {getWeatherData()?.impactOnSchedule === 'None' 
-                          ? 'No impact on construction activities' 
-                          : `Currently experiencing ${getWeatherData()?.impactOnSchedule} impact`}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
-        </Box>
-      </Box>
+            <div className="space-y-6">
+              <Card className="rounded-3xl">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <MapPin size={20} className="text-indigo-600" /> Weather & Location
+                  </h2>
 
-      <Dialog 
-        open={isExportDialogOpen} 
-        onClose={() => setIsExportDialogOpen(false)} 
-        maxWidth="sm" 
-        fullWidth
-      >
-        <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          Export Monthly Progress Report
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            Your report will be generated in the required MPR format with all project data as of {new Date(reportMonth + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}.
-          </Typography>
-          
-          <List>
-            <ListItem>
-              <ListItemText 
-                primary="Project Information" 
-                secondary="Client, Contractor, Contract Details" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Physical Progress" 
-                secondary="BOQ Completion, Work Activities" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Financial Progress" 
-                secondary="Budget Utilization, Cost Analysis" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Quality & Safety" 
-                secondary="NCRs, RFIs, Safety Records" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Environmental Data" 
-                secondary="EMP Implementation Status" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Endorsement Sheet" 
-                secondary="Signatures from stakeholders" 
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="Issue Register" 
-                secondary="Tracking of open issues" 
-              />
-            </ListItem>
-          </List>
-          
-          <Box mt={3}>
-            <Typography variant="subtitle2" fontWeight="bold" mb={1}>Report Approval Workflow</Typography>
-            
-            <List>
-              <ListItem>
-                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', width: 32, height: 32, mr: 2 }}>
-                  <Users size={16} />
-                </Avatar>
-                <ListItemText 
-                  primary="Project Manager Review" 
-                  secondary="Initial review and validation" 
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-                <Chip label="Pending" size="small" color="warning" />
-              </ListItem>
-              <ListItem>
-                <Avatar sx={{ bgcolor: 'info.light', color: 'info.main', width: 32, height: 32, mr: 2 }}>
-                  <Shield size={16} />
-                </Avatar>
-                <ListItemText 
-                  primary="SDC Validation" 
-                  secondary="Technical validation by SDC" 
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-                <Chip label="Pending" size="small" color="default" />
-              </ListItem>
-              <ListItem>
-                <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', width: 32, height: 32, mr: 2 }}>
-                  <FileSignature size={16} />
-                </Avatar>
-                <ListItemText 
-                  primary="PIU Approval" 
-                  secondary="Final approval by PIU" 
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-                <Chip label="Pending" size="small" color="default" />
-              </ListItem>
-            </List>
-          </Box>
+                  {getWeatherData() ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <Card className="p-4 text-center bg-slate-50">
+                        <p className="text-xs text-slate-500">Temperature</p>
+                        <p className="text-3xl font-black">{getWeatherData()?.temp}°C</p>
+                      </Card>
+                      <Card className="p-4 text-center bg-slate-50">
+                        <p className="text-xs text-slate-500">Condition</p>
+                        <p className="text-3xl font-black">{getWeatherData()?.condition}</p>
+                      </Card>
+                    </div>
+                  ) : (
+                    <ShadcnAlert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Weather data not available for this project
+                      </AlertDescription>
+                    </ShadcnAlert>
+                  )}
+
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Impact on Schedule</p>
+                    <p className="text-sm">
+                      {getWeatherData()?.impactOnSchedule === 'None'
+                        ? 'No impact on construction activities'
+                        : `Currently experiencing ${getWeatherData()?.impactOnSchedule} impact`}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Export Monthly Progress Report</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Your report will be generated in the required MPR format with all project data as of {new Date(reportMonth + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}.
+            </p>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Project Information</p>
+                  <p className="text-xs text-muted-foreground">Client, Contractor, Contract Details</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Physical Progress</p>
+                  <p className="text-xs text-muted-foreground">BOQ Completion, Work Activities</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Financial Progress</p>
+                  <p className="text-xs text-muted-foreground">Budget Utilization, Cost Analysis</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Quality & Safety</p>
+                  <p className="text-xs text-muted-foreground">NCRs, RFIs, Safety Records</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Environmental Data</p>
+                  <p className="text-xs text-muted-foreground">EMP Implementation Status</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Endorsement Sheet</p>
+                  <p className="text-xs text-muted-foreground">Signatures from stakeholders</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">Issue Register</p>
+                  <p className="text-xs text-muted-foreground">Tracking of open issues</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-bold mb-3">Report Approval Workflow</h3>
+
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-8 h-8 bg-blue-100">
+                    <Users size={16} className="text-blue-600" />
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Project Manager Review</p>
+                    <p className="text-xs text-muted-foreground">Initial review and validation</p>
+                  </div>
+                  <Badge variant="secondary">Pending</Badge>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-8 h-8 bg-blue-100">
+                    <Shield size={16} className="text-blue-600" />
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">SDC Validation</p>
+                    <p className="text-xs text-muted-foreground">Technical validation by SDC</p>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-8 h-8 bg-green-100">
+                    <FileSignature size={16} className="text-green-600" />
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">PIU Approval</p>
+                    <p className="text-xs text-muted-foreground">Final approval by PIU</p>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport}>
+              Export Report
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setIsExportDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleExport}>Export Report</Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

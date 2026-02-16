@@ -1,3 +1,4 @@
+
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -7,13 +8,11 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       host: 'localhost',
-      port: 3000,
+      port: 3003,
       strictPort: false,
       hmr: {
         overlay: true,
-        host: 'localhost',
         protocol: 'ws',
-        port: 3000,
         path: '/__vite_hmr',
         timeout: 30000,
       },
@@ -24,9 +23,8 @@ export default defineConfig(({ mode }) => {
       cors: true,
       proxy: {
         '/api': {
-          target: 'http://localhost:3001',
+          target: 'http://localhost:3000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/api'),
         },
       },
     },
@@ -38,25 +36,27 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        '~': path.resolve(__dirname, '.'),
         'react': path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
         '@emotion/react': path.resolve(__dirname, './node_modules/@emotion/react'),
         '@emotion/styled': path.resolve(__dirname, './node_modules/@emotion/styled'),
       }
     },
-    // optimizeDeps: {
-    //   exclude: [
-    //     'sql.js',
-    //     'pdfjs-dist',
-    //     'react-pdf'
-    //   ],
-    //   include: []
-    // },
+    optimizeDeps: {
+      exclude: [
+        'sql.js',
+        'pdfjs-dist',
+        'react-pdf',
+        'mongoose'
+      ],
+      include: []
+    },
     css: {
       modules: {
         localsConvention: 'camelCase',
       }
     },
-    // assetsInclude: [/\.css$/, /\.scss$/, /\.sass$/, /\.less$/],
+    assetsInclude: [/\.html$/],
   };
 });

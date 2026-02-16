@@ -1,14 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { 
-    Button, TextField, Grid, Select, MenuItem, FormControl, InputLabel, 
-    Typography, Box, Chip, Card, Paper, Stack, IconButton, Tooltip,
-    Table, TableBody, TableCell, TableHead, TableRow, Divider, 
-    InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions,
-    Alert, LinearProgress, Avatar, Tabs, Tab, CardContent, Snackbar,
-    Accordion, AccordionSummary, AccordionDetails,
-    List, ListItem, ListItemIcon, ListItemText
-} from '@mui/material';
-import { 
     Shield, ShieldCheck, AlertTriangle, FileText, Activity, TrendingUp, 
     Eye, Printer, Filter, Search, Plus, X, CheckCircle2, Flame,
     ChevronDown, Wrench, Package, Scale, Ruler, Thermometer,
@@ -17,6 +8,34 @@ import {
 } from 'lucide-react';
 import { Project, UserRole, LabTest, NCR, RFI, User } from '../../types';
 
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Separator } from '~/components/ui/separator';
+import { Badge } from '~/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { Progress } from '~/components/ui/progress';
+import { cn } from '~/lib/utils';
+import { ScrollArea } from '~/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible';
+
+
+// NOTE: This is a refactored version of the QualityHub component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
+
 interface Props {
   project: Project;
   userRole: UserRole;
@@ -24,9 +43,9 @@ interface Props {
 }
 
 const QualityHub: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedSection, setExpandedSection] = useState<string | false>('lab-tests');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const labTests = project.labTests || [];
   const ncRs = project.ncrs || [];
@@ -58,7 +77,7 @@ const QualityHub: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => 
         t.testName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.sampleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.location.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5);
+    );
   }, [labTests, searchTerm]);
 
   const filteredNCRs = useMemo(() => {
@@ -66,7 +85,7 @@ const QualityHub: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => 
         n.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         n.ncrNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         n.location.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5);
+    );
   }, [ncRs, searchTerm]);
 
   const filteredRFIs = useMemo(() => {
@@ -74,667 +93,566 @@ const QualityHub: React.FC<Props> = ({ project, userRole, onProjectUpdate }) => 
         r.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.rfiNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.location.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5);
+    );
   }, [rfis, searchTerm]);
 
-  const handleExpandChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedSection(isExpanded ? panel : false);
+  const handleExpandChange = (panel: string) => (isExpanded: boolean) => {
+    setExpandedSection(isExpanded ? panel : null);
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-      <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-        <Box>
-          <Typography variant="caption" fontWeight="900" color="primary" sx={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>QUALITY ASSURANCE</Typography>
-          <Typography variant="h4" fontWeight="900">Quality Hub & Compliance Center</Typography>
-        </Box>
-        <Stack direction="row" spacing={1.5}>
-          <Button variant="outlined" startIcon={<History size={16}/>} sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}>Monthly Register</Button>
-          <Button variant="contained" color="secondary" startIcon={<Printer size={16}/>} sx={{ borderRadius: 2, paddingX: 1.5, paddingY: 0.75 }}>Export Certificate</Button>
-        </Stack>
-      </Box>
+    <div className="animate-in fade-in duration-500 p-4">
+      <div className="flex justify-between mb-4 items-center">
+        <div>
+          <p className="text-xs font-bold text-indigo-600 tracking-widest uppercase">QUALITY ASSURANCE</p>
+          <h1 className="text-2xl font-black text-slate-800">Quality Hub & Compliance Center</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <History className="mr-2 h-4 w-4" /> Monthly Register
+          </Button>
+          <Button>
+            <Printer className="mr-2 h-4 w-4" /> Export Certificate
+          </Button>
+        </div>
+      </div>
 
       {/* Quality Overview Stats */}
-      <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 3, bgcolor: 'white' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar sx={{ bgcolor: '#eef2ff', color: '#4f46e5' }}><Scale size={18}/></Avatar>
-                <Box>
-                  <Typography variant="caption" fontWeight="bold" color="text.secondary">LAB TESTS</Typography>
-                  <Typography variant="h5" fontWeight="900">{stats.totalTests}</Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, bgcolor: 'white' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar sx={{ bgcolor: '#ecfdf5', color: '#10b981' }}><ShieldCheck size={20}/></Avatar>
-                <Box>
-                  <Typography variant="caption" fontWeight="bold" color="text.secondary">PASS RATE</Typography>
-                  <Typography variant="h5" fontWeight="900" color="success.main">{stats.passRate}%</Typography>
-                </Box>
-              </Stack>
-              <LinearProgress variant="determinate" value={stats.passRate} color="success" sx={{ mt: 1.5, height: 4, borderRadius: 2 }} />
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, borderLeft: '6px solid #ef4444', bgcolor: 'white' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar sx={{ bgcolor: '#fef2f2', color: '#ef4444' }}><AlertTriangle size={20}/></Avatar>
-                <Box>
-                  <Typography variant="caption" fontWeight="bold" color="text.secondary">OPEN NCrs</Typography>
-                  <Typography variant="h5" fontWeight="900" color="error.main">{stats.openNCRs}</Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, bgcolor: 'white' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar sx={{ bgcolor: '#fffbeb', color: '#f59e0b' }}><FileText size={20}/></Avatar>
-                <Box>
-                  <Typography variant="caption" fontWeight="bold" color="text.secondary">OPEN RFIs</Typography>
-                  <Typography variant="h5" fontWeight="900" color="warning.main">{stats.openRFIs}</Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <Avatar className="h-12 w-12 bg-indigo-100 text-indigo-700">
+              <Scale className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">LAB TESTS</p>
+              <h2 className="text-2xl font-bold">{stats.totalTests}</h2>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <Avatar className="h-12 w-12 bg-emerald-100 text-emerald-700">
+              <ShieldCheck className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">PASS RATE</p>
+              <h2 className="text-2xl font-bold text-emerald-700">{stats.passRate}%</h2>
+            </div>
+          </CardContent>
+          <Progress value={stats.passRate} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-600 rounded-none" />
+        </Card>
+        <Card className="border-l-4 border-destructive">
+          <CardContent className="p-4 flex items-center gap-4">
+            <Avatar className="h-12 w-12 bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">OPEN NCRs</p>
+              <h2 className="text-2xl font-bold text-destructive">{stats.openNCRs}</h2>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <Avatar className="h-12 w-12 bg-amber-100 text-amber-700">
+              <FileText className="h-6 w-6" />
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">OPEN RFIs</p>
+              <h2 className="text-2xl font-bold text-amber-700">{stats.openRFIs}</h2>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quality Status Overview */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={4}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <Activity size={20} className="text-blue-600 mr-2" />
-                <Typography variant="h6" fontWeight="bold">Overall Quality Status</Typography>
-              </Box>
-              <LinearProgress variant="determinate" value={stats.passRate} color="success" sx={{ height: 8, borderRadius: 4, mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                {stats.passedTests} of {stats.totalTests} tests passed
-              </Typography>
-              <Box mt={2} display="flex" justifyContent="space-around">
-                <Box textAlign="center">
-                  <Typography variant="h6" color="success.main" fontWeight="bold">{stats.passedTests}</Typography>
-                  <Typography variant="caption" color="text.secondary">Passed</Typography>
-                </Box>
-                <Box textAlign="center">
-                  <Typography variant="h6" color="error.main" fontWeight="bold">{stats.failedTests}</Typography>
-                  <Typography variant="caption" color="text.secondary">Failed</Typography>
-                </Box>
-                <Box textAlign="center">
-                  <Typography variant="h6" color="warning.main" fontWeight="bold">{stats.openNCRs}</Typography>
-                  <Typography variant="caption" color="text.secondary">NCRs</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-600" /> Overall Quality Status
+            </h2>
+            <Progress value={stats.passRate} className="h-2 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-600 mb-2" />
+            <p className="text-sm text-muted-foreground">
+              {stats.passedTests} of {stats.totalTests} tests passed
+            </p>
+            <div className="flex justify-around mt-4">
+              <div className="text-center">
+                <p className="text-xl font-bold text-emerald-600">{stats.passedTests}</p>
+                <p className="text-sm text-muted-foreground">Passed</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold text-destructive">{stats.totalTests - stats.passedTests}</p>
+                <p className="text-sm text-muted-foreground">Failed</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold text-amber-600">{stats.openNCRs}</p>
+                <p className="text-sm text-muted-foreground">NCRs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={4}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <Flame size={20} className="text-orange-600 mr-2" />
-                <Typography variant="h6" fontWeight="bold">Critical Areas</Typography>
-              </Box>
-              <List>
-                <ListItem>
-                  <ListItemIcon><AlertTriangle size={16} className="text-red-500" /></ListItemIcon>
-                  <ListItemText primary="Soil Compaction" secondary="2 failing tests" />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon><AlertTriangle size={16} className="text-red-500" /></ListItemIcon>
-                  <ListItemText primary="Concrete Strength" secondary="1 failing test" />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon><AlertTriangle size={16} className="text-yellow-500" /></ListItemIcon>
-                  <ListItemText primary="Asphalt Density" secondary="Monitoring" />
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-600" /> Critical Areas
+            </h2>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                Soil Compaction: 2 failing tests
+              </li>
+              <li className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                Concrete Strength: 1 failing test
+              </li>
+              <li className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Asphalt Density: Monitoring
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={4}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <TrendingUp size={20} className="text-green-600 mr-2" />
-                <Typography variant="h6" fontWeight="bold">Quality Trends</Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                Quality metrics over the last 30 days:
-              </Typography>
-              <Box display="flex" alignItems="center">
-                <TrendingUp size={20} className="text-green-500 mr-1" />
-                <Typography variant="body2" color="success.main">+12% improvement</Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                from previous period
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-600" /> Quality Trends
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Quality metrics over the last 30 days:
+            </p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm text-emerald-600">+12% improvement</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              from previous period
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quality Hub Tabs */}
-      <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden', bgcolor: 'white' }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ bgcolor: 'slate.50', borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Quality Dashboard" icon={<Shield size={18}/>} iconPosition="start" sx={{ fontWeight: '700', minHeight: 60 }} />
-          <Tab label="Lab Tests" icon={<Scale size={18}/>} iconPosition="start" sx={{ fontWeight: '700', minHeight: 60 }} />
-          <Tab label="NCRs" icon={<AlertTriangle size={18}/>} iconPosition="start" sx={{ fontWeight: '700', minHeight: 60 }} />
-          <Tab label="RFIs" icon={<FileText size={18}/>} iconPosition="start" sx={{ fontWeight: '700', minHeight: 60 }} />
-        </Tabs>
+      <Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4 h-16">
+            <TabsTrigger value="dashboard">
+              <Shield className="mr-2 h-4 w-4" /> Quality Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="lab-tests">
+              <Scale className="mr-2 h-4 w-4" /> Lab Tests
+            </TabsTrigger>
+            <TabsTrigger value="ncrs">
+              <AlertTriangle className="mr-2 h-4 w-4" /> NCRs
+            </TabsTrigger>
+            <TabsTrigger value="rfis">
+              <FileText className="mr-2 h-4 w-4" /> RFIs
+            </TabsTrigger>
+          </TabsList>
 
-        <Box p={2}>
-          {activeTab === 0 && (
-            <Box>
-              {/* Quality Summary Cards */}
-              <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={6}>
-                  <Accordion expanded={expandedSection === 'lab-tests'} onChange={handleExpandChange('lab-tests')} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                    <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: '#f8fafc', borderBottom: 1, borderColor: 'divider' }}>
-                      <Box display="flex" alignItems="center">
-                        <Scale size={20} className="mr-2 text-blue-600" />
-                        <Typography variant="h6" fontWeight="bold">Recent Lab Tests</Typography>
-                        <Chip label={`${labTests.length} tests`} size="small" color="primary" sx={{ ml: 2 }} />
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table size="small">
-                        <TableHead>
+          <TabsContent value="dashboard" className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Recent Lab Tests */}
+              <Collapsible open={expandedSection === 'lab-tests'} onOpenChange={() => setExpandedSection(prev => prev === 'lab-tests' ? null : 'lab-tests')}>
+                <CollapsibleTrigger asChild>
+                  <Card className="relative hover:bg-slate-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Scale className="text-blue-600 h-5 w-5" />
+                        <CardTitle>Recent Lab Tests</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge>{labTests.length} tests</Badge>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", expandedSection === 'lab-tests' && "rotate-180")} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell>Sample ID</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Result</TableCell>
-                            <TableCell>Date</TableCell>
+                            <TableHead>Sample ID</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Result</TableHead>
+                            <TableHead>Date</TableHead>
                           </TableRow>
-                        </TableHead>
+                        </TableHeader>
                         <TableBody>
-                          {filteredLabTests.map(test => (
+                          {filteredLabTests.length > 0 ? filteredLabTests.map(test => (
                             <TableRow key={test.id}>
                               <TableCell>{test.sampleId}</TableCell>
                               <TableCell>{test.testName}</TableCell>
                               <TableCell>{test.location}</TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={test.result} 
-                                  size="small" 
-                                  color={test.result === 'Pass' ? 'success' : 'error'} 
-                                  sx={{ fontWeight: 'bold' }}
-                                />
+                                <Badge variant={test.result === 'Pass' ? 'default' : 'destructive'}>{test.result}</Badge>
                               </TableCell>
                               <TableCell>{test.date}</TableCell>
                             </TableRow>
-                          ))}
-                          {filteredLabTests.length === 0 && (
-                            <TableRow>
-                              <td colSpan={5} style={{ textAlign: 'center', padding: '16px 16px' }}>
-                                <Typography color="text.disabled">No recent lab tests</Typography>
-                              </td>
-                            </TableRow>
+                          )) : (
+                            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No recent lab tests.</TableCell></TableRow>
                           )}
                         </TableBody>
                       </Table>
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
+                    </CardContent>
+                  </Card>
+                </CollapsibleTrigger>
+              </Collapsible>
 
-                <Grid item xs={12} md={6}>
-                  <Accordion expanded={expandedSection === 'ncrs'} onChange={handleExpandChange('ncrs')} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                    <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: '#f8fafc', borderBottom: 1, borderColor: 'divider' }}>
-                      <Box display="flex" alignItems="center">
-                        <AlertTriangle size={20} className="mr-2 text-red-600" />
-                        <Typography variant="h6" fontWeight="bold">Non-Conformance Reports</Typography>
-                        <Chip label={`${ncRs.length} NCRs`} size="small" color="error" sx={{ ml: 2 }} />
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table size="small">
-                        <TableHead>
+              {/* Non-Conformance Reports */}
+              <Collapsible open={expandedSection === 'ncrs'} onOpenChange={() => setExpandedSection(prev => prev === 'ncrs' ? null : 'ncrs')}>
+                <CollapsibleTrigger asChild>
+                  <Card className="relative hover:bg-slate-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="text-destructive h-5 w-5" />
+                        <CardTitle>Non-Conformance Reports</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive">{ncRs.length} NCRs</Badge>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", expandedSection === 'ncrs' && "rotate-180")} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell>NCR #</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Severity</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Date</TableCell>
+                            <TableHead>NCR #</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Severity</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
                           </TableRow>
-                        </TableHead>
+                        </TableHeader>
                         <TableBody>
-                          {filteredNCRs.map(ncr => (
+                          {filteredNCRs.length > 0 ? filteredNCRs.map(ncr => (
                             <TableRow key={ncr.id}>
                               <TableCell>{ncr.ncrNumber}</TableCell>
                               <TableCell>{ncr.location}</TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={ncr.severity} 
-                                  size="small" 
-                                  color={
-                                    ncr.severity === 'Critical' ? 'error' : 
-                                    ncr.severity === 'High' ? 'warning' : 
-                                    'info'
-                                  } 
-                                />
+                                <Badge variant={ncr.severity === 'Critical' ? 'destructive' : ncr.severity === 'High' ? 'warning' : 'default'}>
+                                  {ncr.severity}
+                                </Badge>
                               </TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={ncr.status} 
-                                  size="small" 
-                                  color={
-                                    ncr.status === 'Open' ? 'warning' : 
-                                    ncr.status === 'Closed' ? 'success' : 
-                                    'info'
-                                  } 
-                                />
+                                <Badge variant={ncr.status === 'Open' ? 'warning' : ncr.status === 'Closed' ? 'default' : 'secondary'}>
+                                  {ncr.status}
+                                </Badge>
                               </TableCell>
                               <TableCell>{ncr.dateRaised}</TableCell>
                             </TableRow>
-                          ))}
-                          {filteredNCRs.length === 0 && (
-                            <TableRow>
-                              <td colSpan={5} style={{ textAlign: 'center', padding: '16px 16px' }}>
-                                <Typography color="text.disabled">No active NCRs</Typography>
-                              </td>
-                            </TableRow>
+                          )) : (
+                            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No recent NCRs.</TableCell></TableRow>
                           )}
                         </TableBody>
                       </Table>
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
+                    </CardContent>
+                  </Card>
+                </CollapsibleTrigger>
+              </Collapsible>
 
-                <Grid item xs={12} md={6}>
-                  <Accordion expanded={expandedSection === 'rfis'} onChange={handleExpandChange('rfis')} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                    <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: '#f8fafc', borderBottom: 1, borderColor: 'divider' }} >
-                      <Box display="flex" alignItems="center">
-                        <FileText size={20} className="mr-2 text-purple-600" />
-                        <Typography variant="h6" fontWeight="bold">Requests for Information</Typography>
-                        <Chip label={`${rfis.length} RFIs`} size="small" color="secondary" sx={{ ml: 2 }} />
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table size="small">
-                        <TableHead>
+              {/* Requests for Information */}
+              <Collapsible open={expandedSection === 'rfis'} onOpenChange={() => setExpandedSection(prev => prev === 'rfis' ? null : 'rfis')}>
+                <CollapsibleTrigger asChild>
+                  <Card className="relative hover:bg-slate-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="text-purple-600 h-5 w-5" />
+                        <CardTitle>Requests for Information</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{rfis.length} RFIs</Badge>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", expandedSection === 'rfis' && "rotate-180")} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell>RFI #</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Priority</TableCell>
-                            <TableCell>Date</TableCell>
+                            <TableHead>RFI #</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Priority</TableHead>
+                            <TableHead>Date</TableHead>
                           </TableRow>
-                        </TableHead>
+                        </TableHeader>
                         <TableBody>
-                          {filteredRFIs.map(rfi => (
+                          {filteredRFIs.length > 0 ? filteredRFIs.map(rfi => (
                             <TableRow key={rfi.id}>
                               <TableCell>{rfi.rfiNumber}</TableCell>
                               <TableCell>{rfi.description.substring(0, 30)}...</TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={rfi.status} 
-                                  size="small" 
-                                  color={
-                                    rfi.status === 'Open' ? 'warning' : 
-                                    rfi.status === 'Approved' ? 'success' : 
-                                    'info'
-                                  } 
-                                />
+                                <Badge variant={rfi.status === 'Open' ? 'warning' : rfi.status === 'Approved' ? 'default' : 'secondary'}>
+                                  {rfi.status}
+                                </Badge>
                               </TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={rfi.priority} 
-                                  size="small" 
-                                  color={
-                                    rfi.priority === 'High' ? 'error' : 
-                                    rfi.priority === 'Medium' ? 'warning' : 
-                                    'info'
-                                  } 
-                                />
+                                <Badge variant={rfi.priority === 'High' ? 'destructive' : rfi.priority === 'Medium' ? 'warning' : 'default'}>
+                                  {rfi.priority}
+                                </Badge>
                               </TableCell>
                               <TableCell>{rfi.date}</TableCell>
                             </TableRow>
-                          ))}
-                          {filteredRFIs.length === 0 && (
-                            <TableRow>
-                              <td colSpan={5} style={{ textAlign: 'center', padding: '16px 16px' }}>
-                                <Typography color="text.disabled">No active RFIs</Typography>
-                              </td>
-                            </TableRow>
+                          )) : (
+                            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No recent RFIs.</TableCell></TableRow>
                           )}
                         </TableBody>
                       </Table>
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={2}>
-                        <Info size={20} className="text-blue-600 mr-2" />
-                        <Typography variant="h6" fontWeight="bold">Quality Insights</Typography>
-                      </Box>
-                      <List>
-                        <ListItem>
-                          <ListItemIcon><ShieldCheck size={16} className="text-green-500" /></ListItemIcon>
-                          <ListItemText 
-                            primary="Concrete strength trending upward" 
-                            secondary="Average strength increased by 15% over last week" 
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon><AlertTriangle size={16} className="text-yellow-500" /></ListItemIcon>
-                          <ListItemText 
-                            primary="Soil compaction monitoring" 
-                            secondary="2 locations showing below threshold values" 
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon><TrendingUp size={16} className="text-blue-500" /></ListItemIcon>
-                          <ListItemText 
-                            primary="NCR closure rate improving" 
-                            secondary="75% of NCRs resolved within target timeframe" 
-                          />
-                        </ListItem>
-                      </List>
                     </CardContent>
                   </Card>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
+                </CollapsibleTrigger>
+              </Collapsible>
 
-          {activeTab === 1 && (
-            <Box>
-              <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <TextField 
-                  size="small" 
-                  placeholder="Search lab tests..." 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)}
-                  sx={{ width: 400, bgcolor: 'white' }}
-                  InputProps={{ startAdornment: <Search size={16} className="text-slate-400 mr-2"/> }}
-                />
-                <Button variant="outlined" startIcon={<Filter size={16}/>}>Filter Results</Button>
-              </Box>
-              <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: '#f8fafc' }}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Sample ID</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Test Type</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Result</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Value</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredLabTests.map(test => (
-                      <TableRow key={test.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="900" sx={{ fontFamily: 'monospace', color: '#4f46e5' }}>{test.sampleId}</Typography>
-                          <Typography variant="caption" color="text.secondary">{test.date}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold">{test.testName}</Typography>
-                          <Chip label={test.category} size="small" variant="outlined" sx={{ height: 16, fontSize: 8, fontWeight: 'black', textTransform: 'uppercase', mt: 0.5 }} />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <MapPin size={10} /> {test.location}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="900" className="text-mono">{test.calculatedValue}</Typography>
-                          <Typography variant="caption" color="text.disabled">Req: {test.standardLimit}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={test.result.toUpperCase()} 
-                            size="small" 
-                            color={test.result === 'Pass' ? 'success' : 'error'} 
-                            sx={{ fontWeight: '900', fontSize: 10, width: 70 }} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="Test Technician">
-                            <Chip 
-                              label={test.technician || 'Unknown'} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ fontSize: 10 }} 
-                            />
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <IconButton size="small"><Eye size={16}/></IconButton>
-                            <IconButton size="small"><Printer size={16}/></IconButton>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredLabTests.length === 0 && (
-                      <TableRow>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px 16px' }}>
-                          <Scale size={48} strokeWidth={1} className="text-slate-200 mb-2 mx-auto"/>
-                          <Typography color="text.disabled">No lab test records matching your query.</Typography>
-                        </td>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
+              {/* Quality Insights */}
+              <Card>
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <Info className="h-5 w-5 text-blue-600" /> Quality Insights
+                  </h2>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                      Concrete strength trending upward: Average strength increased by 15% over last week
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      Soil compaction monitoring: 2 locations showing below threshold values
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-blue-500" />
+                      NCR closure rate improving: 75% of NCRs resolved within target timeframe
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-          {activeTab === 2 && (
-            <Box>
-              <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <TextField 
-                  size="small" 
-                  placeholder="Search NCRs..." 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)}
-                  sx={{ width: 400, bgcolor: 'white' }}
-                  InputProps={{ startAdornment: <Search size={16} className="text-slate-400 mr-2"/> }}
-                />
-                <Button variant="contained" startIcon={<Plus size={16}/>}>New NCR</Button>
-              </Box>
-              <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: '#f8fafc' }}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>NCR #</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Severity</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Raised By</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredNCRs.map(ncr => (
-                      <TableRow key={ncr.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="900" sx={{ fontFamily: 'monospace', color: '#ef4444' }}>{ncr.ncrNumber}</Typography>
-                          <Typography variant="caption" color="text.secondary">{ncr.dateRaised}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{ncr.description.substring(0, 50)}...</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <MapPin size={10} /> {ncr.location}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={ncr.severity} 
-                            size="small" 
-                            color={
-                              ncr.severity === 'Critical' ? 'error' : 
-                              ncr.severity === 'High' ? 'warning' : 
-                              ncr.severity === 'Medium' ? 'info' : 
-                              'default'
-                            } 
-                            sx={{ fontWeight: 'bold' }} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={ncr.status} 
-                            size="small" 
-                            color={
-                              ncr.status === 'Open' ? 'warning' : 
-                              ncr.status === 'Closed' ? 'success' : 
-                              'info'
-                            } 
-                            sx={{ fontWeight: 'bold' }} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={ncr.raisedBy} 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ fontSize: 10 }} 
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <IconButton size="small"><Eye size={16}/></IconButton>
-                            <IconButton size="small"><Printer size={16}/></IconButton>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredNCRs.length === 0 && (
+          <TabsContent value="lab-tests" className="p-4">
+            <div className="flex justify-between mb-4 items-center">
+              <Input
+                placeholder="Search lab tests..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-64"
+              />
+              <Button variant="outline">
+                <Filter className="mr-2 h-4 w-4" /> Filter Results
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[calc(100vh-400px)] w-full rounded-md border">
+                  <Table>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px 16px' }}>
-                          <AlertTriangle size={48} strokeWidth={1} className="text-slate-200 mb-2 mx-auto"/>
-                          <Typography color="text.disabled">No NCR records matching your query.</Typography>
-                        </td>
+                        <TableHead>Sample ID</TableHead>
+                        <TableHead>Test Type</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Result</TableHead>
+                        <TableHead>Value</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLabTests.length > 0 ? filteredLabTests.map(test => (
+                        <TableRow key={test.id}>
+                          <TableCell>
+                            <p className="font-bold font-mono text-indigo-700">{test.sampleId}</p>
+                            <p className="text-xs text-muted-foreground">{test.date}</p>
+                          </TableCell>
+                          <TableCell>
+                            <p className="font-semibold">{test.testName}</p>
+                            <Badge variant="secondary" className="text-xs font-mono">{test.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="h-3 w-3" /> {test.location}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <p className="font-bold font-mono">{test.calculatedValue}</p>
+                            <p className="text-xs text-muted-foreground">Req: {test.standardLimit}</p>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={test.result === 'Pass' ? 'default' : 'destructive'} className="font-bold">
+                              {test.result}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{test.technician || 'Unknown'}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <Scale className="h-12 w-12 text-muted-foreground mx-auto mb-2 opacity-50" />
+                            <p>No lab test records matching your query.</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {activeTab === 3 && (
-            <Box>
-              <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <TextField 
-                  size="small" 
-                  placeholder="Search RFIs..." 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)}
-                  sx={{ width: 400, bgcolor: 'white' }}
-                  InputProps={{ startAdornment: <Search size={16} className="text-slate-400 mr-2"/> }}
-                />
-                <Button variant="contained" startIcon={<Plus size={16}/>}>New RFI</Button>
-              </Box>
-              <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: '#f8fafc' }} >
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>RFI #</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Priority</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Requested By</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredRFIs.map(rfi => (
-                      <TableRow key={rfi.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="900" sx={{ fontFamily: 'monospace', color: '#8b5cf6' }}>{rfi.rfiNumber}</Typography>
-                          <Typography variant="caption" color="text.secondary">{rfi.date}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{rfi.description.substring(0, 50)}...</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <MapPin size={10} /> {rfi.location}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={rfi.priority} 
-                            size="small" 
-                            color={
-                              rfi.priority === 'High' ? 'error' : 
-                              rfi.priority === 'Medium' ? 'warning' : 
-                              'info'
-                            } 
-                            sx={{ fontWeight: 'bold' }} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={rfi.status} 
-                            size="small" 
-                            color={
-                              rfi.status === 'Open' ? 'warning' : 
-                              rfi.status === 'Approved' ? 'success' : 
-                              'info'
-                            } 
-                            sx={{ fontWeight: 'bold' }} 
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={rfi.requestedBy} 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ fontSize: 10 }} 
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <IconButton size="small"><Eye size={16}/></IconButton>
-                            <IconButton size="small"><Printer size={16}/></IconButton>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredRFIs.length === 0 && (
+          <TabsContent value="ncrs" className="p-4">
+            <div className="flex justify-between mb-4 items-center">
+              <Input
+                placeholder="Search NCRs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-64"
+              />
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> New NCR
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[calc(100vh-400px)] w-full rounded-md border">
+                  <Table>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px 16px' }}>
-                          <FileText size={48} strokeWidth={1} className="text-slate-200 mb-2 mx-auto"/>
-                          <Typography color="text.disabled">No RFI records matching your query.</Typography>
-                        </td>
+                        <TableHead>NCR #</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Severity</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Raised By</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Box>
-          )}
-        </Box>
-      </Paper>
-    </Box>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredNCRs.length > 0 ? filteredNCRs.map(ncr => (
+                        <TableRow key={ncr.id}>
+                          <TableCell>
+                            <p className="font-bold font-mono text-destructive">{ncr.ncrNumber}</p>
+                            <p className="text-xs text-muted-foreground">{ncr.dateRaised}</p>
+                          </TableCell>
+                          <TableCell>{ncr.description.substring(0, 50)}...</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="h-3 w-3" /> {ncr.location}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={ncr.severity === 'Critical' ? 'destructive' : ncr.severity === 'High' ? 'warning' : 'default'}>
+                              {ncr.severity}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={ncr.status === 'Open' ? 'warning' : ncr.status === 'Closed' ? 'default' : 'secondary'}>
+                              {ncr.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{ncr.raisedBy}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-2 opacity-50" />
+                            <p>No NCR records matching your query.</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rfis" className="p-4">
+            <div className="flex justify-between mb-4 items-center">
+              <Input
+                placeholder="Search RFIs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-64"
+              />
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> New RFI
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[calc(100vh-400px)] w-full rounded-md border">
+                  <Table>
+                    <TableHeader className="bg-slate-50">
+                      <TableRow>
+                        <TableHead>RFI #</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Requested By</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRFIs.length > 0 ? filteredRFIs.map(rfi => (
+                        <TableRow key={rfi.id}>
+                          <TableCell>
+                            <p className="font-bold font-mono text-purple-700">{rfi.rfiNumber}</p>
+                            <p className="text-xs text-muted-foreground">{rfi.date}</p>
+                          </TableCell>
+                          <TableCell>{rfi.description.substring(0, 50)}...</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="h-3 w-3" /> {rfi.location}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={rfi.priority === 'High' ? 'destructive' : rfi.priority === 'Medium' ? 'warning' : 'default'}>
+                              {rfi.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={rfi.status === 'Open' ? 'warning' : rfi.status === 'Approved' ? 'default' : 'secondary'}>
+                              {rfi.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{rfi.requestedBy}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-2 opacity-50" />
+                            <p>No RFI records matching your query.</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </div>
   );
 };
 

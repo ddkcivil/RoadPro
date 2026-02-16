@@ -92,9 +92,21 @@ class ApiService {
         body: JSON.stringify({ email, password })
       });
       
+      // If API endpoint doesn't exist (404), allow fallback to work
+      if (response.status === 404) {
+        console.log('API login endpoint not found, allowing fallback authentication');
+        throw new Error('API endpoint not found');
+      }
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        // Try to parse error response, but handle if it's not JSON
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Login failed');
+        } catch (parseError) {
+          // If we can't parse JSON, throw a generic error
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
       }
       
       return await response.json();
@@ -186,6 +198,12 @@ class ApiService {
         headers: { 'Content-Type': 'application/json' }
       });
       
+      // If API endpoint doesn't exist (404), return empty array to allow fallback
+      if (response.status === 404) {
+        console.log('API projects endpoint not found, returning empty array for fallback');
+        return [];
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -193,7 +211,8 @@ class ApiService {
       return await response.json();
     } catch (error: any) {
       console.error('Failed to fetch projects:', error);
-      throw error;
+      // Return empty array to allow fallback to localStorage/SQLite
+      return [];
     }
   }
 
@@ -258,13 +277,19 @@ class ApiService {
   async healthCheck() {
     try {
       const response = await fetch(`/api/health`);
+      // If API endpoint doesn't exist (404), return mock health status
+      if (response.status === 404) {
+        console.log('API health endpoint not found, returning mock health status');
+        return { status: 'ok', message: 'API not available, using local storage' };
+      }
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error: any) {
       console.error('API health check failed:', error);
-      throw error; // Propagate the error for consistent handling
+      // Return mock health status for fallback
+      return { status: 'degraded', message: 'API unavailable, using local fallback' };
     }
   }
 

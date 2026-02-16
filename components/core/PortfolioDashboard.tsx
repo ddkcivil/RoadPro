@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Search, 
   Plus, 
@@ -15,29 +15,24 @@ import {
   LineChart,
   Trash2
 } from 'lucide-react';
-import { 
-  Box, 
-  Typography, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Paper, 
-  TextField, 
-  InputAdornment, 
-  Chip, 
-  Avatar,
-  Button,
-  Stack,
-  LinearProgress,
-  IconButton,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle
-} from '@mui/material';
 import { UserRole, Project, AppSettings } from '../../types';
 import { formatCurrency } from '../../utils/formatting/exportUtils';
 
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Badge } from '~/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Progress } from '~/components/ui/progress';
+import { Separator } from '~/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
+import { cn } from '~/lib/utils';
+
+
+// NOTE: This is a refactored version of the PortfolioDashboard component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 interface Props {
   projects: Project[];
@@ -103,8 +98,6 @@ const PortfolioDashboard: React.FC<Props> = ({ projects, userRole, settings, onS
   const handleSelectProject = (id: string) => {
     onSelectProject(id);
   };
-
-  // Calculate progress functions (from ProjectsList)
 
   // Calculate progress functions (from ProjectsList)
   const calculateProgress = (boq?: any[]) => {
@@ -177,387 +170,241 @@ const PortfolioDashboard: React.FC<Props> = ({ projects, userRole, settings, onS
   );
 
   return (
-    <Box className="space-y-6">
+    <div className="space-y-6 p-4">
       {/* Portfolio Overview */}
-      <Box>
-        <Typography variant="h5" fontWeight="900" color="text.primary" mb={3}>
-          Portfolio Dashboard
-        </Typography>
-        <Typography variant="body2" color="text.secondary" mb={4}>
-          Strategic overview of {totalProjects} infrastructure assets
-        </Typography>
-      </Box>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-2">Portfolio Dashboard</h1>
+        <p className="text-sm text-slate-500 mb-4">Strategic overview of {totalProjects} infrastructure assets</p>
+      </div>
 
       {/* Portfolio Metrics */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2} mb={2}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                  <BarChart3 size={24} />
-                </Avatar>
-                <Box>
-                  <Typography variant="h4" fontWeight="900" color="text.primary">
-                    {totalProjects}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Projects
-                  </Typography>
-                </Box>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={100} 
-                sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover' }} 
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar className="h-12 w-12 bg-indigo-600 text-white">
+                <BarChart3 className="h-6 w-6" />
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{totalProjects}</h2>
+                <p className="text-sm text-slate-500">Total Projects</p>
+              </div>
+            </div>
+            <Progress value={100} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-indigo-600" />
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2} mb={2}>
-                <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
-                  <Activity size={24} />
-                </Avatar>
-                <Box>
-                  <Typography variant="h4" fontWeight="900" color="text.primary">
-                    {activeProjects}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Active Projects
-                  </Typography>
-                </Box>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={Math.round((activeProjects / totalProjects) * 100) || 0} 
-                sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover' }} 
-                color="success"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar className="h-12 w-12 bg-emerald-600 text-white">
+                <Activity className="h-6 w-6" />
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{activeProjects}</h2>
+                <p className="text-sm text-slate-500">Active Projects</p>
+              </div>
+            </div>
+            <Progress value={Math.round((activeProjects / totalProjects) * 100) || 0} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-600" />
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2} mb={2}>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
-                  <Clock size={24} />
-                </Avatar>
-                <Box>
-                  <Typography variant="h4" fontWeight="900" color="text.primary">
-                    {upcomingProjects}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Upcoming Projects
-                  </Typography>
-                </Box>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={Math.round((upcomingProjects / totalProjects) * 100) || 0} 
-                sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover' }} 
-                color="warning"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar className="h-12 w-12 bg-amber-600 text-white">
+                <Clock className="h-6 w-6" />
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{upcomingProjects}</h2>
+                <p className="text-sm text-slate-500">Upcoming Projects</p>
+              </div>
+            </div>
+            <Progress value={Math.round((upcomingProjects / totalProjects) * 100) || 0} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-amber-600" />
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={3}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2} mb={2}>
-                <Avatar sx={{ bgcolor: 'info.main', width: 48, height: 48 }}>
-                  <TrendingUp size={24} />
-                </Avatar>
-                <Box>
-                  <Typography variant="h4" fontWeight="900" color="text.primary">
-                    {formatCurrency(totalPortfolioValue, settings)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Portfolio Value
-                  </Typography>
-                </Box>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={100} 
-                sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover' }} 
-                color="info"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar className="h-12 w-12 bg-sky-600 text-white">
+                <TrendingUp className="h-6 w-6" />
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{formatCurrency(totalPortfolioValue, settings)}</h2>
+                <p className="text-sm text-slate-500">Portfolio Value</p>
+              </div>
+            </div>
+            <Progress value={100} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-sky-600" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Progress Overview */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
-                <TrendingUp size={20} />
-                Average Progress
-              </Typography>
-              <Stack spacing={2}>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2" fontWeight="bold">Physical Progress</Typography>
-                    <Typography variant="body2" fontWeight="bold">{avgPhysicalProgress}%</Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={avgPhysicalProgress} 
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover' }} 
-                    color="success"
-                  />
-                </Box>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2" fontWeight="bold">Time Progress</Typography>
-                    <Typography variant="body2" fontWeight="bold">{avgTimeProgress}%</Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={avgTimeProgress} 
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover' }} 
-                    color="primary"
-                  />
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" /> Average Progress
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <p className="text-sm font-semibold">Physical Progress</p>
+                  <p className="text-sm font-semibold text-emerald-600">{avgPhysicalProgress}%</p>
+                </div>
+                <Progress value={avgPhysicalProgress} className="h-2 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-600" />
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <p className="text-sm font-semibold">Time Progress</p>
+                  <p className="text-sm font-semibold text-indigo-600">{avgTimeProgress}%</p>
+                </div>
+                <Progress value={avgTimeProgress} className="h-2 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-indigo-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ borderRadius: 4, height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
-                <PieChart size={20} />
-                Project Status Distribution
-              </Typography>
-              <Stack spacing={1}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'success.main', borderRadius: '50%' }}></Box>
-                    <Typography variant="body2">Active</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight="bold">{activeProjects}</Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.round((activeProjects / totalProjects) * 100) || 0} 
-                  sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }} 
-                  color="success"
-                />
-                
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'warning.main', borderRadius: '50%' }}></Box>
-                    <Typography variant="body2">Upcoming</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight="bold">{upcomingProjects}</Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.round((upcomingProjects / totalProjects) * 100) || 0} 
-                  sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }} 
-                  color="warning"
-                />
-                
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'info.main', borderRadius: '50%' }}></Box>
-                    <Typography variant="body2">Completed</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight="bold">{completedProjects}</Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.round((completedProjects / totalProjects) * 100) || 0} 
-                  sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }} 
-                  color="info"
-                />
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <PieChart className="h-5 w-5" /> Project Status Distribution
+            </h2>
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-emerald-500 rounded-full"></div>
+                    <p className="text-sm">Active</p>
+                  </div>
+                  <p className="text-sm font-semibold">{activeProjects}</p>
+                </div>
+                <Progress value={Math.round((activeProjects / totalProjects) * 100) || 0} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-500" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-amber-500 rounded-full"></div>
+                    <p className="text-sm">Upcoming</p>
+                  </div>
+                  <p className="text-sm font-semibold">{upcomingProjects}</p>
+                </div>
+                <Progress value={Math.round((upcomingProjects / totalProjects) * 100) || 0} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-amber-500" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-sky-500 rounded-full"></div>
+                    <p className="text-sm">Completed</p>
+                  </div>
+                  <p className="text-sm font-semibold">{completedProjects}</p>
+                </div>
+                <Progress value={Math.round((completedProjects / totalProjects) * 100) || 0} className="h-1.5 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-sky-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Search and Action Bar */}
-      <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden', bgcolor: 'background.paper', mb: 4 }}>
-        <Box p={2} borderBottom="1px solid" borderColor="divider" display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" gap={2} bgcolor="action.hover">
-          <Typography variant="subtitle1" fontWeight="bold" color="text.primary">Project Directory</Typography>
-          <Box display="flex" gap={2} alignItems="center" width={{ xs: '100%', sm: 'auto' }}>
-            <Box sx={{ position: 'relative', flex: 1 }}>
-              <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'textSecondary' }} size={16} />
-              <TextField 
-                size="small"
-                placeholder="Search by code or client..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ 
-                  pl: 4, 
-                  py: 1, 
-                  borderRadius: 2, 
-                  border: '1px solid', 
-                  borderColor: 'divider', 
-                  bgcolor: 'background.default', 
-                  width: '100%',
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'transparent' },
-                    '&:hover fieldset': { borderColor: 'transparent' },
-                    '&.Mui-focused fieldset': { borderColor: 'transparent' },
-                  }
-                }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
-                  sx: { height: 36, borderRadius: 2 }
-                }}
-              />
-            </Box>
+      <Card className="mb-6">
+        <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h2 className="text-lg font-bold">Project Directory</h2>
+          <div className="relative w-full sm:w-auto flex-grow">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by code or client..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-                      </Box>
-                    </Box>
-                  </Paper>
+      {/* Project Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProjects.map(project => {
+          const physProgress = calculateProgress(project.boq); // Placeholder
+          const timeProgress = calculateTimeProgress(project.startDate, project.endDate); // Placeholder
+          const status = getProjectStatus(project.startDate, project.endDate); // Placeholder
 
+          return (
+            <Card key={project.id} className="h-full transition-transform hover:-translate-y-1 hover:shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex justify-between mb-2 items-start">
+                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleSelectProject(project.id)}>
+                    <Avatar className="h-14 w-14 rounded-lg bg-indigo-100 text-indigo-700 font-bold">
+                      <AvatarImage src={project.logo} />
+                      <AvatarFallback>{project.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="text-lg font-bold leading-tight">{project.name}</h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Badge variant="secondary">{project.code}</Badge>
+                        <MapPin className="h-3 w-3" /> {project.location}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <Badge className={cn("mb-1", status.dot)}>{status.icon} {status.label}</Badge>
+                    {(userRole === UserRole.ADMIN || userRole === UserRole.PROJECT_MANAGER) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteProject(project.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete Project</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                  <Users className="h-4 w-4" /> {project.agencies?.length || 0} Agencies
+                  <FileText className="h-4 w-4 ml-2" /> {project.boq?.length || 0} BOQ Items
+                </div>
 
-                  
-                  {/* Project Grid */}
-                  <Grid container spacing={3}>
-                    {filteredProjects.map(project => {
-                      const physProgress = calculateProgress(project.boq);
-                      const timeProgress = calculateTimeProgress(project.startDate, project.endDate);
-                      const status = getProjectStatus(project.startDate, project.endDate);
-            
-                      return (
-                        <Grid item xs={12} md={6} lg={4} key={project.id}>
-                          <Card 
-                            sx={{ 
-                              height: '100%', 
-                              transition: 'all 0.2s', 
-                              '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 24px rgba(0,0,0,0.1)', borderColor: 'primary.main' },
-                              borderRadius: 4
-                            }} 
-                            variant="outlined"
-                          >
-                            <CardContent sx={{ p: 3 }}>
-                              <Box display="flex" justifyContent="space-between" mb={2} alignItems="flex-start">
-                                <Box display="flex" alignItems="center" gap={2}>
-                                  <Avatar 
-                                    src={project.logo} 
-                                    variant="rounded" 
-                                    sx={{ width: 56, height: 56, bgcolor: 'primary.lighter', color: 'primary.main', fontWeight: 'bold' }}
-                                    onClick={() => handleSelectProject(project.id)}
-                                  >
-                                    {project.name.charAt(0)}
-                                  </Avatar>
-                                  <Box onClick={() => handleSelectProject(project.id)} style={{ cursor: 'pointer' }}>
-                                    <Typography variant="subtitle1" fontWeight="900" sx={{ mb: 0.5 }} noWrap>{project.name}</Typography>
-                                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                                      <Typography variant="caption" sx={{ fontWeight: 'bold', px: 1, bgcolor: 'action.hover', borderRadius: 1, color: 'text.secondary' }}>{project.code}</Typography>
-                                      <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                                        <MapPin size={10}/> {project.location}
-                                      </Typography>
-                                    </Box>
-                                  </Box>
-                                </Box>
-                                <Box>
-                                  <Chip 
-                                    label={status.label} 
-                                    size="small" 
-                                    sx={{ bgcolor: 'info.main', color: 'info.contrastText', fontWeight: 800, fontSize: 10, borderRadius: '6px', mb: 1 }} 
-                                    icon={status.icon}
-                                  />
-                                  {userRole === UserRole.ADMIN || userRole === UserRole.PROJECT_MANAGER ? (
-                                    <IconButton 
-                                      size="small" 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (window.confirm(`
-            ⚠️ PERMANENT DELETION WARNING ⚠️
-            You are about to permanently delete the project:
-            Project: ${project.name}
-            Code: ${project.code}
-            Client: ${project.client}
-            This action will permanently remove all associated data including schedules,
-            BOQ items, documents, reports, and other records. This cannot be undone.
-            To confirm deletion, click OK. To cancel, click Cancel.`)) {
-                                            if (window.confirm(`FINAL CONFIRMATION REQUIRED:
-            You are about to permanently delete:
-            ${project.name} (${project.code})
-            This is the FINAL step. Click OK to DELETE PERMANENTLY or Cancel to abort.`)) {
-                                              handleDeleteProject(project.id);
-                                            }
-                                        }
-                                      }}
-                                      color="error"
-                                    >
-                                      <Trash2 size={16} />
-                                    </IconButton>
-                                  ) : null}
-                                </Box>
-                              </Box>
-                              
-                              <Typography variant="subtitle1" fontWeight="900" sx={{ mb: 0.5 }} noWrap>{project.name}</Typography>
-                              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                                <Typography variant="caption" sx={{ fontWeight: 'bold', px: 1, bgcolor: 'action.hover', borderRadius: 1, color: 'text.secondary' }}>{project.code}</Typography>
-                                <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                                  <MapPin size={10}/> {project.location}
-                                </Typography>
-                              </Box>
-            
-                              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                                <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                                  <Users size={10}/> {project.agencies?.length || 0} Agencies
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5} ml={1}>
-                                  <FileText size={10}/> {project.boq?.length || 0} BOQ Items
-                                </Typography>
-                              </Box>
-            
-                              <Stack spacing={2}>
-                                <Box>
-                                  <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography variant="caption" fontWeight="900" color="text.secondary">Physical Progress</Typography>
-                                    <Typography variant="caption" fontWeight="900" color="success.main">{physProgress}%</Typography>
-                                  </Box>
-                                  <LinearProgress variant="determinate" value={physProgress} sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover' }} color="success" />
-                                </Box>
-            
-                                <Box>
-                                  <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography variant="caption" fontWeight="900" color="text.secondary">Timeline</Typography>
-                                    <Typography variant="caption" fontWeight="900" color="primary.main">{timeProgress}%</Typography>
-                                  </Box>
-                                  <LinearProgress 
-                                    variant="determinate" 
-                                    value={timeProgress} 
-                                    sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: timeProgress > physProgress ? 'error.main' : 'primary.main' } }} 
-                                  />
-                                </Box>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
-            
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <p className="text-xs font-semibold text-muted-foreground">Physical Progress</p>
+                      <p className="text-xs font-semibold text-emerald-600">{physProgress}%</p>
+                    </div>
+                    <Progress value={physProgress} className="h-2 [&::-webkit-progress-bar]:bg-slate-200 [&::-webkit-progress-value]:bg-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <p className="text-xs font-semibold text-muted-foreground">Timeline</p>
+                      <p className="text-xs font-semibold text-indigo-600">{timeProgress}%</p>
+                    </div>
+                    <Progress 
+                      value={timeProgress} 
+                      className="h-2 [&::-webkit-progress-bar]:bg-slate-200"
+                      indicatorClassName={cn(timeProgress > physProgress ? 'bg-destructive' : 'bg-indigo-600')}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {filteredProjects.length === 0 && (
-        <Box textAlign="center" p={8} bgcolor="background.paper" borderRadius={4} border="1px dashed" borderColor="divider">
-          <Typography variant="h5" fontWeight="800" color="text.primary">No Projects Found</Typography>
-          <Typography variant="body1" color="text.secondary" mt={1} mb={3}>
-            No projects match your search criteria.
-          </Typography>
-        </Box>
+        <Card className="text-center p-8 border-dashed">
+          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+          <h2 className="text-xl font-bold text-slate-800">No Projects Found</h2>
+          <p className="text-sm text-slate-500 mt-1">No projects match your search criteria.</p>
+        </Card>
       )}
-    </Box>
+    </div>
   );
 };
 

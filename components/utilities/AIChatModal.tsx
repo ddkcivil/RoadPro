@@ -2,18 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Bot, Send, Paperclip, Zap, Image as ImageIcon, Video, Loader2, Sparkles, FileText } from 'lucide-react';
 import { chatWithGemini, ChatMessage } from '../../services/ai/geminiService';
 import { Project } from '../../types';
-import { 
-  Box, 
-  Typography, 
-  IconButton, 
-  TextField, 
-  Avatar, 
-  Switch, 
-  FormControlLabel, 
-  Chip,
-  CircularProgress,
-  Tooltip
-} from '@mui/material';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 interface Props {
   project: Project;
@@ -268,7 +263,7 @@ const AIChatModal: React.FC<Props> = ({ project, onClose }) => {
         <Box sx={{ bgcolor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', p: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'white', flexShrink: 0 }} id="chat-modal-title">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <Box sx={{ bgcolor: 'rgba(255,255,255,0.2)', p: 2, borderRadius: '50%', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <Bot size={24} style={{ color: 'white' }} />
+                <Bot size={24} />
             </Box>
             <Box>
                 <Typography variant="h6" fontWeight="bold" sx={{ lineHeight: '1.4' }}>RoadMaster AI</Typography>
@@ -294,7 +289,7 @@ const AIChatModal: React.FC<Props> = ({ project, onClose }) => {
                 }
                 label={
                     <Box sx={{ fontSize: '0.75rem', fontWeight: 'medium', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Zap size={12} style={{ color: isFastMode ? '#fbbf24' : 'inherit' }} />
+                        <Zap size={12} className={isFastMode ? 'text-[#fbbf24]' : 'text-inherit'} />
                         Fast Mode
                     </Box>
                 }
@@ -412,17 +407,18 @@ const AIChatModal: React.FC<Props> = ({ project, onClose }) => {
             {renderSuggestionChips()}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 3, alignItems: 'flex-end' }}>
-                <input 
-                    type="file" 
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    className="hidden" 
-                    accept="image/*,video/*,application/pdf"
-                />
-                
-                {/* Fix: Wrapped Tooltip child in a span for strict MUI compatibility */}
-                <Tooltip title="Upload PDF (RFI/Invoice) or Media" arrow>
-                    <span>
+                                <input
+                                    type="file"
+                                    id="file-upload-input" // Added id for accessibility
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                    accept="image/*,video/*,application/pdf"
+                                />
+                                <label htmlFor="file-upload-input" className="sr-only">Upload PDF (RFI/Invoice) or Media</label>
+                                
+                                {/* Fix: Wrapped Tooltip child in a span for strict MUI compatibility */}
+                                <Tooltip title="Upload PDF (RFI/Invoice) or Media" arrow>                    <span>
                         <IconButton 
                             onClick={() => fileInputRef.current?.click()}
                             sx={{ 
@@ -446,7 +442,7 @@ const AIChatModal: React.FC<Props> = ({ project, onClose }) => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask about schedule, or upload RFI PDF for extraction..."
-                        style={{ flex: 1, background: 'transparent', outline: 'none', fontSize: '0.875rem', color: 'text.primary', padding: 0 }}
+                        className="flex-1 bg-transparent outline-none text-sm text-foreground p-0"
                         autoFocus
                         aria-label="Ask about schedule or upload RFI PDF"
                     />

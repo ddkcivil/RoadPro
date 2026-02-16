@@ -1,5 +1,14 @@
 import React, { Component, ReactNode } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+
+import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Terminal } from 'lucide-react';
+
+
+// NOTE: This is a refactored version of the ErrorBoundary component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
 
 interface Props {
   children: ReactNode;
@@ -33,49 +42,33 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          minHeight="100vh"
-          p={3}
-        >
-          <Typography variant="h4" gutterBottom>
-            Something went wrong
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={3}>
-            An error occurred while rendering the application.
-          </Typography>
-          {this.state.error && (
-            <Box mb={3} p={2} bgcolor="error.light" borderRadius={1} maxWidth="600px">
-              <Typography variant="body2" color="error.main" component="pre" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                Error: {this.state.error.message}
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
+          <Card className="max-w-xl w-full p-6 text-center">
+            <h1 className="text-3xl font-bold mb-2">Something went wrong</h1>
+            <p className="text-muted-foreground mb-4">An error occurred while rendering the application.</p>
+            {this.state.error && (
+              <Alert variant="destructive" className="mb-4 text-left">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Error: {this.state.error.message}</AlertTitle>
                 {this.state.error.stack && (
-                  <>
-                    <br /><br />
-                    Stack trace:
-                    <br />
-                    {this.state.error.stack}
-                  </>
+                  <AlertDescription>
+                    <pre className="mt-2 w-full whitespace-pre-wrap word-break-all text-xs">
+                      {this.state.error.stack}
+                    </pre>
+                  </AlertDescription>
                 )}
-              </Typography>
-            </Box>
-          )}
-          <Button
-            variant="contained"
-            onClick={() => this.setState({ hasError: false, error: undefined })}
-          >
-            Try Again
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => window.location.reload()}
-            sx={{ ml: 2 }}
-          >
-            Reload Page
-          </Button>
-        </Box>
+              </Alert>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => this.setState({ hasError: false, error: undefined })}>
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+            </div>
+          </Card>
+        </div>
       );
     }
 

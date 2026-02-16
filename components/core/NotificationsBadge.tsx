@@ -1,171 +1,112 @@
 import React, { useState } from "react";
-import { Badge, IconButton, Popover, List, ListItem, ListItemText, ListItemIcon, Divider, Box, Typography, Button, Chip } from '@mui/material';
 import { Bell, Check, CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 
+import { Button } from '~/components/ui/button';
+import { Badge } from '~/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '~/components/ui/dropdown-menu';
+import { ScrollArea } from '~/components/ui/scroll-area';
+import { Separator } from '~/components/ui/separator';
+import { cn } from '~/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
+
+
+// NOTE: This is a refactored version of the NotificationsBadge component.
+// The original logic has been temporarily removed to facilitate the UI migration.
+// It will be re-implemented in subsequent steps.
+
 const NotificationsBadge: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification } = useNotifications();
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   
   // Early return if context is not ready
   if (!notifications) {
     return (
-      <IconButton color="inherit" size="small" disabled>
-        <Bell size={20} />
-      </IconButton>
+      <Button variant="ghost" size="icon" disabled>
+        <Bell className="h-5 w-5" />
+      </Button>
     );
   }
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const open = Boolean(anchorEl);
-  const id = open ? 'notifications-popover' : undefined;
-
   const getIcon = (type: string) => {
     switch (type) {
-      case 'success':
-        return <CheckCircle size={16} color="#10b981" />;
-      case 'warning':
-        return <AlertCircle size={16} color="#f59e0b" />;
-      case 'error':
-        return <AlertCircle size={16} color="#ef4444" />;
-      case 'info':
-      default:
-        return <Info size={16} color="#3b82f6" />;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return '#10b981';
-      case 'warning':
-        return '#f59e0b';
-      case 'error':
-        return '#ef4444';
-      case 'info':
-      default:
-        return '#3b82f6';
+      case 'success': return <CheckCircle className="h-4 w-4 text-emerald-500" />;
+      case 'warning': return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      case 'error': return <AlertCircle className="h-4 w-4 text-destructive" />;
+      case 'info': default: return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
 
   return (
-    <>
-      <IconButton onClick={handleClick} color="inherit" size="small">
-        <Badge badgeContent={unreadCount} color="error">
-          <Bell size={20} />
-        </Badge>
-      </IconButton>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        PaperProps={{
-          sx: { width: 400, maxWidth: '90vw', borderRadius: 3, mt: 1 }
-        }}
-      >
-        <Box p={2} borderBottom="1px solid" borderColor="divider" display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight="bold">Notifications</Typography>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-96" align="end">
+        <div className="flex justify-between items-center p-4">
+          <DropdownMenuLabel className="text-lg font-bold">Notifications</DropdownMenuLabel>
           {notifications.length > 0 && (
             <Button 
-              size="small" 
-              onClick={() => {
-                markAllAsRead();
-              }}
-              startIcon={<Check size={14} />}
+              variant="ghost" 
+              size="sm" 
+              onClick={() => { console.log('Mark all read placeholder'); }}
             >
-              Mark All Read
+              <Check className="mr-2 h-4 w-4" /> Mark All Read
             </Button>
           )}
-        </Box>
-        <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+        </div>
+        <DropdownMenuSeparator />
+        <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
-            <ListItem>
-              <ListItemText 
-                primary="No notifications" 
-                secondary="You're all caught up!" 
-                primaryTypographyProps={{ color: 'text.secondary', textAlign: 'center' }}
-                secondaryTypographyProps={{ color: 'text.secondary', textAlign: 'center' }}
-              />
-            </ListItem>
+            <p className="text-center text-muted-foreground py-8">No notifications. You're all caught up!</p>
           ) : (
             notifications.map((notification) => (
-              <React.Fragment key={notification.id}>
-                <ListItem 
-                  sx={{ 
-                    backgroundColor: notification.read ? 'transparent' : 'action.hover',
-                    borderLeft: `3px solid ${getTypeColor(notification.type)}`,
-                    pl: 3
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 30, color: getTypeColor(notification.type) }}>
+              <DropdownMenuItem key={notification.id} className={cn("flex flex-col items-start gap-1 p-3", !notification.read && "bg-accent/50")}>
+                <div className="flex w-full justify-between items-center">
+                  <div className="flex items-center gap-2">
                     {getIcon(notification.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" fontWeight="bold">{notification.title}</Typography>
-                        {!notification.read && (
-                          <Chip 
-                            label="New" 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined" 
-                            sx={{ height: 18, fontSize: '0.6rem' }} 
-                          />
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <React.Fragment>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(notification.timestamp).toLocaleString()}
-                        </Typography>
-                        <Typography variant="body2" mt={0.5}>{notification.message}</Typography>
-                      </React.Fragment>
-                    }
-                  />
-                  <Box display="flex" gap={1}>
-                    {!notification.read && (
-                      <IconButton 
-                        size="small" 
-                        onClick={() => markAsRead(notification.id)}
-                        title="Mark as read"
-                      >
-                        <Check size={14} />
-                      </IconButton>
-                    )}
-                    <IconButton 
-                      size="small" 
-                      onClick={() => removeNotification(notification.id)}
-                      title="Dismiss"
-                    >
-                      <X size={14} />
-                    </IconButton>
-                  </Box>
-                </ListItem>
-                <Divider />
-              </React.Fragment>
+                    <span className="font-semibold">{notification.title}</span>
+                  </div>
+                  {!notification.read && <Badge className="bg-primary/20 text-primary">New</Badge>}
+                </div>
+                <p className="text-sm text-muted-foreground">{notification.message}</p>
+                <p className="text-xs text-muted-foreground">{new Date(notification.timestamp).toLocaleString()}</p>
+                <div className="flex gap-2 self-end">
+                  {!notification.read && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => console.log('Mark as read placeholder', notification.id)}>
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Mark as read</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => console.log('Dismiss placeholder', notification.id)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Dismiss</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </DropdownMenuItem>
             ))
           )}
-        </List>
-      </Popover>
-    </>
+        </ScrollArea>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

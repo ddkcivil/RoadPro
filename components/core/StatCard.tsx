@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import { LucideIcon } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { cn } from '~/lib/utils';
 
 interface StatCardProps {
   title: string;
@@ -12,48 +12,20 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
   return (
-    <Card 
-      sx={{ 
-        height: '100%', 
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '12px',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
-        }
-      }}
-    >
+    <Card className="h-full bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-2xl">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-gray-400">{title}</CardTitle>
+        <div className="p-1.5 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+          <Icon className="h-6 w-6" style={{ color: color }} />
+        </div>
+      </CardHeader>
       <CardContent>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography variant="caption" component="div" color="text.secondary" gutterBottom>
-              {title}
-            </Typography>
-            <Typography variant="h6" component="div" sx={{ fontWeight: 600, mt: 0.5 }}>
-              {value}
-            </Typography>
-            {trend && (
-              <Box display="flex" alignItems="center" mt={1}>
-                <Typography variant="caption" sx={{ color: trend.startsWith('+') ? '#10b981' : '#ef4444' }}>
-                  {trend}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box sx={{ 
-            backgroundColor: `${color}20`, 
-            borderRadius: '8px', 
-            p: 1.5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Icon size={24} color={color} />
-          </Box>
-        </Box>
+        <div className="text-2xl font-bold text-white">{value}</div>
+        {trend && (
+            <p className={cn("text-xs mt-1", trend.startsWith('+') ? 'text-emerald-500' : 'text-red-500')}>
+                {trend}
+            </p>
+        )}
       </CardContent>
     </Card>
   );

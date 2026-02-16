@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { Tabs, Tab, Box, TextField, Grid, Button, Switch, FormControlLabel, Typography, Divider, Paper, Stack, Alert, AlertTitle, Avatar, Chip, Card, CardContent, MenuItem, Select, InputLabel, FormControl, Slider, Autocomplete, InputAdornment, IconButton } from '@mui/material';
-import { AppSettings, DashboardWidget } from '../../types';
-import { Settings, Image as ImageIcon, Mail, AlertCircle, Cloud, Share2, Info, Save, Palette, Lock, Globe, Database, Monitor, Smartphone, Users, Shield, Bell, Eye, BarChart3, Activity } from 'lucide-react';
+import { Card, CardContent } from '~/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs';
+import { Label } from '~/components/ui/label';
+import { Input } from '~/components/ui/input';
+import { Button } from '~/components/ui/button';
+import { Switch } from '~/components/ui/switch';
+import { Separator } from '~/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Badge } from '~/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
+import { Slider } from '~/components/ui/slider';
+import { AppSettings } from '../../types';
+import { Settings, Palette, Shield, Cloud, Save, BarChart3, Bell, Activity, Share2, Info, Image as ImageIcon, Mail, AlertCircle } from 'lucide-react';
+
 
 interface Props {
   settings: AppSettings;
@@ -9,7 +21,7 @@ interface Props {
 }
 
 const SettingsModule: React.FC<Props> = ({ settings, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("general");
   const [formData, setFormData] = useState<AppSettings>(settings);
 
   const handleUpdate = () => {
@@ -17,832 +29,683 @@ const SettingsModule: React.FC<Props> = ({ settings, onUpdate }) => {
   };
 
   return (
-    <Box className="animate-in fade-in duration-500">
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Box>
-                <Typography variant="h4" fontWeight="800" sx={{ letterSpacing: '-0.04em' }}>System Settings</Typography>
-                <Typography variant="body1" color="text.secondary">Configure your project parameters and integrations</Typography>
-            </Box>
+    <div className="animate-in fade-in duration-500">
+        <div className="flex items-center justify-between mb-6">
+            <div>
+                <h4 className="text-2xl font-extrabold tracking-tight">System Settings</h4>
+                <p className="text-gray-500">Configure your project parameters and integrations</p>
+            </div>
             <Button 
-                variant="contained" 
-                startIcon={<Save size={18} />} 
                 onClick={handleUpdate} 
-                sx={{ 
-                    paddingX: 3, 
-                    paddingY: 1, 
-                    fontWeight: 700,
-                    borderRadius: 2
-                }}
+                className="px-6 py-2 font-bold rounded-lg"
             >
+                <Save size={18} className="mr-2" /> 
                 Save Changes
             </Button>
-        </Box>
+        </div>
         
-        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={(e, v) => setActiveTab(v)} 
-            sx={{ 
-              bgcolor: 'background.paper', 
-              borderBottom: 1, 
-              borderColor: 'divider',
-              minHeight: 50
-            }}
-          >
-            <Tab 
-              label="General" 
-              icon={<Settings size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Appearance" 
-              icon={<Palette size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Security" 
-              icon={<Shield size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Cloud Integrations" 
-              icon={<Cloud size={16}/>} 
-              iconPosition="start" 
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Project Parameters" 
-              icon={<Settings size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Reporting" 
-              icon={<BarChart3 size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Notifications" 
-              icon={<Bell size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
-            <Tab 
-              label="Dashboard" 
-              icon={<Activity size={16}/>} 
-              iconPosition="start"
-              sx={{ 
-                fontWeight: '600', 
-                minHeight: 50,
-                textTransform: 'none',
-                fontSize: 14
-              }} 
-            />
+        <Card className="rounded-xl overflow-hidden mb-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)}>
+            <TabsList className="grid w-full grid-cols-8 h-auto rounded-none border-b p-0">
+              <TabsTrigger value="general" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Settings size={16}/> General
+              </TabsTrigger>
+              <TabsTrigger value="appearance" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Palette size={16}/> Appearance
+              </TabsTrigger>
+              <TabsTrigger value="security" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Shield size={16}/> Security
+              </TabsTrigger>
+              <TabsTrigger value="cloud-integrations" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Cloud size={16}/> Cloud Integrations
+              </TabsTrigger>
+              <TabsTrigger value="project-parameters" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Settings size={16}/> Project Parameters
+              </TabsTrigger>
+              <TabsTrigger value="reporting" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <BarChart3 size={16}/> Reporting
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="rounded-none border-r data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Bell size={16}/> Notifications
+              </TabsTrigger>
+              <TabsTrigger value="dashboard" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none text-sm font-semibold h-12 flex items-center gap-2">
+                <Activity size={16}/> Dashboard
+              </TabsTrigger>
+            </TabsList>
           </Tabs>
-        </Paper>
+        </Card>
 
           {/* TAB 0: General */}
-          <div role="tabpanel" hidden={activeTab !== 0}>
-              <Card variant="outlined" sx={{ borderRadius: 3, mb: 3 }}>
+          <TabsContent value="general">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Organization Details</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Company Name" 
+                  <h6 className="text-lg font-bold mb-4 text-primary">Organization Details</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="company-name" className="mb-2 block">Company Name</Label>
+                          <Input 
+                              id="company-name"
                               value={formData.companyName} 
                               onChange={e => setFormData({...formData, companyName: e.target.value})} 
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Default Currency" 
-                              select
-                              value={formData.currency} 
-                              onChange={e => setFormData({...formData, currency: e.target.value})} 
-                              SelectProps={{ native: true }}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                      </div>
+                      <div>
+                          <Label htmlFor="default-currency" className="mb-2 block">Default Currency</Label>
+                          <Select
+                              value={formData.currency}
+                              onValueChange={(value) => setFormData({...formData, currency: value})}
                           >
-                              <option value="USD">USD ($)</option>
-                              <option value="NPR">NPR (Rs.)</option>
-                              <option value="INR">INR (₹)</option>
-                              <option value="EUR">EUR (€)</option>
-                              <option value="GBP">GBP (£)</option>
-                          </TextField>
-                      </Grid>
-                  </Grid>
+                              <SelectTrigger id="default-currency">
+                                  <SelectValue placeholder="Select a currency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="USD">USD ($)</SelectItem>
+                                  <SelectItem value="NPR">NPR (Rs.)</SelectItem>
+                                  <SelectItem value="INR">INR (₹)</SelectItem>
+                                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                                  <SelectItem value="GBP">GBP (£)</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
 
-                  <Divider sx={{ my: 3 }} />
+                  <Separator className="my-6" />
 
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Financial Defaults</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Default VAT Rate (%)" 
+                  <h6 className="text-lg font-bold mb-4 text-primary">Financial Defaults</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="vat-rate" className="mb-2 block">Default VAT Rate (%)</Label>
+                          <Input 
+                              id="vat-rate"
                               type="number"
                               value={formData.vatRate} 
                               onChange={e => setFormData({...formData, vatRate: parseFloat(e.target.value) || 0})} 
-                              size="small"
-                              variant="outlined"
-                              helperText="Enter VAT rate as percentage (e.g., 13 for 13%)"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Fiscal Year Start" 
+                      </div>
+                      <div>
+                          <Label htmlFor="fiscal-year-start" className="mb-2 block">Fiscal Year Start</Label>
+                          <Input 
+                              id="fiscal-year-start"
                               type="date"
-                              InputLabelProps={{ shrink: true }}
                               value={formData.fiscalYearStart} 
                               onChange={e => setFormData({...formData, fiscalYearStart: e.target.value})} 
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                  </Grid>
+                      </div>
+                  </div>
                             
-                  <Divider sx={{ my: 3 }} />
+                  <Separator className="my-6" />
                             
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">System Configuration</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Default Timezone" 
-                              select
-                              value={formData.timezone || "UTC+05:45"} 
-                              onChange={e => setFormData({...formData, timezone: e.target.value as string})} 
-                              SelectProps={{ native: true }}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                  <h6 className="text-lg font-bold mb-4 text-primary">System Configuration</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="default-timezone" className="mb-2 block">Default Timezone</Label>
+                          <Select
+                              value={formData.timezone || "UTC+05:45"}
+                              onValueChange={(value) => setFormData({...formData, timezone: value})}
                           >
-                              <option value="UTC+05:45">Nepal Time (UTC+05:45)</option>
-                              <option value="UTC+00:00">GMT (UTC+00:00)</option>
-                              <option value="UTC+01:00">CET (UTC+01:00)</option>
-                              <option value="UTC+05:30">IST (UTC+05:30)</option>
-                              <option value="UTC-05:00">EST (UTC-05:00)</option>
-                              <option value="UTC-08:00">PST (UTC-08:00)</option>
-                          </TextField>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Date Format" 
-                              select
-                              value={formData.dateFormat || "DD/MM/YYYY"} 
-                              onChange={e => setFormData({...formData, dateFormat: e.target.value as string})} 
-                              SelectProps={{ native: true }}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                              <SelectTrigger id="default-timezone">
+                                  <SelectValue placeholder="Select a timezone" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="UTC+05:45">Nepal Time (UTC+05:45)</SelectItem>
+                                  <SelectItem value="UTC+00:00">GMT (UTC+00:00)</SelectItem>
+                                  <SelectItem value="UTC+01:00">CET (UTC+01:00)</SelectItem>
+                                  <SelectItem value="UTC+05:30">IST (UTC+05:30)</SelectItem>
+                                  <SelectItem value="UTC-05:00">EST (UTC-05:00)</SelectItem>
+                                  <SelectItem value="UTC-08:00">PST (UTC-08:00)</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div>
+                          <Label htmlFor="date-format" className="mb-2 block">Date Format</Label>
+                          <Select
+                              value={formData.dateFormat || "DD/MM/YYYY"}
+                              onValueChange={(value) => setFormData({...formData, dateFormat: value})}
                           >
-                              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                              <option value="DD-MMM-YYYY">DD-MMM-YYYY</option>
-                          </TextField>
-                      </Grid>
-                  </Grid>
+                              <SelectTrigger id="date-format">
+                                  <SelectValue placeholder="Select a date format" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                                  <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                                  <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                                  <SelectItem value="DD-MMM-YYYY">DD-MMM-YYYY</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
                             
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch checked={formData.backupEnabled || false} onChange={(e) => setFormData({...formData, backupEnabled: e.target.checked})} />} 
-                              label="Enable Auto-backup" 
-                              sx={{ mb: 2 }}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch 
+                              id="backup-enabled"
+                              checked={formData.backupEnabled || false} 
+                              onCheckedChange={(checked) => setFormData({...formData, backupEnabled: checked})} 
                           />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Backup Frequency" 
-                              select
-                              value={formData.backupFrequency || "daily"} 
-                              onChange={e => setFormData({...formData, backupFrequency: e.target.value as string})} 
-                              SelectProps={{ native: true }}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                          <Label htmlFor="backup-enabled">Enable Auto-backup</Label>
+                      </div>
+                      <div>
+                          <Label htmlFor="backup-frequency" className="mb-2 block">Backup Frequency</Label>
+                          <Select
+                              value={formData.backupFrequency || "daily"}
+                              onValueChange={(value) => setFormData({...formData, backupFrequency: value})}
                           >
-                              <option value="hourly">Hourly</option>
-                              <option value="daily">Daily</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="monthly">Monthly</option>
-                          </TextField>
-                      </Grid>
-                  </Grid>
+                              <SelectTrigger id="backup-frequency">
+                                  <SelectValue placeholder="Select frequency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="hourly">Hourly</SelectItem>
+                                  <SelectItem value="daily">Daily</SelectItem>
+                                  <SelectItem value="weekly">Weekly</SelectItem>
+                                  <SelectItem value="monthly">Monthly</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
                 </CardContent>
               </Card>
-          </div>
+          </TabsContent>
                     
           {/* TAB 1: Cloud Integrations */}
-          <div role="tabpanel" hidden={activeTab !== 1}>
-              <Stack spacing={3}>
-                  <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                    <CardContent>
-                      <Box display="flex" gap={2} mb={3}>
-                          <Avatar sx={{ bgcolor: '#eef2ff', color: '#4f46e5' }}><Cloud size={20}/></Avatar>
-                          <Box>
-                            <Typography variant="h6" fontWeight="bold">Google Sheets Data Bridge</Typography>
-                            <Typography variant="body2" color="text.secondary">Connect your project registry to a Google Spreadsheet for bi-directional updates.</Typography>
-                          </Box>
-                      </Box>
+          <TabsContent value="cloud-integrations">
+              <div className="space-y-6">
+                  <Card className="rounded-xl">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4 mb-6">
+                          <Avatar className="bg-[#eef2ff] text-[#4f46e5] w-10 h-10">
+                            <AvatarFallback><Cloud size={20}/></AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h6 className="text-lg font-bold">Google Sheets Data Bridge</h6>
+                            <p className="text-sm text-gray-500">Connect your project registry to a Google Spreadsheet for bi-directional updates.</p>
+                          </div>
+                      </div>
                       
-                      <Stack spacing={2}>
-                          <TextField 
-                            fullWidth 
-                            label="Google Spreadsheet ID" 
-                            placeholder="e.g. 1aBCdEfgHijkLmNoPqRsTuVwXyZ"
-                            value={formData.googleSpreadsheetId || ''} 
-                            onChange={e => setFormData({...formData, googleSpreadsheetId: e.target.value})}
-                            helperText="The ID is found in the URL: docs.google.com/spreadsheets/d/[SPREADSHEET_ID]/edit"
-                            size="small"
-                            variant="outlined"
-                          />
+                      <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="google-spreadsheet-id" className="mb-2 block">Google Spreadsheet ID</Label>
+                            <Input 
+                              id="google-spreadsheet-id"
+                              placeholder="e.g. 1aBCdEfgHijkLmNoPqRsTuVwXyZ"
+                              value={formData.googleSpreadsheetId || ''} 
+                              onChange={e => setFormData({...formData, googleSpreadsheetId: e.target.value})}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">The ID is found in the URL: docs.google.com/spreadsheets/d/[SPREADSHEET_ID]/edit</p>
+                          </div>
                                                     
-                          <Alert severity="info" icon={<Share2 size={20}/>} sx={{ borderRadius: 2 }}>
-                              <AlertTitle sx={{ fontWeight: 'bold' }}>Step 2: Grant System Permissions</AlertTitle>
-                              To allow the app to read and write to your sheet, you must <strong>Share</strong> your spreadsheet with the system service email:
-                              <Box sx={{ mt: 1.5, p: 1, bgcolor: 'rgba(255,255,255,0.5)', borderRadius: 1, fontFamily: 'monospace', fontSize: 12, border: '1px dashed' }}>
-                                roadmaster-bot@engineering-os.iam.gserviceaccount.com
-                              </Box>
+                          <Alert className="rounded-lg p-4 bg-blue-50 border-blue-200 text-blue-800">
+                              <AlertTitle className="font-bold flex items-center gap-2"><Share2 size={20}/> Step 2: Grant System Permissions</AlertTitle>
+                              <AlertDescription className="mt-2 text-sm">
+                                To allow the app to read and write to your sheet, you must <strong>Share</strong> your spreadsheet with the system service email:
+                                <div className="mt-3 p-2 bg-gray-50 rounded-md border border-dashed">
+                                  roadmaster-bot@engineering-os.iam.gserviceaccount.com
+                                </div>
+                              </AlertDescription>
                           </Alert>
                       
-                          <Box p={2} bgcolor="slate.50" borderRadius={2} border="1px solid #e2e8f0">
-                              <Typography variant="subtitle2" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
+                          <div className="p-4 bg-slate-50 rounded-md border border-gray-200">
+                              <p className="text-sm font-bold mb-2 flex items-center gap-1">
                                   <Info size={16} className="text-indigo-600"/> Synchronized Data Maps
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              </p>
+                              <p className="text-xs text-gray-500">
                                   When enabled, the system will automatically look for the following tabs in your Google Sheet:
-                              </Typography>
-                              <Grid container spacing={1} mt={1}>
+                              </p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                                   {['BOQ_Master', 'Physical_Progress', 'Financial_Ledger', 'Quality_Logs'].map(tab => (
-                                      <Grid item key={tab} xs={6} md={3}>
-                                          <Chip label={tab} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: 10 }} />
-                                      </Grid>
+                                      <Badge key={tab} variant="outline" className="font-mono text-xs">{tab}</Badge>
                                   ))}
-                              </Grid>
-                          </Box>
-                      </Stack>
+                              </div>
+                          </div>
+                      </div>
                     </CardContent>
                   </Card>
                   
-                  <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                    <CardContent>
-                      <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Webhooks</Typography>
-                      <Typography variant="body2" color="text.secondary" mb={2}>Send real-time JSON payloads to external systems (e.g. Zapier, ERP).</Typography>
-                      <TextField 
-                        fullWidth 
-                        size="small" 
-                        label="Event Notification URL" 
-                        placeholder="https://hooks.zapier.com/..." 
-                        variant="outlined"
-                      />
+                  <Card className="rounded-xl">
+                    <CardContent className="p-6">
+                      <h6 className="text-lg font-bold mb-2 text-primary">Webhooks</h6>
+                      <p className="text-sm text-gray-500 mb-4">Send real-time JSON payloads to external systems (e.g. Zapier, ERP).</p>
+                      <div>
+                        <Label htmlFor="event-notification-url" className="sr-only">Event Notification URL</Label>
+                        <Input 
+                          id="event-notification-url"
+                          placeholder="https://hooks.zapier.com/..." 
+                        />
+                      </div>
                     </CardContent>
                   </Card>
-              </Stack>
-          </div>
+              </div>
+          </TabsContent>
 
           {/* TAB 2: Project Parameters */}
-          <div role="tabpanel" hidden={activeTab !== 2}>
-              <Card variant="outlined" sx={{ borderRadius: 3 }}>
+          <TabsContent value="project-parameters">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Chainage & Location</Typography>
-                  <Typography variant="body2" color="text.secondary" mb={3}>Define the standard project bounds for validation.</Typography>
+                  <h6 className="text-lg font-bold mb-2 text-primary">Chainage & Location</h6>
+                  <p className="text-sm text-gray-500 mb-6">Define the standard project bounds for validation.</p>
                   
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={4}>
-                          <TextField 
-                              fullWidth 
-                              label="Chainage Format" 
-                              select
-                              value="KM"
-                              SelectProps={{ native: true }}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                      <Label htmlFor="chainage-format" className="mb-2 block">Chainage Format</Label>
+                          <Select
+                              value="KM" // Assuming "KM" is the default or initial value
+                              onValueChange={(value) => console.log("Chainage format changed to:", value)} // Placeholder, replace with actual state update if needed
                           >
-                              <option value="KM">Km (10+000)</option>
-                              <option value="M">Meters (10000)</option>
-                          </TextField>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                          <TextField 
-                              fullWidth 
-                              label="Start Chainage (Km)" 
+                              <SelectTrigger id="chainage-format" className="w-full mb-2">
+                                  <SelectValue placeholder="Select format" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="KM">KM</SelectItem>
+                                  <SelectItem value="M">M</SelectItem>
+                                  <SelectItem value="MILES">Miles</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="col-span-1">
+                          <Label htmlFor="start-chainage" className="mb-2 block">Start Chainage (Km)</Label>
+                          <Input
+                              id="start-chainage"
                               placeholder="0.000"
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                              className="mb-2"
                           />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                          <TextField 
-                              fullWidth 
-                              label="End Chainage (Km)" 
+                      </div>
+                      <div className="col-span-1">
+                          <Label htmlFor="end-chainage" className="mb-2 block">End Chainage (Km)</Label>
+                          <Input
+                              id="end-chainage"
                               placeholder="15.000"
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
+                              className="mb-2"
                           />
-                      </Grid>
-                  </Grid>
+                      </div>
+                  </div>
 
-                  <Box mt={3} p={2} bgcolor="#eff6ff" borderRadius={2} border="1px solid #bfdbfe">
-                      <Typography variant="subtitle2" color="#1e3a8a" display="flex" alignItems="center" gap={1}>
+                  <div className="mt-6 p-4 bg-blue-50 rounded-md border border-blue-200">
+                      <p className="text-sm font-bold text-blue-900 flex items-center gap={1}">
                           <Settings size={16}/> Auto-Numbering Logic
-                      </Typography>
-                      <Typography variant="caption" color="#1e40af">
+                      </p>
+                      <p className="text-xs text-blue-800 mt-1">
                           RFI and Report numbers are currently auto-generated based on the format: <strong>PREFIX-CODE-SEQUENCE</strong>. 
-                      </Typography>
-                  </Box>
+                      </p>
+                  </div>
                 </CardContent>
               </Card>
-          </div>
+          </TabsContent>
 
           {/* TAB 3: Reporting */}
-          <div role="tabpanel" hidden={activeTab !== 3}>
-              <Card variant="outlined" sx={{ borderRadius: 3 }}>
+          <TabsContent value="reporting">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Report Branding</Typography>
+                  <h6 className="text-lg font-bold mb-4 text-primary">Report Branding</h6>
                   
-                  <Grid container spacing={4}>
-                      <Grid item xs={12} md={4}>
-                          <Box 
-                              sx={{ 
-                                  height: 150, 
-                                  border: '2px dashed #cbd5e1', 
-                                  borderRadius: 2, 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center',
-                                  color: 'text.secondary',
-                                  cursor: 'pointer',
-                                  '&:hover': { borderColor: 'primary.main', color: 'primary.main', bgcolor: '#f5f7ff' }
-                              }}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                          <div 
+                              className="h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 cursor-pointer hover:border-primary hover:text-primary hover:bg-blue-50 transition-colors"
                           >
                               <ImageIcon size={28} />
-                              <Typography variant="caption" mt={1}>Upload Company Logo</Typography>
-                          </Box>
-                      </Grid>
-                      <Grid item xs={12} md={8}>
-                          <TextField 
-                              fullWidth 
-                              label="Report Footer / Disclaimer Text" 
-                              multiline 
-                              rows={3}
+                              <p className="text-xs mt={2}">Upload Company Logo</p>
+                          </div>
+                      </div>
+                      <div>
+                          <Label htmlFor="report-footer" className="mb-2 block">Report Footer / Disclaimer Text</Label>
+                          <textarea 
+                              id="report-footer"
+                              className="flex h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               defaultValue="This report is generated automatically. Please verify critical data on site."
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
-                          />
-                          <Box>
-                              <FormControlLabel control={<Switch defaultChecked />} label="Include Signature Block" />
-                          </Box>
-                      </Grid>
-                  </Grid>
+                          ></textarea>
+                          <div className="flex items-center space-x-2 mt-4">
+                              <Switch id="include-signature-block" defaultChecked />
+                              <Label htmlFor="include-signature-block">Include Signature Block</Label>
+                          </div>
+                      </div>
+                  </div>
                 </CardContent>
               </Card>
-          </div>
+          </TabsContent>
 
           {/* TAB 4: Notifications */}
-          <div role="tabpanel" hidden={activeTab !== 4}>
-              <Card variant="outlined" sx={{ borderRadius: 3 }}>
+          <TabsContent value="notifications">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Alert Preferences</Typography>
+                  <h6 className="text-lg font-bold mb-4 text-primary">Alert Preferences</h6>
                   
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                              <Typography variant="subtitle2" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Card className="rounded-lg p-4">
+                              <p className="text-base font-bold mb-4 flex items-center gap-2">
                                   <Mail size={16}/> Email Alerts
-                              </Typography>
-                              <Box display="flex" flexDirection="column" gap={1}>
-                                  <FormControlLabel 
-                                      control={
-                                        <Switch 
+                              </p>
+                              <div className="flex flex-col gap-3">
+                                  <div className="flex items-center space-x-2">
+                                      <Switch 
+                                          id="enable-email-notifications"
                                           checked={formData.notifications.enableEmail} 
-                                          onChange={e => setFormData({
+                                          onCheckedChange={checked => setFormData({
                                             ...formData, 
                                             notifications: {
                                               ...formData.notifications, 
-                                              enableEmail: e.target.checked
+                                              enableEmail: checked
                                             }
                                           })} 
                                         /> 
-                                      } 
-                                      label="Enable Email Notifications" 
-                                  />
-                                  <FormControlLabel control={<Switch defaultChecked />} label="Daily Digest Summary" />
-                              </Box>
+                                      <Label htmlFor="enable-email-notifications">Enable Email Notifications</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                      <Switch id="daily-digest-summary" defaultChecked /> 
+                                      <Label htmlFor="daily-digest-summary">Daily Digest Summary</Label>
+                                  </div>
+                              </div>
                           </Card>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                              <Typography variant="subtitle2" fontWeight="bold" mb={2} display="flex" alignItems="center" gap={1}>
+                      </div>
+                      <div>
+                          <Card className="rounded-lg p-4">
+                              <p className="text-base font-bold mb-4 flex items-center gap-2">
                                   <AlertCircle size={16}/> Triggers
-                              </Typography>
-                              <Box display="flex" flexDirection="column" gap={2}>
-                                  <FormControlLabel 
-                                      control={
-                                        <Switch 
+                              </p>
+                              <div className="flex flex-col gap-3">
+                                  <div className="flex items-center space-x-2">
+                                      <Switch 
+                                          id="alert-on-overdue-tasks"
                                           checked={formData.notifications.notifyOverdue} 
-                                          onChange={e => setFormData({
+                                          onCheckedChange={checked => setFormData({
                                             ...formData, 
                                             notifications: {
                                               ...formData.notifications, 
-                                              notifyOverdue: e.target.checked
+                                              notifyOverdue: checked
                                             }
                                           })} 
                                         /> 
-                                      } 
-                                      label={<span style={{ color: '#ef4444' }}>Alert on Overdue Tasks</span>}
-                                  />
-                                  <FormControlLabel 
-                                      control={
-                                        <Switch 
+                                      <Label htmlFor="alert-on-overdue-tasks" className="text-red-500">Alert on Overdue Tasks</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                      <Switch 
+                                          id="alert-on-upcoming-tasks"
                                           checked={formData.notifications.notifyUpcoming} 
-                                          onChange={e => setFormData({
+                                          onCheckedChange={checked => setFormData({
                                             ...formData, 
                                             notifications: {
                                               ...formData.notifications, 
-                                              notifyUpcoming: e.target.checked
+                                              notifyUpcoming: checked
                                             }
                                           })} 
                                         /> 
-                                      } 
-                                      label="Alert on Upcoming Tasks" 
-                                  />
-                                  <FormControlLabel 
-                                      control={
-                                        <Switch 
+                                      <Label htmlFor="alert-on-upcoming-tasks">Alert on Upcoming Tasks</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                      <Switch 
+                                          id="daily-digest"
                                           checked={formData.notifications.dailyDigest} 
-                                          onChange={e => setFormData({
+                                          onCheckedChange={checked => setFormData({
                                             ...formData, 
                                             notifications: {
                                               ...formData.notifications, 
-                                              dailyDigest: e.target.checked
+                                              dailyDigest: checked
                                             }
                                           })} 
                                         /> 
-                                      } 
-                                      label="Daily Digest" 
-                                  />
-                              </Box>
+                                      <Label htmlFor="daily-digest">Daily Digest</Label>
+                                  </div>
+                              </div>
                           </Card>
-                      </Grid>
-                  </Grid>
-                </CardContent>
+                      </div>
+                  </div>                </CardContent>
               </Card>
-          </div>
+          </TabsContent>
           
           {/* TAB 5: Appearance */}
-          <div role="tabpanel" hidden={activeTab !== 5}>
-              <Card variant="outlined" sx={{ borderRadius: 3, mb: 3 }}>
+          <TabsContent value="appearance">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Theme Settings</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControl fullWidth size="small" variant="outlined" sx={{ mb: 2 }}>
-                              <InputLabel>Theme</InputLabel>
-                              <Select
-                                  value="light"
-                                  label="Theme"
-                              >
-                                  <MenuItem value="light">Light</MenuItem>
-                                  <MenuItem value="dark">Dark</MenuItem>
-                                  <MenuItem value="system">System Default</MenuItem>
-                              </Select>
-                          </FormControl>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Primary Color" 
+                  <h6 className="text-lg font-bold mb-4 text-primary">Theme Settings</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="theme" className="mb-2 block">Theme</Label>
+                          <Select
+                              value="light"
+                              onValueChange={(value) => console.log("Theme changed to:", value)} // Placeholder for actual state update
+                          >
+                              <SelectTrigger id="theme">
+                                  <SelectValue placeholder="Select theme" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="light">Light</SelectItem>
+                                  <SelectItem value="dark">Dark</SelectItem>
+                                  <SelectItem value="system">System Default</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div>
+                          <Label htmlFor="primary-color" className="mb-2 block">Primary Color</Label>
+                          <Input 
+                              id="primary-color"
                               type="color"
                               value="#3b82f6" 
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                  </Grid>
+                      </div>
+                  </div>
                   
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" mt={3}>Display Options</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Compact Mode" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Auto-collapse Sidebar" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
+                  <h6 className="text-lg font-bold mb-4 text-primary mt-6">Display Options</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch id="compact-mode" defaultChecked /> 
+                          <Label htmlFor="compact-mode">Compact Mode</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="auto-collapse-sidebar" defaultChecked /> 
+                          <Label htmlFor="auto-collapse-sidebar">Auto-collapse Sidebar</Label>
+                      </div>
+                  </div>
                   
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" mt={3}>Language & Localization</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControl fullWidth size="small" variant="outlined" sx={{ mb: 2 }}>
-                              <InputLabel>Language</InputLabel>
-                              <Select
-                                  value="en"
-                                  label="Language"
-                              >
-                                  <MenuItem value="en">English</MenuItem>
-                                  <MenuItem value="np">Nepali</MenuItem>
-                                  <MenuItem value="hi">Hindi</MenuItem>
-                                  <MenuItem value="de">German</MenuItem>
-                                  <MenuItem value="fr">French</MenuItem>
-                                  <MenuItem value="es">Spanish</MenuItem>
-                              </Select>
-                          </FormControl>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Show Language Selector" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
+                  <h6 className="text-lg font-bold mb-4 text-primary mt-6">Language & Localization</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="language" className="mb-2 block">Language</Label>
+                          <Select
+                              value="en"
+                              onValueChange={(value) => console.log("Language changed to:", value)} // Placeholder for actual state update
+                          >
+                              <SelectTrigger id="language">
+                                  <SelectValue placeholder="Select language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="en">English</SelectItem>
+                                  <SelectItem value="np">Nepali</SelectItem>
+                                  <SelectItem value="hi">Hindi</SelectItem>
+                                  <SelectItem value="de">German</SelectItem>
+                                  <SelectItem value="fr">French</SelectItem>
+                                  <SelectItem value="es">Spanish</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="show-language-selector" defaultChecked /> 
+                          <Label htmlFor="show-language-selector">Show Language Selector</Label>
+                      </div>
+                  </div>
                 </CardContent>
               </Card>
-          </div>
+          </TabsContent>
           
           {/* TAB 6: Security */}
-          <div role="tabpanel" hidden={activeTab !== 6}>
-              <Card variant="outlined" sx={{ borderRadius: 3, mb: 3 }}>
+          <TabsContent value="security">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Password Policy</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Minimum Password Length" 
+                  <h6 className="text-lg font-bold mb-4 text-primary">Password Policy</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="min-password-length" className="mb-2 block">Minimum Password Length</Label>
+                          <Input 
+                              id="min-password-length"
                               type="number"
                               value={8} 
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Require Numbers" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="require-numbers" defaultChecked /> 
+                          <Label htmlFor="require-numbers">Require Numbers</Label>
+                      </div>
+                  </div>
                   
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Require Special Characters" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Require Uppercase" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
-                  
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" mt={3}>Session Management</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Session Timeout (minutes)" 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch id="require-special-chars" defaultChecked /> 
+                          <Label htmlFor="require-special-chars">Require Special Characters</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="require-uppercase" defaultChecked /> 
+                          <Label htmlFor="require-uppercase">Require Uppercase</Label>
+                      </div>
+                  </div>                  
+                  <h6 className="text-lg font-bold mb-4 text-primary mt-6">Session Management</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="session-timeout" className="mb-2 block">Session Timeout (minutes)</Label>
+                          <Input 
+                              id="session-timeout"
                               type="number"
                               value={30} 
-                              size="small"
-                              variant="outlined"
-                              helperText="Session expires after inactivity period"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch />} 
-                              label="Enable Two-Factor Authentication" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
-                  
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" mt={3}>Audit & Compliance</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Enable Audit Logging" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Log User Actions" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
-                </CardContent>
+                          <p className="text-sm text-gray-500 mt-1">Session expires after inactivity period</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="enable-two-factor-auth" /> 
+                          <Label htmlFor="enable-two-factor-auth">Enable Two-Factor Authentication</Label>
+                      </div>
+                  </div>                  
+                  <h6 className="text-lg font-bold mb-4 text-primary mt-6">Audit & Compliance</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch id="enable-audit-logging" defaultChecked /> 
+                          <Label htmlFor="enable-audit-logging">Enable Audit Logging</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="log-user-actions" defaultChecked /> 
+                          <Label htmlFor="log-user-actions">Log User Actions</Label>
+                      </div>
+                  </div>                </CardContent>
               </Card>
-          </div>
+          </TabsContent>
           
           {/* TAB 7: Dashboard */}
-          <div role="tabpanel" hidden={activeTab !== 7}>
-              <Card variant="outlined" sx={{ borderRadius: 3, mb: 3 }}>
+          <TabsContent value="dashboard">
+              <Card className="rounded-lg mb-3">
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Dashboard Widgets</Typography>
-                  <Typography variant="body2" color="text.secondary" mb={3}>Manage which widgets appear on your dashboard and their visibility.</Typography>
+                  <h6 className="text-lg font-bold mb-4 text-primary">Dashboard Widgets</h6>
+                  <p className="text-sm text-gray-500 mb-6">Manage which widgets appear on your dashboard and their visibility.</p>
                   
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Progress Tracking</Typography>
-                            <Typography variant="caption" color="text.secondary">Monitor project progress metrics</Typography>
-                          </Box>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Progress Tracking</p>
+                            <p className="text-xs text-gray-500">Monitor project progress metrics</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
+                    </div>
                     
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Financial Overview</Typography>
-                            <Typography variant="caption" color="text.secondary">Track budget and expenses</Typography>
-                          </Box>
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Financial Overview</p>
+                            <p className="text-xs text-gray-500">Track budget and expenses</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
+                    </div>
                     
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Schedule Tracking</Typography>
-                            <Typography variant="caption" color="text.secondary">Monitor timeline and milestones</Typography>
-                          </Box>
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Schedule Tracking</p>
+                            <p className="text-xs text-gray-500">Monitor timeline and milestones</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
+                    </div>
                     
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Quality Metrics</Typography>
-                            <Typography variant="caption" color="text.secondary">Track quality control measures</Typography>
-                          </Box>
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Quality Metrics</p>
+                            <p className="text-xs text-gray-500">Track quality control measures</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
+                    </div>
                     
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Resource Allocation</Typography>
-                            <Typography variant="caption" color="text.secondary">Monitor resource utilization</Typography>
-                          </Box>
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Resource Allocation</p>
+                            <p className="text-xs text-gray-500">Monitor resource utilization</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
+                    </div>
                     
-                    <Grid item xs={12}>
-                      <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">Document Status</Typography>
-                            <Typography variant="caption" color="text.secondary">Track document approvals and reviews</Typography>
-                          </Box>
+                    <div>
+                      <Card className="p-4 mb-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-bold">Document Status</p>
+                            <p className="text-xs text-gray-500">Track document approvals and reviews</p>
+                          </div>
                           <Switch defaultChecked />
-                        </Box>
+                        </div>
                       </Card>
-                    </Grid>
-                  </Grid>
-                  
-                  <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" mt={3}>Dashboard Behavior</Typography>
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Auto-refresh Charts" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <TextField 
-                              fullWidth 
-                              label="Refresh Interval (seconds)" 
+                    </div>
+                  </div>                  
+                  <h6 className="text-lg font-bold mb-4 text-primary mt-6">Dashboard Behavior</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center space-x-2">
+                          <Switch id="auto-refresh-charts" defaultChecked /> 
+                          <Label htmlFor="auto-refresh-charts">Auto-refresh Charts</Label>
+                      </div>
+                      <div>
+                          <Label htmlFor="refresh-interval" className="mb-2 block">Refresh Interval (seconds)</Label>
+                          <Input 
+                              id="refresh-interval"
                               type="number"
                               value={300} 
-                              size="small"
-                              variant="outlined"
-                              sx={{ mb: 2 }}
                           />
-                      </Grid>
-                  </Grid>
+                      </div>
+                  </div>
                   
-                  <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                          <FormControl fullWidth size="small" variant="outlined" sx={{ mb: 2 }}>
-                              <InputLabel>Default View</InputLabel>
-                              <Select
-                                  value="grid"
-                                  label="Default View"
-                              >
-                                  <MenuItem value="grid">Grid Layout</MenuItem>
-                                  <MenuItem value="list">List Layout</MenuItem>
-                                  <MenuItem value="compact">Compact Layout</MenuItem>
-                              </Select>
-                          </FormControl>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                          <FormControlLabel 
-                              control={<Switch defaultChecked />} 
-                              label="Show Charts" 
-                              sx={{ mb: 2 }}
-                          />
-                      </Grid>
-                  </Grid>
-                </CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      <div>
+                          <Label htmlFor="default-view" className="mb-2 block">Default View</Label>
+                          <Select
+                              value="grid"
+                              onValueChange={(value) => console.log("Default view changed to:", value)} // Placeholder for actual state update
+                          >
+                              <SelectTrigger id="default-view">
+                                  <SelectValue placeholder="Select view" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="grid">Grid Layout</SelectItem>
+                                  <SelectItem value="list">List Layout</SelectItem>
+                                  <SelectItem value="compact">Compact Layout</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                          <Switch id="show-charts" defaultChecked /> 
+                          <Label htmlFor="show-charts">Show Charts</Label>
+                      </div>
+                  </div>                </CardContent>
               </Card>
-          </div>
-    </Box>
+          </TabsContent>
+    </div>
   );
 };
 
